@@ -1,1 +1,3 @@
-import { PageFor } from '../_common'; export default function Leases(){ return <PageFor entity="leases" />; }
+import React from 'react';
+import CollectionPage from '../_Collection';
+export default function Page() { return <CollectionPage name="leases" />; }
