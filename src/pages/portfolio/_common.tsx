@@ -1,5 +1,6 @@
+import React from 'react';
 import Table from '@/components/ui/Table';
-import { useCollection } from '@lib/useApi';
+import { useCollection } from '@/lib/useApi';
 
 function getName(row:any){
   return row.display_name ?? row.name ?? row.property_name ?? row.full_name ?? row.company_name ?? row.address1 ?? '(unnamed)';
@@ -14,7 +15,7 @@ function getUpdated(row:any){
   return row.updated_at ?? row.updatedAt ?? row.modified_at ?? row.modifiedAt ?? '';
 }
 
-export function PageFor({ entity }: { entity: string }) {
+export function PageFor({ entity }: { entity: string }): React.ReactElement {
   const { data, loading, error } = useCollection<any>(entity, { order: 'updated_at.desc', limit: 200 });
 
   const rows = (data||[]).map((r:any)=>({

@@ -4,7 +4,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
   const [isActive] = useRoute(href === '/' ? '/' : `${href}/*`);
   return (
     <Link href={href}>
-      <span
+      <div
         style={{
           display: 'block',
           padding: '8px 10px',
@@ -14,7 +14,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
         }}
       >
         {children}
-      </span>
+      </div>
     </Link>
   );
 }
