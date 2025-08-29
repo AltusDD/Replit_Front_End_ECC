@@ -1,3 +1,2 @@
-import React from 'react';
-import { CollectionPage } from '@/pages/portfolio/_common';
-export default function Page(){ return <CollectionPage title="Properties" name="properties" />; }
+import { CollectionView } from '../_common'
+export default function Page(){ return <CollectionView col="properties" title="Propertiesroperties" /> }

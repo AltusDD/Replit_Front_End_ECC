@@ -1,24 +1,27 @@
-import React from 'react';
-import { Link, useLocation } from 'wouter';
-import { NAV_SECTIONS } from './navConfig';
+import { Link, useRoute } from 'wouter'
+import nav from './navConfig'
+
+function Item({ href, label }: { href:string; label:string }) {
+  const [active] = useRoute(href === '/dashboard' ? '/dashboard' : href)
+  return (
+    <Link href={href}>
+      <a className={`nav-link ${active ? 'active' : ''}`}>{label}</a>
+    </Link>
+  )
+}
 
 export default function Nav(){
-  const [loc] = useLocation();
   return (
-    <nav className="nav">
+    <div>
       <div className="brand">Empire Command Center</div>
-      {NAV_SECTIONS.map(sec => (
-        <div key={sec.label} className="navSection">
-          <div className="navSectionTitle">{sec.label}</div>
-          <div className="navLinks">
-            {sec.children?.map(it => it.path ? (
-              <Link key={it.path} href={it.path} className={'navLink' + (loc.startsWith(it.path) ? ' active' : '')}>
-                <span>{it.label}</span>
-              </Link>
-            ) : null)}
+      {nav.map(sec => (
+        <div key={sec.section} className="section-block">
+          <div className="section">{sec.section}</div>
+          <div className="nav">
+            {sec.items.map(it => <Item key={it.href} {...it} />)}
           </div>
         </div>
       ))}
-    </nav>
-  );
+    </div>
+  )
 }

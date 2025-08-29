@@ -1,14 +1,17 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
 const allowed = (process.env.VITE_ALLOWED_HOST || '')
-  .split(',').map(s => s.trim()).filter(Boolean);
+  .split(',').map(s => s.trim()).filter(Boolean)
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: { '@': path.resolve(__dirname, './src'), '@lib': path.resolve(__dirname, './src/lib') }
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@lib': path.resolve(__dirname, './src/lib'),
+    },
   },
   css: { postcss: { plugins: [] } },
   server: {
@@ -18,9 +21,10 @@ export default defineConfig({
     allowedHosts: allowed.length ? allowed : true,
     proxy: {
       '/api': {
-        target: 'https://empirecommandcenter-altus-staging.azurewebsites.net',
-        changeOrigin: true, secure: true,
-      }
-    }
-  }
-});
+        target: process.env.VITE_PROXY_TARGET || 'https://empirecommandcenter-altus-staging.azurewebsites.net',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
+})

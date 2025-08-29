@@ -1,34 +1,27 @@
-import React from 'react';
-import { useCounts } from '@/lib/useApi';
-
-function Stat({label, value}:{label:string; value:React.ReactNode}){
-  return (
-    <div className="panel stat">
-      <h4>{label.toUpperCase()}</h4>
-      <div className="number">{value}</div>
-    </div>
-  );
-}
+import StatCard from '@/components/ui/StatCard'
+import { useCounts } from '@lib/useApi'
 
 export default function Dashboard(){
-  const { data, loading, error } = useCounts();
-  const c = data || {};
+  const { data, loading, error } = useCounts()
+  const safe = (k:string) => (data?.[k] ?? '…')
+
   return (
     <div>
-      <div className="h1">Dashboard</div>
-      {error ? <div className="panel">API error: {String(error.message||error)}</div> : null}
-      <div className="grid-cards">
-        <Stat label="Properties" value={loading?'…':(c.properties ?? '…')}/>
-        <Stat label="Units"      value={loading?'…':(c.units ?? '…')}/>
-        <Stat label="Leases"     value={loading?'…':(c.leases ?? '…')}/>
-        <Stat label="Tenants"    value={loading?'…':(c.tenants ?? '…')}/>
-        <Stat label="Owners"     value={loading?'…':(c.owners ?? '…')}/>
+      <h1>Dashboard</h1>
+
+      {error && <div className="panel">API error: {String(error.message || error)}</div>}
+
+      <div className="grid-5 mt-16">
+        <StatCard label="Properties" value={safe('properties')} loading={loading}/>
+        <StatCard label="Units"      value={safe('units')}      loading={loading}/>
+        <StatCard label="Leases"     value={safe('leases')}     loading={loading}/>
+        <StatCard label="Tenants"    value={safe('tenants')}    loading={loading}/>
+        <StatCard label="Owners"     value={safe('owners')}     loading={loading}/>
       </div>
 
-      <div className="panel" style={{marginTop:16}}>
-        <span className="badge">Next Best Action</span>
-        <span style={{marginLeft:8}} className="badge">Powered by RPC</span>
+      <div className="panel mt-16">
+        <div className="badge">Powered by RPC</div>
       </div>
     </div>
-  );
+  )
 }

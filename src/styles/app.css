@@ -1,48 +1,37 @@
-/* App layout */
-.app-layout{
-  display:grid; grid-template-columns: 240px 1fr; min-height:100vh;
-}
+/* Layout */
+.layout{display:flex; min-height:100vh}
 .sidebar{
-  position:sticky; top:0; height:100vh; overflow:auto;
-  background:var(--panel); border-right:1px solid var(--border); padding:16px 14px;
+  width:240px; background:var(--panel-2); border-right:1px solid var(--border);
+  position:sticky; top:0; height:100vh; padding:16px 10px
 }
-.brand{font-weight:800; letter-spacing:.4px; margin-bottom:10px}
-.nav-section{margin:16px 0 6px; font-size:12px; color:var(--muted)}
-.nav{
-  display:flex; flex-direction:column; gap:6px;
-}
+.brand{font-weight:700; letter-spacing:.04em; color:var(--muted); font-size:12px; margin:8px 8px 18px}
+.section{color:var(--muted); font-size:11px; letter-spacing:.08em; text-transform:uppercase; padding:8px 8px}
 .nav a{
-  display:block; padding:8px 10px; border-radius:var(--radius-sm);
-  color:var(--text); background:transparent; border:1px solid transparent;
+  display:block; color:var(--muted); padding:8px 10px; border-radius:8px; text-decoration:none;
 }
+.nav a:hover{background:rgba(255,255,255,0.03); color:var(--text)}
 .nav a.active{
-  background:rgba(255,255,255,.05);
-  border-color:var(--border);
+  background:#101620; border:1px solid var(--border); color:var(--text)
 }
+.content{flex:1; padding:24px 28px; max-width:1400px}
 
-.main{padding:22px 24px}
-.header h1{font-size:26px; margin-bottom:16px}
+/* Headings */
+h1{font-size:28px; font-weight:800; margin:4px 0 18px}
+h2{font-size:18px; font-weight:700; margin:0 0 12px; color:var(--muted)}
 
-/* KPI stat card grid */
-.stat-grid{
-  display:grid; gap:var(--gap);
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-.stat{
-  background:var(--panel); border:1px solid var(--border);
-  border-radius:var(--radius); padding:16px;
-}
-.stat .label{color:var(--muted); text-transform:uppercase; letter-spacing:.6px; font-size:12px}
-.stat .value{font-size:28px; font-weight:800; margin-top:6px}
+/* Stat Cards */
+.stat{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:16px}
+.stat .label{color:var(--muted); font-size:12px; letter-spacing:.06em; text-transform:uppercase}
+.stat .value{font-size:28px; font-weight:800; margin-top:8px}
 
 /* Table */
-.table-wrap{overflow:auto; border:1px solid var(--border); border-radius:var(--radius); background:var(--panel)}
-table.data{
-  width:100%; border-collapse:collapse; min-width:800px;
+.table{width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--border); border-radius:12px; overflow:hidden}
+.table thead th{
+  text-align:left; background:#0f141a; color:var(--muted); font-weight:600; padding:10px 12px; border-bottom:1px solid var(--border); position:sticky; top:0
 }
-table.data th, table.data td{
-  border-bottom:1px solid var(--border); padding:10px 12px; text-align:left;
-  white-space:nowrap; text-overflow:ellipsis; overflow:hidden;
-}
-table.data thead th{font-weight:700; color:var(--muted); background:var(--panel-2)}
-table.data tbody tr:hover{background:rgba(255,255,255,.03)}
+.table tbody td{padding:10px 12px; border-top:1px solid var(--border)}
+.table tbody tr:hover{background:rgba(255,255,255,.02)}
+/* Utilities */
+.row{display:flex; gap:16px; flex-wrap:wrap}
+.grid-5{display:grid; gap:16px; grid-template-columns:repeat(5,minmax(180px,1fr))}
+.mt-16{margin-top:16px}

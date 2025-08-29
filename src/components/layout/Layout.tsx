@@ -1,11 +1,10 @@
-import React from 'react';
-import Nav from './Nav';
-
-export default function Layout({children}:{children:React.ReactNode}){
+import Nav from './Nav'
+import '../../styles/app.css'
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="app">
-      <aside className="rail"><Nav/></aside>
+    <div className="layout">
+      <aside className="sidebar"><Nav/></aside>
       <main className="content">{children}</main>
     </div>
-  );
+  )
 }

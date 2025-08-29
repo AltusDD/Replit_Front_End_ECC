@@ -1,37 +1,35 @@
 :root{
-  --bg:#0b0d10;
-  --surface:#0f1318;
-  --panel:#11161c;
-  --fg:#e7eaee;
-  --muted-1:#b6c0cb;
-  --muted-2:#8e99a6;
-  --border-1:#25303b;
-  --gold:#E6C15A;
-  --gold-2:#F2D47A;
+  --bg:#0b0f14;
+  --text:#e8edf2;
+  --muted:#99a6b3;
+  --panel:#11171e;
+  --panel-2:#0e1319;
+  --border:#26313c;
+  --focus:#3b82f6;
+  --success:#22c55e;
+  --warn:#f59e0b;
+  --danger:#ef4444;
+
+  /* brand accents (contract) */
+  --gold:#dcbf69;
+  --brand:#3b82f6;
 }
+
 *{box-sizing:border-box}
 html,body,#root{height:100%}
-body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui, Inter, Arial}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font:14px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,"Apple Color Emoji","Segoe UI Emoji";
+}
+a{color:var(--brand); text-decoration:none}
+a:hover{text-decoration:underline}
 
-.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
-.rail{background:var(--surface);border-right:1px solid var(--border-1);padding:16px 12px}
-.content{padding:24px 24px 48px}
+.panel{
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:12px; padding:16px;
+}
 
-.brand{font-weight:700;margin:4px 8px 16px 8px}
-.navSection{margin:18px 0}
-.navSectionTitle{font-size:11px;letter-spacing:.08em;color:var(--muted-2);margin:0 8px 8px}
-.navLink{display:block;padding:10px 12px;border-radius:10px;color:var(--fg);text-decoration:none;border:1px solid transparent}
-.navLink:hover{background:rgba(255,255,255,.02);border-color:var(--border-1)}
-.navLink.active{background:var(--panel);border-color:var(--border-1)}
-
-.h1{font-size:28px;font-weight:700;margin:6px 0 18px}
-.panel{background:var(--panel);border:1px solid var(--border-1);border-radius:14px;padding:16px}
-.grid-cards{display:grid;grid-template-columns:repeat(5, minmax(220px,1fr));gap:16px}
-.stat h4{font-size:11px;letter-spacing:.06em;color:var(--muted-2);margin:0 0 8px}
-.stat .number{font-size:28px;font-weight:700}
-.badge{display:inline-block;padding:4px 8px;border-radius:10px;border:1px solid var(--border-1);color:var(--muted-1);font-size:12px}
-.table{width:100%;border-collapse:separate;border-spacing:0}
-.table th,.table td{padding:10px 12px;border-bottom:1px solid var(--border-1)}
-.table th{position:sticky;top:0;background:var(--surface);text-align:left;color:var(--muted-1)}
-.link{color:#8ab4ff;text-decoration:none}
-.link:hover{text-decoration:underline}
+.badge{
+  display:inline-block; padding:4px 8px; border-radius:999px;
+  font-size:12px; color:#cfe1ff; background:rgba(59,130,246,.15); border:1px solid rgba(59,130,246,.3);
+}
