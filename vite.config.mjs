@@ -15,12 +15,13 @@ export default defineConfig({
       '@lib': path.resolve(__dirname, './src/lib'),
     },
   },
+  // no Tailwind wired through PostCSS
+  css: { postcss: { plugins: [] } },
   server: {
     host: '0.0.0.0',
     port: Number(process.env.PORT) || 5173,
     strictPort: false,
-    // allow ONLY the hosts you specify via the secret
-    allowedHosts: allowed.length ? allowed : [],
+    allowedHosts: allowed.length ? allowed : true,
     proxy: {
       '/api': {
         target: 'https://empirecommandcenter-altus-staging.azurewebsites.net',
