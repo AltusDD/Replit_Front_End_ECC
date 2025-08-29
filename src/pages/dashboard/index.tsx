@@ -1,8 +1,51 @@
+import { useEffect, useState } from 'react';
+import StatCard from '@/components/ui/StatCard';
+import Badge from '@/components/ui/Badge';
+import { fetchCollection, fetchJSON } from '@lib/ecc-api';
+
 export default function Dashboard() {
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [rpcOk, setRpcOk] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const names = ['properties','units','leases','tenants','owners'];
+      const results = await Promise.all(names.map(n => fetchCollection(n).catch(()=>({items:[]}))));
+      const c: Record<string, number> = {};
+      names.forEach((n,i)=> c[n] = (results[i].items as any[]).length);
+      setCounts(c);
+
+      try {
+        await fetchJSON('rpc/dashboard_kpis'); // optional
+        setRpcOk(true);
+      } catch { setRpcOk(false); }
+    })();
+  }, []);
+
+  const cards = [
+    { title:'Properties', key:'properties' },
+    { title:'Units', key:'units' },
+    { title:'Leases', key:'leases' },
+    { title:'Tenants', key:'tenants' },
+    { title:'Owners', key:'owners' }
+  ];
+
   return (
-    <div>
+    <div style={{ display:'grid', gap:16 }}>
       <h1>Dashboard</h1>
-      <p>V3 KPI cards will render here (counts from properties, units, leases, tenants, owners).</p>
+      <div style={{ display:'grid', gap:12, gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))' }}>
+        {cards.map(c => (
+          <StatCard key={c.key} title={c.title} value={counts[c.key] ?? '…'} />
+        ))}
+      </div>
+
+      <div className="panel">
+        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+          <strong>Next Best Action</strong>
+          {rpcOk ? <Badge tone="info">Powered by RPC</Badge> : <Badge tone="neutral">Not available yet</Badge>}
+        </div>
+        {!rpcOk && <div style={{color:'var(--muted)',marginTop:8,fontSize:13}}>When the backend exposes <code>/api/rpc/dashboard_*</code> we’ll render richer KPIs here without blocking the page.</div>}
+      </div>
     </div>
   );
 }

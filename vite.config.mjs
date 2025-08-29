@@ -12,11 +12,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@lib': path.resolve(__dirname, './src/lib'),
-    },
+      '@lib': path.resolve(__dirname, './src/lib')
+    }
   },
-  // no Tailwind wired through PostCSS
-  css: { postcss: { plugins: [] } },
+  css: { postcss: { plugins: [] } }, // no Tailwind, only CSS variables in theme.css
   server: {
     host: '0.0.0.0',
     port: Number(process.env.PORT) || 5173,
@@ -26,8 +25,8 @@ export default defineConfig({
       '/api': {
         target: 'https://empirecommandcenter-altus-staging.azurewebsites.net',
         changeOrigin: true,
-        secure: true,
-      },
-    },
-  },
+        secure: true
+      }
+    }
+  }
 });
