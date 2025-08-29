@@ -87,15 +87,17 @@ export default function ApiProbe() {
             type="text"
             value={endpoint}
             onChange={(e) => setEndpoint(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full"
             placeholder="/api/endpoint"
+            style={{padding: '0.5rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '0.375rem'}}
           />
         </div>
 
         <button
           onClick={probeApi}
           disabled={result.status === 'loading'}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-blue-600 text-white rounded-md"
+          style={{padding: '0.5rem 1rem'}}
         >
           {result.status === 'loading' ? 'Probing...' : 'Probe API'}
         </button>
