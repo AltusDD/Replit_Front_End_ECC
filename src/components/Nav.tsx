@@ -1,18 +1,20 @@
-import React from 'react';
 import { Link, useRoute } from 'wouter';
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const [isActive] = useRoute(href);
   return (
-    <div style={{ margin: '6px 0' }}>
-      <Link href={href}>
-        <a style={{
-          textDecoration: 'none',
-          color: 'var(--text)',
-          fontWeight: isActive ? 700 : 500
-        }}>{children}</a>
-      </Link>
-    </div>
+    <Link
+      href={href}
+      style={{
+        display: 'block',
+        margin: '6px 0',
+        textDecoration: 'none',
+        color: 'var(--text)',
+        fontWeight: isActive ? 700 : 500,
+      }}
+    >
+      {children}
+    </Link>
   );
 }
 
