@@ -1,0 +1,362 @@
+# --- Safety (optional) -------------------------------------------------------
+mkdir -p _backup_$(date +%s)
+[ -d src/components ] && cp -r src/components _backup_*/components 2>/dev/null || true
+[ -d src/pages ] && cp -r src/pages _backup_*/pages 2>/dev/null || true
+[ -f src/App.tsx ] && cp src/App.tsx _backup_*/ 2>/dev/null || true
+[ -f src/main.tsx ] && cp src/main.tsx _backup_*/ 2>/dev/null || true
+
+# --- 1) Centralized theme + app styles --------------------------------------
+mkdir -p src/styles
+
+cat > src/styles/theme.css <<'CSS'
+:root{
+  --bg:#0b0d10;
+  --text:#e7eaee;
+  --muted:#9aa4af;
+  --panel:#12161b;
+  --panel-2:#0f1318;
+  --border:#26303b;
+  --shadow:0 6px 24px rgba(0,0,0,.35);
+
+  --primary:#3b82f6;
+  --success:#16a34a;
+  --warn:#f59e0b;
+  --danger:#ef4444;
+
+  --radius:12px;
+  --radius-sm:8px;
+
+  --gap:16px;
+}
+
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font:14px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,"Apple Color Emoji","Segoe UI Emoji";
+}
+a{color:var(--text); text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3{margin:0 0 10px}
+small{color:var(--muted)}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  box-shadow:var(--shadow);
+}
+.badge{
+  display:inline-block; font-size:12px; padding:3px 8px; border-radius:999px;
+  border:1px solid var(--border); background:var(--panel-2); color:var(--text);
+}
+.btn{
+  display:inline-flex; align-items:center; gap:8px;
+  background:var(--primary); color:#fff; border:0; border-radius:var(--radius-sm);
+  padding:10px 14px; cursor:pointer;
+}
+.btn:disabled{opacity:.6; cursor:not-allowed}
+CSS
+
+cat > src/styles/app.css <<'CSS'
+/* App layout */
+.app-layout{
+  display:grid; grid-template-columns: 240px 1fr; min-height:100vh;
+}
+.sidebar{
+  position:sticky; top:0; height:100vh; overflow:auto;
+  background:var(--panel); border-right:1px solid var(--border); padding:16px 14px;
+}
+.brand{font-weight:800; letter-spacing:.4px; margin-bottom:10px}
+.nav-section{margin:16px 0 6px; font-size:12px; color:var(--muted)}
+.nav{
+  display:flex; flex-direction:column; gap:6px;
+}
+.nav a{
+  display:block; padding:8px 10px; border-radius:var(--radius-sm);
+  color:var(--text); background:transparent; border:1px solid transparent;
+}
+.nav a.active{
+  background:rgba(255,255,255,.05);
+  border-color:var(--border);
+}
+
+.main{padding:22px 24px}
+.header h1{font-size:26px; margin-bottom:16px}
+
+/* KPI stat card grid */
+.stat-grid{
+  display:grid; gap:var(--gap);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.stat{
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px;
+}
+.stat .label{color:var(--muted); text-transform:uppercase; letter-spacing:.6px; font-size:12px}
+.stat .value{font-size:28px; font-weight:800; margin-top:6px}
+
+/* Table */
+.table-wrap{overflow:auto; border:1px solid var(--border); border-radius:var(--radius); background:var(--panel)}
+table.data{
+  width:100%; border-collapse:collapse; min-width:800px;
+}
+table.data th, table.data td{
+  border-bottom:1px solid var(--border); padding:10px 12px; text-align:left;
+  white-space:nowrap; text-overflow:ellipsis; overflow:hidden;
+}
+table.data thead th{font-weight:700; color:var(--muted); background:var(--panel-2)}
+table.data tbody tr:hover{background:rgba(255,255,255,.03)}
+CSS
+
+# --- 2) Core UI primitives (Table + StatCard) -------------------------------
+mkdir -p src/components/ui
+
+cat > src/components/ui/Table.tsx <<'TS'
+import React from 'react';
+
+type Props = { rows: any[]; emptyHint?: string };
+
+export default function Table({ rows, emptyHint = 'No results' }: Props) {
+  if (!rows?.length) {
+    return <div className="panel">{emptyHint}</div>;
+  }
+  const cols = Object.keys(rows[0] ?? {});
+  return (
+    <div className="table-wrap">
+      <table className="data">
+        <thead><tr>{cols.map(c => <th key={c}>{c}</th>)}</tr></thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i}>
+              {cols.map(c => <td key={c}>{String(r?.[c] ?? '')}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+TS
+
+cat > src/components/ui/StatCard.tsx <<'TS'
+import React from 'react';
+
+export function StatCard({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="stat">
+      <div className="label">{label}</div>
+      <div className="value">{value}</div>
+    </div>
+  );
+}
+TS
+
+# --- 3) Layout with a clean, accessible Nav (no nested anchors) -------------
+mkdir -p src/components
+
+cat > src/components/Layout.tsx <<'TS'
+import React from 'react';
+import { Link, useRoute } from 'wouter';
+
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const [isActive] = useRoute(href === '/' ? '/' : `${href}/*`); // highlights section
+  return <Link href={href} className={`nav-link ${isActive ? 'active' : ''}`}>{children}</Link>;
+}
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="app-layout">
+      <aside className="sidebar">
+        <div className="brand">Empire Command Center</div>
+
+        <div className="nav-section">PRIMARY</div>
+        <nav className="nav">
+          <NavLink href="/dashboard">Dashboard</NavLink>
+        </nav>
+
+        <div className="nav-section">PORTFOLIO V3</div>
+        <nav className="nav">
+          <NavLink href="/portfolio/properties">Properties</NavLink>
+          <NavLink href="/portfolio/units">Units</NavLink>
+          <NavLink href="/portfolio/leases">Leases</NavLink>
+          <NavLink href="/portfolio/tenants">Tenants</NavLink>
+          <NavLink href="/portfolio/owners">Owners</NavLink>
+        </nav>
+
+        <div className="nav-section">TOOLS</div>
+        <nav className="nav">
+          <NavLink href="/tools/probe">API Probe</NavLink>
+        </nav>
+      </aside>
+
+      <main className="main">
+        {children}
+      </main>
+    </div>
+  );
+}
+TS
+
+# --- 4) Pages ---------------------------------------------------------------
+mkdir -p src/pages/dashboard src/pages/portfolio src/pages/tools
+
+cat > src/pages/dashboard/index.tsx <<'TS'
+import React from 'react';
+import { StatCard } from '@/components/ui/StatCard';
+import { useCounts } from '@lib/useApi';
+
+export default function Dashboard() {
+  const { data, loading, error } = useCounts();
+
+  const counts = {
+    properties: data?.properties ?? '…',
+    units: data?.units ?? '…',
+    leases: data?.leases ?? '…',
+    tenants: data?.tenants ?? '…',
+    owners: data?.owners ?? '…',
+  };
+
+  return (
+    <>
+      <div className="header"><h1>Dashboard</h1></div>
+
+      {error && <div className="panel">API error: {String((error as any)?.message || error)}</div>}
+
+      <div className="stat-grid" style={{ marginBottom: 18 }}>
+        <StatCard label="Properties" value={counts.properties} />
+        <StatCard label="Units" value={counts.units} />
+        <StatCard label="Leases" value={counts.leases} />
+        <StatCard label="Tenants" value={counts.tenants} />
+        <StatCard label="Owners" value={counts.owners} />
+      </div>
+
+      <div className="panel">
+        <strong>Next Best Action</strong> <span className="badge">Powered by RPC</span>
+      </div>
+    </>
+  );
+}
+TS
+
+# Reusable portfolio page
+cat > src/pages/portfolio/_common.tsx <<'TS'
+import React from 'react';
+import Table from '@/components/ui/Table';
+import { useCollection } from '@lib/useApi';
+
+export function CollectionPage({ title, name }: { title: string; name: string }) {
+  const { data, loading, error } = useCollection(name, {});
+  return (
+    <>
+      <div className="header"><h1>{title}</h1></div>
+      {error && <div className="panel">API error: {String((error as any)?.message || error)}</div>}
+      {loading ? <div className="panel">Loading…</div> : <Table rows={data} emptyHint="No results" />}
+    </>
+  );
+}
+TS
+
+for P in properties units leases tenants owners; do
+cat > "src/pages/portfolio/${P}/index.tsx" <<TS
+import React from 'react';
+import { CollectionPage } from '@/pages/portfolio/_common';
+export default function Page(){ return <CollectionPage title="${P[0].toUpperCase()}${P:1}" name="${P}" /> }
+TS
+done
+
+# Simple probe page (keeps the tool alive)
+cat > src/pages/tools/ApiProbe.tsx <<'TS'
+import React, { useState } from 'react';
+import { API_BASE, fetchJSON, buildUrl } from '@lib/useApi';
+
+export default function ApiProbe(){
+  const [ep, setEp] = useState('/api/health');
+  const [resp, setResp] = useState<any>(null);
+  const [status, setStatus] = useState<'idle'|'ok'|'err'>('idle');
+
+  async function go(){
+    setStatus('idle'); setResp(null);
+    try{
+      const data = await fetchJSON(buildUrl(ep));
+      setResp(data); setStatus('ok');
+    }catch(e:any){
+      setResp({error: String(e?.message || e)});
+      setStatus('err');
+    }
+  }
+  return (
+    <>
+      <div className="header"><h1>API Probe</h1></div>
+      <div className="panel" style={{display:'grid',gap:12}}>
+        <div><small>Target:</small> {API_BASE}</div>
+        <div style={{display:'flex',gap:8}}>
+          <input style={{flex:1}} value={ep} onChange={e=>setEp(e.target.value)} />
+          <button className="btn" onClick={go}>Probe</button>
+        </div>
+        <div><small>Status:</small> {status==='ok'?'✅ OK':status==='err'?'❌ Error':'—'}</div>
+        <pre className="panel" style={{overflow:'auto',maxHeight:320}}>{JSON.stringify(resp,null,2)}</pre>
+      </div>
+    </>
+  );
+}
+TS
+
+# --- 5) App + main wiring ---------------------------------------------------
+cat > src/App.tsx <<'TS'
+import React from 'react';
+import { Route, Switch, Redirect } from 'wouter';
+import Layout from '@/components/Layout';
+
+import Dashboard from '@/pages/dashboard';
+import ApiProbe from '@/pages/tools/ApiProbe';
+import Properties from '@/pages/portfolio/properties';
+import Units from '@/pages/portfolio/units';
+import Leases from '@/pages/portfolio/leases';
+import Tenants from '@/pages/portfolio/tenants';
+import Owners from '@/pages/portfolio/owners';
+
+export default function App(){
+  return (
+    <Layout>
+      <Switch>
+        <Route path="/" component={() => <Redirect to="/dashboard" />} />
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/tools/probe" component={ApiProbe} />
+
+        <Route path="/portfolio/properties" component={Properties} />
+        <Route path="/portfolio/units" component={Units} />
+        <Route path="/portfolio/leases" component={Leases} />
+        <Route path="/portfolio/tenants" component={Tenants} />
+        <Route path="/portfolio/owners" component={Owners} />
+
+        <Route> <div className="panel">Not Found</div> </Route>
+      </Switch>
+    </Layout>
+  );
+}
+TS
+
+# Ensure main.tsx imports our styles once
+cat > src/main.tsx <<'TS'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+
+import App from './App';
+import './styles/theme.css';
+import './styles/app.css';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+TS
+
+# --- 6) Keep the useApi we already stabilized -------------------------------
+# (No change here if you already updated earlier)
+
+# --- 7) Restart dev server ---------------------------------------------------
+pkill -f vite >/dev/null 2>&1 || true
+npm run dev

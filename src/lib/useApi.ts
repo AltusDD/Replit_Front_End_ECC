@@ -1,11 +1,33 @@
 import { useEffect, useMemo, useState } from 'react';
 
-const BASE = import.meta.env.VITE_API_BASE || '/api';
+export const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 const COLL_BASE = import.meta.env.VITE_API_COLLECTION_BASE || ''; // optional override
 const KEY = import.meta.env.VITE_API_KEY || '';
 
 const HEADERS: Record<string, string> = { Accept: 'application/json' };
 if (KEY) HEADERS['x-api-key'] = KEY;
+
+/** Build a request URL that plays nice with the Vite proxy.
+ * - absolute URLs pass through as-is
+ * - paths beginning with "/" are returned unchanged (so proxy can catch them)
+ * - bare paths are joined to API_BASE
+ * - optional query params appended
+ */
+export function buildUrl(path: string, params?: Record<string, any>): string {
+  let out = path;
+
+  if (!/^https?:\/\//i.test(path)) {
+    if (!path.startsWith('/')) out = `${API_BASE.replace(/\/$/,'')}/${path}`;
+  }
+
+  if (params && Object.keys(params).length) {
+    const sp = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) if (v != null) sp.set(k, String(v));
+    const q = sp.toString();
+    if (q) out += (out.includes('?') ? '&' : '?') + q;
+  }
+  return out;
+}
 
 export async function fetchJSON<T>(url: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(url, { ...init, headers: { ...HEADERS, ...(init.headers || {}) } });
@@ -13,15 +35,15 @@ export async function fetchJSON<T>(url: string, init: RequestInit = {}): Promise
   return res.json();
 }
 
-// Try multiple paths for a collection until one works.
+/** Fetch a portfolio collection using several likely paths (first that works wins). */
 export async function fetchCollection(col: string, qs: string) {
   const paths = [
-    COLL_BASE ? `${COLL_BASE}/${col}${qs}` : '',
-    `${BASE}/portfolio/${col}${qs}`,
-    `${BASE}/${col}${qs}`
+    COLL_BASE ? `${COLL_BASE.replace(/\/$/,'')}/${col}${qs}` : '',
+    `${API_BASE.replace(/\/$/,'')}/portfolio/${col}${qs}`,
+    `${API_BASE.replace(/\/$/,'')}/${col}${qs}`,
   ].filter(Boolean);
 
-  const errors: any[] = [];
+  const errors: Array<[string, unknown]> = [];
   for (const u of paths) {
     try { return await fetchJSON<any>(u); } catch (e) { errors.push([u, e]); }
   }
@@ -30,6 +52,7 @@ export async function fetchCollection(col: string, qs: string) {
   throw err;
 }
 
+/** Counts for the dashboard (tries /counts then /portfolio/counts). */
 export function useCounts() {
   const [data, set] = useState<any | null>(null);
   const [loading, setL] = useState(true);
@@ -38,7 +61,10 @@ export function useCounts() {
   useEffect(() => {
     (async () => {
       setL(true); setE(null);
-      const candidates = [`${BASE}/counts`, `${BASE}/portfolio/counts`];
+      const candidates = [
+        `${API_BASE.replace(/\/$/,'')}/counts`,
+        `${API_BASE.replace(/\/$/,'')}/portfolio/counts`,
+      ];
       let ok: any = null;
       for (const u of candidates) { try { ok = await fetchJSON(u); break; } catch {} }
       if (!ok) setE(new Error('Counts endpoint not found')); else set(ok);
@@ -48,6 +74,7 @@ export function useCounts() {
   return { data, loading, error };
 }
 
+/** Generic collection hook with stable shape handling. */
 export function useCollection(col: string, params: Record<string, any> = {}) {
   const qs = useMemo(() => {
     const s = new URLSearchParams();

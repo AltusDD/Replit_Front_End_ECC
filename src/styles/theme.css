@@ -1,16 +1,48 @@
 :root{
   --bg:#0b0d10;
   --text:#e7eaee;
-  --muted:#a7b0bb;
+  --muted:#9aa4af;
   --panel:#12161b;
+  --panel-2:#0f1318;
   --border:#26303b;
-  --info:#3b82f6; --success:#16a34a; --warn:#f59e0b; --danger:#ef4444;
+  --shadow:0 6px 24px rgba(0,0,0,.35);
+
+  --primary:#3b82f6;
+  --success:#16a34a;
+  --warn:#f59e0b;
+  --danger:#ef4444;
+
+  --radius:12px;
+  --radius-sm:8px;
+
+  --gap:16px;
 }
+
 *{box-sizing:border-box}
 html,body,#root{height:100%}
-body{margin:0;font:14px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,"Apple Color Emoji","Segoe UI Emoji";color:var(--text);background:var(--bg)}
-h1,h2,h3{margin:0 0 12px}
-a{color:var(--info);text-decoration:none} a:hover{text-decoration:underline}
-button{font:inherit;background:var(--info);color:#fff;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}
-.code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font:14px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,"Apple Color Emoji","Segoe UI Emoji";
+}
+a{color:var(--text); text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3{margin:0 0 10px}
+small{color:var(--muted)}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  box-shadow:var(--shadow);
+}
+.badge{
+  display:inline-block; font-size:12px; padding:3px 8px; border-radius:999px;
+  border:1px solid var(--border); background:var(--panel-2); color:var(--text);
+}
+.btn{
+  display:inline-flex; align-items:center; gap:8px;
+  background:var(--primary); color:#fff; border:0; border-radius:var(--radius-sm);
+  padding:10px 14px; cursor:pointer;
+}
+.btn:disabled{opacity:.6; cursor:not-allowed}
