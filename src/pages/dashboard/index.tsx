@@ -14,13 +14,13 @@ export default function Dashboard(){
   })()},[]);
   const cards=[{title:'Properties',key:'properties'},{title:'Units',key:'units'},{title:'Leases',key:'leases'},{title:'Tenants',key:'tenants'},{title:'Owners',key:'owners'}];
   return (
-    <div className="grid">
+    <div>
       <h1>Dashboard</h1>
-      <div className="grid cols-5">
+      <div className="kpis">
         {cards.map(c=><StatCard key={c.key} title={c.title} value={counts[c.key]??'…'}/>)}
       </div>
-      <div className="panel">
-        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+      <div className="section">
+        <div className="row">
           <strong>Next Best Action</strong>
           {rpcOk ? <Badge tone="info">Powered by RPC</Badge> : <Badge tone="neutral">Not available yet</Badge>}
         </div>
