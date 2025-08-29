@@ -1,14 +1,14 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Route, Switch, useLocation } from 'wouter';
 import Layout from '@/components/Layout';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import Dashboard from '@/pages/dashboard';
-import ApiProbe from '@/pages/tools/ApiProbe';
-import Properties from '@/pages/portfolio/properties';
-import Units from '@/pages/portfolio/units';
-import Leases from '@/pages/portfolio/leases';
-import Tenants from '@/pages/portfolio/tenants';
-import Owners from '@/pages/portfolio/owners';
+import Dashboard from '@/pages/dashboard/index';
+import ApiProbe from '@/components/ApiProbe';
+import Properties from '@/pages/portfolio/properties/index';
+import Units from '@/pages/portfolio/units/index';
+import Leases from '@/pages/portfolio/leases/index';
+import Tenants from '@/pages/portfolio/tenants/index';
+import Owners from '@/pages/portfolio/owners/index';
 
 function Redirect({ to }: { to: string }) {
   const [, setLocation] = useLocation();

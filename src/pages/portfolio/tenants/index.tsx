@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchCollection } from '@lib/api';
 
 type Row = Record<string, any>;
