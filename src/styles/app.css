@@ -1,0 +1,5 @@
+/* page-level wrappers (kept generic so they match any markup) */
+.grid{display:grid;gap:16px}
+.grid.cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:1100px){.grid.cols-5{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){.grid.cols-5{grid-template-columns:1fr}}

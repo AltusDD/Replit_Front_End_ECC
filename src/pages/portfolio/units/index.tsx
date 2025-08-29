@@ -1,2 +1,1 @@
-import { PageFor } from '../_common';
-export default function Units(){ return <PageFor entity="units" />; }
+import { PageFor } from '../_common'; export default function Units(){ return <PageFor entity="units" />; }

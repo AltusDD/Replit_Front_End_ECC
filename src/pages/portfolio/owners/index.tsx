@@ -1,2 +1,1 @@
-import { PageFor } from '../_common';
-export default function Owners(){ return <PageFor entity="owners" />; }
+import { PageFor } from '../_common'; export default function Owners(){ return <PageFor entity="owners" />; }

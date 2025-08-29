@@ -1,2 +1,1 @@
-import { PageFor } from '../_common';
-export default function Leases(){ return <PageFor entity="leases" />; }
+import { PageFor } from '../_common'; export default function Leases(){ return <PageFor entity="leases" />; }
