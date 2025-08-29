@@ -1,5 +1,5 @@
 import Nav from './Nav'
-import '../../styles/app.css'
+// [locked by style-contract] '../../styles/app.css'
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="layout">

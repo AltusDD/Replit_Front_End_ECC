@@ -1,5 +1,5 @@
 import { Route, Switch, Redirect } from 'wouter'
-import Layout from '@/components/layout/Layout'
+import Layout from './components/Layout'
 import Dashboard from '@/pages/dashboard'
 import Properties from '@/pages/portfolio/properties'
 import Units from '@/pages/portfolio/units'

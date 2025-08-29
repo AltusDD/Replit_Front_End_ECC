@@ -1,38 +1,31 @@
-import React from 'react';
-import { Link, useRoute } from 'wouter';
-
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  const [isActive] = useRoute(href === '/' ? '/' : `${href}/*`); // highlights section
-  return <Link href={href} className={`nav-link ${isActive ? 'active' : ''}`}>{children}</Link>;
-}
+import { Link, useLocation } from "wouter";
+import nav from "./layout/navConfig";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+  const [loc] = useLocation();
   return (
-    <div className="app-layout">
+    <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">Empire Command Center</div>
-
-        <div className="nav-section">PRIMARY</div>
         <nav className="nav">
-          <NavLink href="/dashboard">Dashboard</NavLink>
-        </nav>
-
-        <div className="nav-section">PORTFOLIO V3</div>
-        <nav className="nav">
-          <NavLink href="/portfolio/properties">Properties</NavLink>
-          <NavLink href="/portfolio/units">Units</NavLink>
-          <NavLink href="/portfolio/leases">Leases</NavLink>
-          <NavLink href="/portfolio/tenants">Tenants</NavLink>
-          <NavLink href="/portfolio/owners">Owners</NavLink>
-        </nav>
-
-        <div className="nav-section">TOOLS</div>
-        <nav className="nav">
-          <NavLink href="/tools/probe">API Probe</NavLink>
+          {nav.map(group => (
+            <div className="group" key={group.title}>
+              <div className="group-title">{group.title}</div>
+              <div className="links stack">
+                {group.items.map(it => {
+                  const active = loc.startsWith(it.href);
+                  return (
+                    <Link key={it.href} href={it.href} aria-current={active ? "page" : undefined}>
+                      {it.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
       </aside>
-
-      <main className="main">
+      <main className="content">
         {children}
       </main>
     </div>

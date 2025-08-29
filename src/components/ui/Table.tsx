@@ -1,19 +1,21 @@
-type Row = Record<string, any>
-export default function Table({ rows }: { rows: Row[] }) {
-  if (!rows?.length) return <div className="panel">No results</div>
-  const cols = Object.keys(rows[0] ?? {})
+export default function Table({ columns, rows }:{
+  columns: { key:string; label:string }[];
+  rows: Record<string, any>[];
+}) {
   return (
-    <div className="panel">
+    <div className="table-wrap">
       <table className="table">
-        <thead><tr>{cols.map(c => <th key={c}>{c}</th>)}</tr></thead>
+        <thead>
+          <tr>{columns.map(c => <th key={c.key}>{c.label}</th>)}</tr>
+        </thead>
         <tbody>
-          {rows.map((r,i) => (
+          {rows.map((r,i)=>(
             <tr key={i}>
-              {cols.map(c => <td key={c}>{String(r[c] ?? '')}</td>)}
+              {columns.map(c => <td key={c.key}>{String(r[c.key] ?? "")}</td>)}
             </tr>
           ))}
         </tbody>
       </table>
     </div>
-  )
+  );
 }

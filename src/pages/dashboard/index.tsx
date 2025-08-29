@@ -1,27 +1,23 @@
-import StatCard from '@/components/ui/StatCard'
-import { useCounts } from '@lib/useApi'
+import StatCard from "@/components/ui/StatCard";
+import { useCounts } from "@/lib/useApi";
 
 export default function Dashboard(){
-  const { data, loading, error } = useCounts()
-  const safe = (k:string) => (data?.[k] ?? '…')
-
+  const { data } = useCounts();
+  const c = data || {};
+  const items = [
+    { label:"Properties", value: c.properties ?? "…" },
+    { label:"Units",      value: c.units ?? "…" },
+    { label:"Leases",     value: c.leases ?? "…" },
+    { label:"Tenants",    value: c.tenants ?? "…" },
+    { label:"Owners",     value: c.owners ?? "…" },
+  ];
   return (
-    <div>
-      <h1>Dashboard</h1>
-
-      {error && <div className="panel">API error: {String(error.message || error)}</div>}
-
-      <div className="grid-5 mt-16">
-        <StatCard label="Properties" value={safe('properties')} loading={loading}/>
-        <StatCard label="Units"      value={safe('units')}      loading={loading}/>
-        <StatCard label="Leases"     value={safe('leases')}     loading={loading}/>
-        <StatCard label="Tenants"    value={safe('tenants')}    loading={loading}/>
-        <StatCard label="Owners"     value={safe('owners')}     loading={loading}/>
+    <div className="stack">
+      <h1 className="page-title">Dashboard</h1>
+      <div className="cards">
+        {items.map(i => <StatCard key={i.label} label={i.label} value={i.value} />)}
       </div>
-
-      <div className="panel mt-16">
-        <div className="badge">Powered by RPC</div>
-      </div>
+      <div className="panel"><span className="badge primary">Powered by RPC</span></div>
     </div>
-  )
+  );
 }
