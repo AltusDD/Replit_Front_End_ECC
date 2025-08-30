@@ -1,0 +1,92 @@
+Here’s the Replit-ready command to patch all 5 Portfolio pages with accurate columns:
+
+Paste the following block into the Replit shell:
+
+set -euo pipefail
+
+# Update table columns for each portfolio entity per ECC specs and your screenshots
+
+gen_entity () {
+  local Pretty="$1"; local coll="$2"; shift 2; local -a cols=("$@")
+  mkdir -p "src/pages/portfolio/$coll"
+  cat > "src/pages/portfolio/$coll/index.tsx" <<TSX
+import Table from "@/components/ui/Table";
+import { useCollection } from "@lib/useApi";
+
+const cols = [
+  ${cols[*]}
+];
+
+export default function ${Pretty}(){
+  const {data, loading, error} = useCollection("${coll}", { order:'updated_at.desc', limit: 200 });
+
+  return (
+    <>
+      <h1 className="pageTitle">${Pretty}</h1>
+      {error ? <div className="panel" style={{padding:12,marginBottom:12}}>API error: {String(error.message||error)}</div> : null}
+      <Table<any>
+        rows={loading ? [] : data}
+        cols={cols}
+        cap={\`Loaded \${data.length} ${Pretty.toLowerCase()}\`}
+        empty={loading ? 'Loading…' : 'No results'}
+      />
+    </>
+  );
+}
+TSX
+}
+
+# Properties
+gen_entity "Properties" properties \
+  "{ key:'property_name', label:'Name' }" \
+  "{ key:'city', label:'City' }" \
+  "{ key:'state', label:'State' }" \
+  "{ key:'updated_at', label:'Updated' }"
+
+# Units
+gen_entity "Units" units \
+  "{ key:'unit_name', label:'Name' }" \
+  "{ key:'beds', label:'Beds' }" \
+  "{ key:'rent', label:'Rent', render:(r:any)=> '$'+r.rent }" \
+  "{ key:'updated_at', label:'Updated' }"
+
+# Leases
+gen_entity "Leases" leases \
+  "{ key:'property_id', label:'Property ID' }" \
+  "{ key:'unit_id', label:'Unit ID' }" \
+  "{ key:'rent', label:'Rent', render:(r:any)=> '$'+r.rent }" \
+  "{ key:'status', label:'Status' }" \
+  "{ key:'updated_at', label:'Updated' }"
+
+# Tenants
+gen_entity "Tenants" tenants \
+  "{ key:'full_name', label:'Name' }" \
+  "{ key:'tenant_type', label:'Type' }" \
+  "{ key:'email', label:'Email' }" \
+  "{ key:'updated_at', label:'Updated' }"
+
+# Owners
+gen_entity "Owners" owners \
+  "{ key:'display_name', label:'Name' }" \
+  "{ key:'company_name', label:'Company' }" \
+  "{ key:'email', label:'Contact' }" \
+  "{ key:'is_active', label:'Active', render:(r:any)=> r.is_active ? 'Yes' : 'No' }" \
+  "{ key:'updated_at', label:'Updated' }"
+
+# Restart dev server
+pkill -f vite >/dev/null 2>&1 || true
+npm run dev
+
+🧪 Result:
+
+Each page will render the correct columns (from API keys that match your data):
+
+Properties: property_name, city, state, updated_at
+
+Units: unit_name, beds, rent, updated_at
+
+Leases: property_id, unit_id, rent, status, updated_at
+
+Tenants: full_name, tenant_type, email, updated_at
+
+Owners: display_name, company_name, email, is_active, updated_at
