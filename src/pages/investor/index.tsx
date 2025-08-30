@@ -1,1 +1,0 @@
-export default function InvestorPortal(){ return <div className="panel" style={{padding:16}}><h1>Investor Portal</h1><p className="badge">Stub • /investor</p></div>; }

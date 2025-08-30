@@ -4,7 +4,7 @@ const ok=(m)=> console.log('✅',m);
 
 const mainTsx = fs.readFileSync('src/main.tsx','utf8');
 const cssImports = (mainTsx.match(/import\s+["']\.\/styles\/.*\.css["']/g)||[]).length;
-if(cssImports!==2) fail('main.tsx must import exactly two CSS files (theme.css, app.css).');
+if(cssImports!==3) fail('main.tsx must import exactly three CSS files (theme.css, app.css, nav.css).');
 
 const theme = fs.readFileSync('src/styles/theme.css','utf8');
 ['--gold','#F7C948','--bg','--panel'].forEach(tok=>{

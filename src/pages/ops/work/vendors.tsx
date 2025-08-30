@@ -1,0 +1,1 @@
+export default function Vendors(){ return <div className="panel" style={{padding:16}}><h1>Vendors</h1><p className="badge">Stub • /ops/work/vendors</p></div>; }

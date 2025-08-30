@@ -1,0 +1,1 @@
+export default function Marketing(){ return <div className="panel" style={{padding:16}}><h1>Marketing</h1><p className="badge">Stub • /growth/marketing</p></div>; }

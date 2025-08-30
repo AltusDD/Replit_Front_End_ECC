@@ -1,0 +1,1 @@
+export default function InvestorFinancialReports(){ return <div className="panel" style={{padding:16}}><h1>Investor Financial Reports</h1><p className="badge">Stub • /investor/financial-reports</p></div>; }

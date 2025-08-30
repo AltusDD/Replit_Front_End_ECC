@@ -1,1 +1,0 @@
-export default function DataManagement(){ return <div className="panel" style={{padding:16}}><h1>Data Management</h1><p className="badge">Stub • /data</p></div>; }

@@ -1,1 +1,0 @@
-export default function Integrations(){ return <div className="panel" style={{padding:16}}><h1>Integrations</h1><p className="badge">Stub • /integrations</p></div>; }

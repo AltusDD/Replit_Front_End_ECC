@@ -1,1 +1,0 @@
-export default function Growth(){ return <div className="panel" style={{padding:16}}><h1>Growth</h1><p className="badge">Stub • /growth</p></div>; }

@@ -1,0 +1,1 @@
+export default function SubsidizedHousing(){ return <div className="panel" style={{padding:16}}><h1>Subsidized Housing</h1><p className="badge">Stub • /ops/accounting/subsidized-housing</p></div>; }

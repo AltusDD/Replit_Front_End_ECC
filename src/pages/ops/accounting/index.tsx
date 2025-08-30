@@ -1,1 +1,0 @@
-export default function Accounting(){ return <div className="panel" style={{padding:16}}><h1>Accounting</h1><p className="badge">Stub • /ops/accounting</p></div>; }

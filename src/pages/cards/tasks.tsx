@@ -1,1 +1,0 @@
-export default function Tasks(){ return <div className="panel" style={{padding:16}}><h1>Tasks</h1><p className="badge">Stub • /cards/tasks</p></div>; }
