@@ -38,7 +38,7 @@ export default function Nav(){
   return (
     <aside className="sidebar">
       <div className="brand">
-        <div className="logo">AE</div>
+        <img src="/logo.png" className="logo" alt="Altus Realty" />
         <div className="title">Empire Command Center</div>
       </div>
       {NAV.map((sec, i) => <SectionBlock key={sec.label+i} sec={sec} />)}
