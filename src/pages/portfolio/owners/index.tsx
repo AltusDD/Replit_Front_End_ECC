@@ -1,5 +1,5 @@
 import React from 'react';
-import Table from '@/components/Table';
+import Table from '@/components/ui/Table';
 import { useCollection } from '@lib/useApi';
 import { useLocation } from 'wouter';
 
@@ -8,37 +8,34 @@ export default function OwnersPage() {
   const [, setLocation] = useLocation();
 
   const columns = [
-    { label: 'Name', accessor: 'display_name' },
-    { label: 'Company', accessor: 'company_name' },
-    { label: 'First Name', accessor: 'first_name' },
-    { label: 'Last Name', accessor: 'last_name' },
-    { label: 'Contact Info', accessor: 'notes' },
+    { key: 'display_name', label: 'Name' },
+    { key: 'company_name', label: 'Company' },
+    { key: 'first_name', label: 'First Name' },
+    { key: 'last_name', label: 'Last Name' },
+    { key: 'notes', label: 'Contact Info' },
     {
+      key: 'active',
       label: 'Active',
-      accessor: 'active',
-      render: (value: any) => (
+      render: (row: any) => (
         <span style={{ 
-          color: value ? 'var(--color-status-good)' : 'var(--color-status-critical)'
+          color: row.active ? 'var(--color-status-good)' : 'var(--color-status-critical)'
         }}>
-          {value ? 'Yes' : 'No'}
+          {row.active ? 'Yes' : 'No'}
         </span>
       ),
     },
     {
+      key: 'management_start_date',
       label: 'Management Start',
-      accessor: 'management_start_date',
-      render: (value: any) => value ? new Date(value).toLocaleDateString() : 'N/A',
+      render: (row: any) => row.management_start_date ? new Date(row.management_start_date).toLocaleDateString() : 'N/A',
     },
     { 
+      key: 'updated_at',
       label: 'Updated', 
-      accessor: 'updated_at',
-      render: (value: any) => value ? new Date(value).toLocaleDateString() : ''
+      render: (row: any) => row.updated_at ? new Date(row.updated_at).toLocaleDateString() : ''
     },
   ];
 
-  const handleRowDoubleClick = (row: any) => {
-    setLocation(`/card/owner/${row.id}`);
-  };
 
   // Calculate KPIs
   const totalOwners = data.length;
@@ -64,7 +61,7 @@ export default function OwnersPage() {
         <div className="card">Companies: {companyOwners}</div>
       </div>
 
-      <Table columns={columns} data={data} onRowDoubleClick={handleRowDoubleClick} />
+      <Table rows={data} cols={columns} entityType="owner" onRowClick={(row) => setLocation(`/card/owner/${row.id}`)} />
     </div>
   );
 }

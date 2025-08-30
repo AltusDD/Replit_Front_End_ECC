@@ -19,6 +19,20 @@
   --font-size-xl: 1.5rem;
 
   --border-radius: 6px;
+
+  /* Required brand tokens */
+  --gold: #FFD700;
+  --gold-700: #B8860B;
+  --bg: #000000;
+  --text: #FFFFFF;
+  --panel: #1F2023;
+  --panel-3: #2a2a2a;
+  --border: #333333;
+  --muted: #B0B0B0;
+  --hover: #333333;
+  
+  /* Icon color token */
+  #F7C948: #F7C948;
 }
 
 body {
