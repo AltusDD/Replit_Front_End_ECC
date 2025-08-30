@@ -46,6 +46,16 @@ export default function Sidebar() {
 
   const collapsed = isCollapsed && !hoverExpand;
 
+  // Ensure parent stays open if user selected a child
+  useEffect(() => {
+    const activeItem = NAV
+      .flatMap(sec => sec.groups)
+      .find(grp => grp.items.some(item => item.path === loc));
+    if (activeItem) {
+      setOpenGroups(prev => new Set([...prev, activeItem.label]));
+    }
+  }, [loc]);
+
   useEffect(() => {
     const icon = document.querySelector(".nav-icon svg");
     if (icon instanceof HTMLElement) {
