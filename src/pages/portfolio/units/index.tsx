@@ -2,15 +2,15 @@ import Table from "@/components/ui/Table";
 import { useCollection } from "@lib/useApi";
 
 const cols = [
-  { key: 'unit_number', label: 'Name' },
-  { key: 'beds', label: 'Beds' },
-  { key: 'baths', label: 'Baths' },
-  { key: 'sq_ft', label: 'Sq Ft' },
-  { key: 'rent_amount', label: 'Rent', render: (r:any) => r.rent_amount ? `$${r.rent_amount}` : 'N/A' },
-  { key: 'status', label: 'Status', render: (r:any) => <span className={`badge ${r.status?.toLowerCase()}`}>{r.status}</span> },
-  { key: 'lease_end_date', label: 'Lease Ends', render: (r:any) => r.lease_end_date ? new Date(r.lease_end_date).toLocaleDateString() : 'N/A' },
-  { key: 'tenant_name', label: 'Tenant', render: (r:any) => r.tenant_name || 'Vacant' },
-  { key: 'updated_at', label: 'Updated', render: (r:any) => r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '' }
+  { key: 'unit_number', label: 'Unit', sortable: true, filterable: true },
+  { key: 'beds', label: 'Beds', sortable: true, filterable: true },
+  { key: 'baths', label: 'Baths', sortable: true, filterable: true },
+  { key: 'sq_ft', label: 'Sq Ft', sortable: true, render: (r:any) => r.sq_ft ? `${r.sq_ft}` : 'N/A' },
+  { key: 'rent_amount', label: 'Rent', sortable: true, render: (r:any) => r.rent_amount ? `$${r.rent_amount}` : 'N/A' },
+  { key: 'status', label: 'Status', sortable: true, filterable: true, render: (r:any) => <span className={`badge ${r.status?.toLowerCase()}`}>{r.status}</span> },
+  { key: 'lease_end_date', label: 'Lease Ends', sortable: true, render: (r:any) => r.lease_end_date ? new Date(r.lease_end_date).toLocaleDateString() : 'N/A' },
+  { key: 'tenant_name', label: 'Tenant', sortable: true, filterable: true, render: (r:any) => r.tenant_name || <span className="badge vacant">Vacant</span> },
+  { key: 'updated_at', label: 'Updated', sortable: true, render: (r:any) => r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '' }
 ];
 
 export default function Units(){
@@ -23,8 +23,10 @@ export default function Units(){
       <Table
         rows={loading ? [] : data}
         cols={cols}
-        cap={`Loaded ${data.length} units`}
-        empty={loading ? 'Loading…' : 'No results'}
+        cap={`${data.length} units loaded`}
+        empty={loading ? 'Loading…' : 'No units found'}
+        entityType="unit"
+        pageSize={25}
       />
     </>
   );

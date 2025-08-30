@@ -1,0 +1,49 @@
+REPLIT UPGRADE PROMPT FOR PORTFOLIO TABLES
+
+🔧 Prompt for Replit:
+
+Project: EstateCommand Portfolio Table Enhancement
+
+Goals:
+1. **Enhance all portfolio list pages** (`/portfolio/properties`, `/units`, `/leases`, `/tenants`, `/owners`) with the following capabilities:
+   - Column sorting (multi-column)
+   - Per-column filtering (dropdowns or text filter)
+   - Per-column search
+   - Conditional styling (e.g., delinquent tenants, vacant units)
+   - Pagination (25 per page)
+   - Zebra row and hover highlight styling
+   - Double-click on row to drill into `/card/<entity>/<id>` — no action buttons
+
+2. Follow **ECC Styling & Interaction Contract** from `ecc_portfolio_card_standard.md`:
+   - Dark theme, gold accents using `var(--gold)`, `var(--panel)`, `var(--fg)`
+   - Sticky header
+   - No raw hex colors
+   - Accessible ARIA tags
+   - Responsive design
+
+3. Implement keyboard navigation and column pinning
+
+4. Each row on double-click should:
+   - Open `/card/property/:id`, `/card/unit/:id`, etc.
+   - Use router navigation (not page refresh)
+   - Prefetch target card data using SWR keys (example: `['property-card', id]`)
+
+5. Add loading skeletons and error/empty states per the standard.
+
+6. All table data must come from live hooks (e.g. `useProperties()`, `useLeases()`), no mock data.
+
+7. Confirm compliance with:
+   - Table standards (#7)
+   - Interactions (#10)
+   - Telemetry events (#13): `table_row_drilled`, `filter_applied`, `column_sorted`
+
+DELIVERABLES:
+- Replace current table components with enhanced versions
+- Reuse table layout logic for each entity, but modularize columns/config
+- For properties, include columns: `property_name`, `city`, `state`, `type`, `units_count`, `occupancy_rate`, `active`, `updated_at`, `health_score`
+- For leases, tenants, units, owners, use the revised data model plan as provided.
+
+Validation:
+- Lighthouse score ≥ 85
+- Playwright test: double-click navigation works, sorting/filtering functional
+- Screenshot each portfolio page showing sorted + filtered state

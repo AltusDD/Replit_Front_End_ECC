@@ -2,16 +2,20 @@ import Table from "@/components/ui/Table";
 import { useCollection } from "@lib/useApi";
 
 const cols = [
-  { key: 'id', label: 'Lease ID' },
-  { key: 'property_id', label: 'Property ID' },
-  { key: 'unit_id', label: 'Unit ID' },
-  { key: 'tenant_name', label: 'Tenant', render: (r:any) => r.tenant_name || r.primary_tenant_id || 'N/A' },
-  { key: 'start_date', label: 'Start Date', render: (r:any) => r.start_date ? new Date(r.start_date).toLocaleDateString() : 'N/A' },
-  { key: 'end_date', label: 'End Date', render: (r:any) => r.end_date ? new Date(r.end_date).toLocaleDateString() : 'N/A' },
-  { key: 'rent_cents', label: 'Rent', render: (r:any) => r.rent_cents ? `$${(r.rent_cents/100).toFixed(2)}` : 'N/A' },
-  { key: 'total_balance_due', label: 'Balance Due', render: (r:any) => r.total_balance_due ? `$${r.total_balance_due}` : '$0.00' },
-  { key: 'status', label: 'Status' },
-  { key: 'updated_at', label: 'Updated', render: (r:any) => r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '' }
+  { key: 'id', label: 'Lease ID', sortable: true, filterable: true },
+  { key: 'property_id', label: 'Property ID', sortable: true, filterable: true },
+  { key: 'unit_id', label: 'Unit ID', sortable: true, filterable: true },
+  { key: 'tenant_name', label: 'Tenant', sortable: true, filterable: true, render: (r:any) => r.tenant_name || r.primary_tenant_id || 'N/A' },
+  { key: 'start_date', label: 'Start Date', sortable: true, render: (r:any) => r.start_date ? new Date(r.start_date).toLocaleDateString() : 'N/A' },
+  { key: 'end_date', label: 'End Date', sortable: true, render: (r:any) => r.end_date ? new Date(r.end_date).toLocaleDateString() : 'N/A' },
+  { key: 'rent_cents', label: 'Rent', sortable: true, render: (r:any) => r.rent_cents ? `$${(r.rent_cents/100).toFixed(2)}` : 'N/A' },
+  { key: 'total_balance_due', label: 'Balance Due', sortable: true, render: (r:any) => {
+    const amount = r.total_balance_due || 0;
+    const color = amount > 0 ? 'var(--danger)' : 'var(--success)';
+    return <span style={{color}}>${amount.toFixed(2)}</span>;
+  }},
+  { key: 'status', label: 'Status', sortable: true, filterable: true, render: (r:any) => <span className={`badge ${r.status?.toLowerCase()}`}>{r.status}</span> },
+  { key: 'updated_at', label: 'Updated', sortable: true, render: (r:any) => r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '' }
 ];
 
 export default function Leases(){
@@ -24,8 +28,10 @@ export default function Leases(){
       <Table
         rows={loading ? [] : data}
         cols={cols}
-        cap={`Loaded ${data.length} leases`}
-        empty={loading ? 'Loading…' : 'No results'}
+        cap={`${data.length} leases loaded`}
+        empty={loading ? 'Loading…' : 'No leases found'}
+        entityType="lease"
+        pageSize={25}
       />
     </>
   );

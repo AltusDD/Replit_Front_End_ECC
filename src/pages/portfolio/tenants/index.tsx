@@ -2,14 +2,24 @@ import Table from "@/components/ui/Table";
 import { useCollection } from "@lib/useApi";
 
 const cols = [
-  { key: 'display_name', label: 'Name' },
-  { key: 'first_name', label: 'First Name' },
-  { key: 'last_name', label: 'Last Name' },
-  { key: 'type', label: 'Type' },
-  { key: 'email', label: 'Email' },
-  { key: 'company_name', label: 'Company' },
-  { key: 'credit_score', label: 'Credit Score', render: (r:any) => r.credit_score || 'N/A' },
-  { key: 'updated_at', label: 'Updated', render: (r:any) => r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '' }
+  { key: 'display_name', label: 'Name', sortable: true, filterable: true },
+  { key: 'first_name', label: 'First Name', sortable: true, filterable: true },
+  { key: 'last_name', label: 'Last Name', sortable: true, filterable: true },
+  { key: 'type', label: 'Type', sortable: true, filterable: true },
+  { key: 'email', label: 'Email', sortable: true, filterable: true },
+  { key: 'company_name', label: 'Company', sortable: true, filterable: true },
+  { key: 'credit_score', label: 'Credit Score', sortable: true, render: (r:any) => {
+    const score = r.credit_score;
+    if (!score) return 'N/A';
+    const color = score >= 700 ? 'var(--success)' : score >= 600 ? 'var(--warn)' : 'var(--danger)';
+    return <span style={{color}}>{score}</span>;
+  }},
+  { key: 'total_balance_due', label: 'Balance Due', sortable: true, render: (r:any) => {
+    const amount = r.total_balance_due || 0;
+    const color = amount > 0 ? 'var(--danger)' : 'var(--success)';
+    return <span style={{color}}>${amount.toFixed(2)}</span>;
+  }},
+  { key: 'updated_at', label: 'Updated', sortable: true, render: (r:any) => r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '' }
 ];
 
 export default function Tenants(){
@@ -22,8 +32,10 @@ export default function Tenants(){
       <Table
         rows={loading ? [] : data}
         cols={cols}
-        cap={`Loaded ${data.length} tenants`}
-        empty={loading ? 'Loading…' : 'No results'}
+        cap={`${data.length} tenants loaded`}
+        empty={loading ? 'Loading…' : 'No tenants found'}
+        entityType="tenant"
+        pageSize={25}
       />
     </>
   );

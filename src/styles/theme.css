@@ -410,3 +410,208 @@ a:hover{text-decoration:underline}
   justify-content: flex-start;
   padding: 8px 12px;
 }
+
+/* Enhanced table styles */
+.enhanced-table-container {
+  background: var(--panel);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.table-caption {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.table-controls {
+  margin-bottom: 16px;
+}
+
+.global-search {
+  width: 100%;
+  max-width: 300px;
+  padding: 8px 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.global-search:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(247, 201, 72, 0.2);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.enhanced-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel);
+}
+
+.sticky-header {
+  position: sticky;
+  top: 0;
+  background: var(--panel-2);
+  z-index: 10;
+}
+
+.table-header {
+  padding: 12px;
+  border-bottom: 2px solid var(--border);
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--panel-2);
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sortable-header:hover {
+  color: var(--gold);
+}
+
+.column-filter {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 12px;
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+}
+
+.column-filter:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.table-row {
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.table-row:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.table-row:hover {
+  background: rgba(247, 201, 72, 0.1);
+}
+
+.table-row.delinquent {
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 3px solid var(--danger);
+}
+
+.table-row.vacant {
+  background: rgba(165, 176, 189, 0.1);
+  border-left: 3px solid var(--muted);
+}
+
+.table-row.at-risk {
+  background: rgba(245, 158, 11, 0.1);
+  border-left: 3px solid var(--warn);
+}
+
+.table-row td {
+  padding: 12px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.pagination-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--gold);
+  color: var(--panel-3);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-indicator {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.badge.active {
+  background: rgba(22, 163, 74, 0.2);
+  color: var(--success);
+}
+
+.badge.vacant {
+  background: rgba(165, 176, 189, 0.2);
+  color: var(--muted);
+}
+
+.badge.occupied {
+  background: rgba(22, 163, 74, 0.2);
+  color: var(--success);
+}
+
+.badge.maintenance {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--warn);
+}

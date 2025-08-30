@@ -7,6 +7,11 @@ import Units from "@/pages/portfolio/units";
 import Leases from "@/pages/portfolio/leases";
 import Tenants from "@/pages/portfolio/tenants";
 import Owners from "@/pages/portfolio/owners";
+import PropertyCard from "@/pages/card/property";
+import UnitCard from "@/pages/card/unit";
+import LeaseCard from "@/pages/card/lease";
+import TenantCard from "@/pages/card/tenant";
+import OwnerCard from "@/pages/card/owner";
 
 export default function App(){
   return (
@@ -19,6 +24,11 @@ export default function App(){
         <Route path="/portfolio/leases" component={Leases}/>
         <Route path="/portfolio/tenants" component={Tenants}/>
         <Route path="/portfolio/owners" component={Owners}/>
+        <Route path="/card/property/:id" component={PropertyCard}/>
+        <Route path="/card/unit/:id" component={UnitCard}/>
+        <Route path="/card/lease/:id" component={LeaseCard}/>
+        <Route path="/card/tenant/:id" component={TenantCard}/>
+        <Route path="/card/owner/:id" component={OwnerCard}/>
         <Route path="/tools/probe" component={ApiProbe}/>
         <Route>404 Not Found</Route>
       </Switch>
