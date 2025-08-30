@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Home,
@@ -177,6 +177,29 @@ function SectionBlock({ sec }: { sec: Section }) {
 
 export default function Nav() {
   const [pinned, setPinned] = useState(true);
+  const [collapsedLevel, setCollapsedLevel] = useState<"none" | "partial" | "full">("none");
+  
+  useEffect(() => {
+    const checkCollapse = () => {
+      const width = window.innerWidth;
+      const layout = document.querySelector('.layout');
+      if (width < 640) {
+        layout?.classList.add('collapsed-full');
+        layout?.classList.remove('collapsed-partial');
+        setCollapsedLevel("full");
+      } else if (width < 900) {
+        layout?.classList.add('collapsed-partial');
+        layout?.classList.remove('collapsed-full');
+        setCollapsedLevel("partial");
+      } else {
+        layout?.classList.remove('collapsed-full', 'collapsed-partial');
+        setCollapsedLevel("none");
+      }
+    };
+    window.addEventListener('resize', checkCollapse);
+    checkCollapse();
+    return () => window.removeEventListener('resize', checkCollapse);
+  }, []);
 
   useEffect(() => {
     const raw = localStorage.getItem("ecc.sidebarPinned");
