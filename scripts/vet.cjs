@@ -4,7 +4,7 @@ const ok=(m)=> console.log('✅',m);
 
 const mainTsx = fs.readFileSync('src/main.tsx','utf8');
 const cssImports = (mainTsx.match(/import\s+["']\.\/styles\/.*\.css["']/g)||[]).length;
-if(cssImports!==3) fail('main.tsx must import exactly three CSS files (theme.css, app.css, nav.css).');
+if(cssImports!==2) fail('main.tsx must import exactly two CSS files (theme.css, app.css).');
 
 const theme = fs.readFileSync('src/styles/theme.css','utf8');
 ['--gold','#F7C948','--bg','--panel'].forEach(tok=>{
@@ -16,13 +16,7 @@ const scanCss = (dir)=>{
     const p = path.join(dir,f);
     const s = fs.statSync(p);
     if(s.isDirectory()) scanCss(p);
-    else if(/\.tsx?$/.test(p)) {
-      const content = fs.readFileSync(p,'utf8');
-      // Allow only main.tsx to have CSS imports
-      if(p !== 'src/main.tsx' && /import\s+['"][^'"]+\.css['"]/.test(content)) {
-        fail('Rogue CSS import: '+p);
-      }
-    }
+    else if(/\.tsx?$/.test(p) && p !== 'src/main.tsx' && /import\s+['"][^'"]+\.css['"]/.test(fs.readFileSync(p,'utf8'))) fail('Rogue CSS import: '+p);
   }
 };
 scanCss('src');

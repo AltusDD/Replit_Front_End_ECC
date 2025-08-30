@@ -17,7 +17,7 @@ function RenderItem(it: Leaf | Group) {
     <li className="group">
       <div className="gH">{it.label}</div>
       <ul className="nav">
-        {it.children.map((c) => <RenderItem key={c.path} {...c} />)}
+        {it.children.map((c) => <LeafLink key={c.path} leaf={c} />)}
       </ul>
     </li>
   );
@@ -28,7 +28,7 @@ function SectionBlock({sec}:{sec:Section}) {
     <div className="navSec">
       <div className="secH">{sec.label}</div>
       <ul className="nav">
-        {sec.items.map((it, i) => <RenderItem key={i+(('path'in it)?it.path:it.label)} {...it} />)}
+        {sec.items.map((it, i) => <div key={i+(('path'in it)?it.path:it.label)}>{RenderItem(it)}</div>)}
       </ul>
     </div>
   );
