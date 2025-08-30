@@ -1,30 +1,81 @@
+/* src/components/Table.css */
+
 .table-container {
-  background-color: var(--altus-panel-grey);
-  border-radius: 6px;
-  padding: 1rem;
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--panel);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
-.custom-table {
+table {
   width: 100%;
   border-collapse: collapse;
-  color: white;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  background-color: var(--panel-2);
 }
 
-.custom-table thead {
-  background-color: var(--altus-header-grey);
+thead {
+  background-color: var(--panel-3);
+}
+
+thead th {
+  padding: var(--spacing-sm);
+  text-align: left;
   font-weight: bold;
-  border-bottom: 2px solid var(--altus-hover);
+  color: var(--gold);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
 
-.custom-table th, .custom-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--altus-border);
+tbody tr {
+  transition: background-color 0.2s ease;
 }
 
-.custom-table tr:nth-child(even) {
-  background-color: var(--altus-hover);
+tbody tr:nth-child(even) {
+  background-color: #1e1e1e;
 }
 
-.custom-table tr:hover {
-  background-color: var(--altus-header-grey);
+tbody tr:hover {
+  background-color: #2e2e2e;
+}
+
+td {
+  padding: var(--spacing-sm);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.status-good {
+  color: var(--success);
+  font-weight: bold;
+}
+
+.status-warning {
+  color: var(--warn);
+  font-weight: bold;
+}
+
+.status-critical {
+  color: var(--danger);
+  font-weight: bold;
+}
+
+.table-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.table-cell-clickable {
+  cursor: pointer;
+  text-decoration: underline;
+  color: var(--link);
+}
+
+.table-cell-clickable:hover {
+  color: var(--gold);
 }

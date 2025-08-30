@@ -31,7 +31,7 @@ export function Table<T>({ data, columns }: TableProps<T>) {
             <tr key={i} className="even:bg-panel-3 hover:bg-panel-2 transition-colors">
               {columns.map((col, j) => (
                 <td key={j} className={`px-4 py-2 ${col.className || ""}`}>
-                  {col.render ? col.render(row[col.accessor], row) : (row[col.accessor] as React.ReactNode)}
+                  {col.render ? col.render(row[col.accessor], row) : row[col.accessor]}
                 </td>
               ))}
             </tr>
