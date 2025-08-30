@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
+import "../Table.css";
 
 interface TableColumn<T> {
   key: keyof T | string;

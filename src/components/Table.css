@@ -4,7 +4,7 @@
   width: 100%;
   overflow-x: auto;
   background-color: var(--panel);
-  border-radius: var(--radius);
+  border-radius: var(--border-radius);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
 }
@@ -13,69 +13,31 @@ table {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-family);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   color: var(--text);
-  background-color: var(--panel-2);
 }
 
 thead {
-  background-color: var(--panel-3);
+  background-color: var(--panel-2);
 }
 
 thead th {
   padding: var(--spacing-sm);
   text-align: left;
-  font-weight: bold;
+  font-weight: 600;
   color: var(--gold);
   border-bottom: 1px solid var(--border);
-  white-space: nowrap;
-}
-
-tbody tr {
-  transition: background-color 0.2s ease;
 }
 
 tbody tr:nth-child(even) {
-  background-color: #1e1e1e;
+  background-color: var(--panel-3);
 }
 
 tbody tr:hover {
-  background-color: #2e2e2e;
+  background-color: var(--panel-2);
 }
 
 td {
   padding: var(--spacing-sm);
   border-bottom: 1px solid var(--border);
-  white-space: nowrap;
-}
-
-.status-good {
-  color: var(--success);
-  font-weight: bold;
-}
-
-.status-warning {
-  color: var(--warn);
-  font-weight: bold;
-}
-
-.status-critical {
-  color: var(--danger);
-  font-weight: bold;
-}
-
-.table-actions {
-  display: flex;
-  gap: var(--spacing-xs);
-  align-items: center;
-}
-
-.table-cell-clickable {
-  cursor: pointer;
-  text-decoration: underline;
-  color: var(--link);
-}
-
-.table-cell-clickable:hover {
-  color: var(--gold);
 }
