@@ -9,67 +9,59 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);
-    if (!collapsed) setPinned(false); // Auto-unpin when collapsing
+    if (!collapsed) setPinned(false);
   };
 
   const togglePin = () => {
     setPinned(!pinned);
-    if (!pinned) setCollapsed(false); // Auto-expand when pinning
+    if (!pinned) setCollapsed(false);
   };
+
+  // Group nav items by section
+  const sections = ['PRIMARY', 'PORTFOLIO', 'TOOLS'] as const;
+  const navBySection = sections.map(sectionName => ({
+    title: sectionName,
+    items: NAV.filter(item => item.section === sectionName)
+  }));
 
   return (
     <div className="app-shell">
-      <aside className={`ec-sidebar ${collapsed ? 'collapsed' : ''}`}>
-        <div className="sidebar-header">
-          <div className="brand">
-            {!collapsed && 'Empire Command Center'}
-            {collapsed && 'ECC'}
-          </div>
-          <div className="sidebar-controls">
-            <button
-              className="pin-btn"
-              onClick={togglePin}
-              title={pinned ? 'Unpin sidebar' : 'Pin sidebar'}
-            >
-              📌
-            </button>
-            <button
-              className="collapse-btn"
-              onClick={toggleCollapsed}
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {collapsed ? '→' : '←'}
-            </button>
-          </div>
+      <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+        <div className="brand">
+          {!collapsed && 'Empire Command Center'}
+          {collapsed && 'ECC'}
         </div>
-
-        <nav className="nav">
-          {NAV.map((section) => (
-            <div className="nav-section" key={section.title}>
-              <div className="nav-section-title">{!collapsed && section.title}</div>
-              <div className="nav-items">
-                {section.items.map((item) => {
-                  const active =
-                    loc === item.path || (item.path !== '/dashboard' && loc.startsWith(item.path));
-                  return (
-                    <Link
-                      key={item.path}
-                      href={item.path}
-                      className={`nav-item ${active ? 'active' : ''}`}
-                      title={collapsed ? item.label : undefined}
-                    >
-                      <span className="nav-label">
-                        {collapsed ? item.label.charAt(0) : item.label}
-                      </span>
-                    </Link>
-                  );
-                })}
+        <div className="controls">
+          <button onClick={togglePin}>{pinned ? '📌' : '📍'}</button>
+          <button onClick={toggleCollapsed}>{collapsed ? '→' : '←'}</button>
+        </div>
+        
+        <nav>
+          {navBySection.map(section => (
+            <div key={section.title}>
+              <div className="section-title">
+                {!collapsed && section.title}
               </div>
+              {section.items.map(item => {
+                const active = loc === item.href || (item.href !== '/dashboard' && loc.startsWith(item.href));
+                return (
+                  <Link 
+                    key={item.href} 
+                    href={item.href} 
+                    className={active ? 'active' : ''}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    {collapsed ? item.label.charAt(0) : item.label}
+                  </Link>
+                );
+              })}
             </div>
           ))}
         </nav>
       </aside>
-      <main className={`ec-content ${collapsed ? 'sidebar-collapsed' : ''}`}>{children}</main>
+      <main className="content">
+        {children}
+      </main>
     </div>
   );
 }

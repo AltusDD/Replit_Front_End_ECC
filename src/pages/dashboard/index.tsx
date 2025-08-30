@@ -9,7 +9,7 @@ export default function Dashboard() {
     <div className="page">
       <h1 className="ec-title">Dashboard</h1>
       {error && <div className="panel">API error: {String((error as any)?.message || error)}</div>}
-      <div className="grid-auto">
+      <div className="grid-kpis">
         <StatCard title="Properties" value={v('properties')} loading={loading} />
         <StatCard title="Units" value={v('units')} loading={loading} />
         <StatCard title="Leases" value={v('leases')} loading={loading} />

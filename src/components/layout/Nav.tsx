@@ -3,17 +3,25 @@ import { NAV } from './navConfig';
 
 export default function Nav() {
   const [loc] = useLocation();
+  
+  // Group nav items by section
+  const sections = ['PRIMARY', 'PORTFOLIO', 'TOOLS'] as const;
+  const navBySection = sections.map(sectionName => ({
+    title: sectionName,
+    items: NAV.filter(item => item.section === sectionName)
+  }));
+
   return (
     <aside className="sidebar">
       <div className="brand">Empire Command Center</div>
-      {NAV.map((sec) => (
-        <div key={sec.title}>
-          <div className="nav-section">{sec.title}</div>
-          {sec.items.map((it) => {
-            const active = loc === it.path;
+      {navBySection.map(section => (
+        <div key={section.title}>
+          <div className="nav-section">{section.title}</div>
+          {section.items.map(item => {
+            const active = loc === item.href;
             return (
-              <Link key={it.path} href={it.path} className={`navlink ${active ? 'active' : ''}`}>
-                {it.label}
+              <Link key={item.href} href={item.href} className={`navlink ${active ? 'active' : ''}`}>
+                {item.label}
               </Link>
             );
           })}
