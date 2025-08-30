@@ -1,33 +1,81 @@
-import Table from "@/components/ui/Table";
-import { useCollection } from "@lib/useApi";
+import React from 'react';
+import Table from '@/components/Table';
+import { useCollection } from '@lib/useApi';
+import { useLocation } from 'wouter';
 
-const cols = [
-  { key: 'unit_number', label: 'Unit', sortable: true, filterable: true },
-  { key: 'beds', label: 'Beds', sortable: true, filterable: true },
-  { key: 'baths', label: 'Baths', sortable: true, filterable: true },
-  { key: 'sq_ft', label: 'Sq Ft', sortable: true, render: (r:any) => r.sq_ft ? `${r.sq_ft}` : 'N/A' },
-  { key: 'rent_amount', label: 'Rent', sortable: true, render: (r:any) => r.rent_amount ? `$${r.rent_amount}` : 'N/A' },
-  { key: 'status', label: 'Status', sortable: true, filterable: true, render: (r:any) => <span className={`badge ${r.status?.toLowerCase()}`}>{r.status}</span> },
-  { key: 'lease_end_date', label: 'Lease Ends', sortable: true, render: (r:any) => r.lease_end_date ? new Date(r.lease_end_date).toLocaleDateString() : 'N/A' },
-  { key: 'tenant_name', label: 'Tenant', sortable: true, filterable: true, render: (r:any) => r.tenant_name || <span className="badge vacant">Vacant</span> },
-  { key: 'updated_at', label: 'Updated', sortable: true, render: (r:any) => r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '' }
-];
+export default function UnitsPage() {
+  const { data = [], loading } = useCollection('units');
+  const [, setLocation] = useLocation();
 
-export default function Units(){
-  const {data, loading, error} = useCollection("units", { order:'updated_at.desc', limit: 200 });
+  const columns = [
+    { label: 'Unit', accessor: 'unit_number' },
+    { label: 'Beds', accessor: 'beds' },
+    { label: 'Baths', accessor: 'baths' },
+    { label: 'Sq Ft', accessor: 'sq_ft', render: (value: any) => value || 'N/A' },
+    {
+      label: 'Rent',
+      accessor: 'rent_amount',
+      render: (value: any) => value ? `$${value}` : 'N/A',
+    },
+    {
+      label: 'Status',
+      accessor: 'status',
+      render: (value: any) => (
+        <span style={{ 
+          color: value === 'occupied' ? 'var(--color-status-good)' : 
+                 value === 'vacant' ? 'var(--color-status-warning)' : 
+                 'var(--color-text-primary)'
+        }}>
+          {value || 'N/A'}
+        </span>
+      ),
+    },
+    {
+      label: 'Lease Ends',
+      accessor: 'lease_end_date',
+      render: (value: any) => value ? new Date(value).toLocaleDateString() : 'N/A',
+    },
+    {
+      label: 'Tenant',
+      accessor: 'tenant_name',
+      render: (value: any) => value || <span style={{ color: 'var(--color-status-warning)' }}>Vacant</span>,
+    },
+    { 
+      label: 'Updated', 
+      accessor: 'updated_at',
+      render: (value: any) => value ? new Date(value).toLocaleDateString() : ''
+    },
+  ];
+
+  const handleRowDoubleClick = (row: any) => {
+    setLocation(`/card/unit/${row.id}`);
+  };
+
+  // Calculate KPIs
+  const totalUnits = data.length;
+  const vacantUnits = data.filter((u: any) => !u.tenant_name || u.status === 'vacant').length;
+  const avgRent = data.length > 0 ? Math.round(data.reduce((sum: number, u: any) => sum + (u.rent_amount || 0), 0) / data.length) : 0;
+
+  if (loading) {
+    return (
+      <div style={{ padding: 'var(--spacing-lg)' }}>
+        <h1 style={{ color: 'var(--color-accent-primary)' }}>Portfolio: Units</h1>
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <h1 className="pageTitle">Units</h1>
-      {error && <div className="panel" style={{ padding:12, marginBottom:12 }}>API error: {String(error.message || error)}</div>}
-      <Table
-        rows={loading ? [] : data}
-        cols={cols}
-        cap={`${data.length} units loaded`}
-        empty={loading ? 'Loading…' : 'No units found'}
-        entityType="unit"
-        pageSize={25}
-      />
-    </>
+    <div style={{ padding: 'var(--spacing-lg)' }}>
+      <h1 style={{ color: 'var(--color-accent-primary)' }}>Portfolio: Units</h1>
+
+      <div style={{ display: 'flex', gap: 'var(--spacing-md)', margin: 'var(--spacing-md) 0' }}>
+        <div className="card">Total Units: {totalUnits}</div>
+        <div className="card">Vacant Units: {vacantUnits}</div>
+        <div className="card">Avg Rent: ${avgRent}</div>
+      </div>
+
+      <Table columns={columns} data={data} onRowDoubleClick={handleRowDoubleClick} />
+    </div>
   );
 }

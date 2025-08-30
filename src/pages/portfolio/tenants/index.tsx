@@ -1,42 +1,75 @@
-import Table from "@/components/ui/Table";
-import { useCollection } from "@lib/useApi";
+import React from 'react';
+import Table from '@/components/Table';
+import { useCollection } from '@lib/useApi';
+import { useLocation } from 'wouter';
 
-const cols = [
-  { key: 'display_name', label: 'Name', sortable: true, filterable: true },
-  { key: 'first_name', label: 'First Name', sortable: true, filterable: true },
-  { key: 'last_name', label: 'Last Name', sortable: true, filterable: true },
-  { key: 'type', label: 'Type', sortable: true, filterable: true },
-  { key: 'email', label: 'Email', sortable: true, filterable: true },
-  { key: 'company_name', label: 'Company', sortable: true, filterable: true },
-  { key: 'credit_score', label: 'Credit Score', sortable: true, render: (r:any) => {
-    const score = r.credit_score;
-    if (!score) return 'N/A';
-    const color = score >= 700 ? 'var(--success)' : score >= 600 ? 'var(--warn)' : 'var(--danger)';
-    return <span style={{color}}>{score}</span>;
-  }},
-  { key: 'total_balance_due', label: 'Balance Due', sortable: true, render: (r:any) => {
-    const amount = r.total_balance_due || 0;
-    const color = amount > 0 ? 'var(--danger)' : 'var(--success)';
-    return <span style={{color}}>${amount.toFixed(2)}</span>;
-  }},
-  { key: 'updated_at', label: 'Updated', sortable: true, render: (r:any) => r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '' }
-];
+export default function TenantsPage() {
+  const { data = [], loading } = useCollection('tenants');
+  const [, setLocation] = useLocation();
 
-export default function Tenants(){
-  const {data, loading, error} = useCollection("tenants", { order:'updated_at.desc', limit: 200 });
+  const columns = [
+    { label: 'Name', accessor: 'display_name' },
+    { label: 'First Name', accessor: 'first_name' },
+    { label: 'Last Name', accessor: 'last_name' },
+    { label: 'Type', accessor: 'type' },
+    { label: 'Email', accessor: 'email' },
+    { label: 'Company', accessor: 'company_name' },
+    {
+      label: 'Credit Score',
+      accessor: 'credit_score',
+      render: (value: any) => {
+        if (!value) return 'N/A';
+        const color = value >= 700 ? 'var(--color-status-good)' : 
+                     value >= 600 ? 'var(--color-status-warning)' : 
+                     'var(--color-status-critical)';
+        return <span style={{color}}>{value}</span>;
+      },
+    },
+    {
+      label: 'Balance Due',
+      accessor: 'total_balance_due',
+      render: (value: any) => {
+        const amount = value || 0;
+        const color = amount > 0 ? 'var(--color-status-critical)' : 'var(--color-status-good)';
+        return <span style={{color}}>${amount.toFixed(2)}</span>;
+      },
+    },
+    { 
+      label: 'Updated', 
+      accessor: 'updated_at',
+      render: (value: any) => value ? new Date(value).toLocaleDateString() : ''
+    },
+  ];
+
+  const handleRowDoubleClick = (row: any) => {
+    setLocation(`/card/tenant/${row.id}`);
+  };
+
+  // Calculate KPIs
+  const totalTenants = data.length;
+  const delinquentTenants = data.filter((t: any) => (t.total_balance_due || 0) > 0).length;
+  const avgCreditScore = data.length > 0 ? Math.round(data.reduce((sum: number, t: any) => sum + (t.credit_score || 0), 0) / data.length) : 0;
+
+  if (loading) {
+    return (
+      <div style={{ padding: 'var(--spacing-lg)' }}>
+        <h1 style={{ color: 'var(--color-accent-primary)' }}>Portfolio: Tenants</h1>
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <h1 className="pageTitle">Tenants</h1>
-      {error && <div className="panel" style={{ padding:12, marginBottom:12 }}>API error: {String(error.message || error)}</div>}
-      <Table
-        rows={loading ? [] : data}
-        cols={cols}
-        cap={`${data.length} tenants loaded`}
-        empty={loading ? 'Loading…' : 'No tenants found'}
-        entityType="tenant"
-        pageSize={25}
-      />
-    </>
+    <div style={{ padding: 'var(--spacing-lg)' }}>
+      <h1 style={{ color: 'var(--color-accent-primary)' }}>Portfolio: Tenants</h1>
+
+      <div style={{ display: 'flex', gap: 'var(--spacing-md)', margin: 'var(--spacing-md) 0' }}>
+        <div className="card">Total Tenants: {totalTenants}</div>
+        <div className="card">Delinquent: {delinquentTenants}</div>
+        <div className="card">Avg Credit Score: {avgCreditScore}</div>
+      </div>
+
+      <Table columns={columns} data={data} onRowDoubleClick={handleRowDoubleClick} />
+    </div>
   );
 }

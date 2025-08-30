@@ -1,32 +1,70 @@
-import Table from "@/components/ui/Table";
-import { useCollection } from "@lib/useApi";
+import React from 'react';
+import Table from '@/components/Table';
+import { useCollection } from '@lib/useApi';
+import { useLocation } from 'wouter';
 
-const cols = [
-  { key: 'display_name', label: 'Name', sortable: true, filterable: true },
-  { key: 'company_name', label: 'Company', sortable: true, filterable: true },
-  { key: 'first_name', label: 'First Name', sortable: true, filterable: true },
-  { key: 'last_name', label: 'Last Name', sortable: true, filterable: true },
-  { key: 'notes', label: 'Contact Info', filterable: true },
-  { key: 'active', label: 'Active', sortable: true, filterable: true, render: (r:any) => <span className={`badge ${r.active ? 'active' : 'inactive'}`}>{r.active ? 'Yes' : 'No'}</span> },
-  { key: 'management_start_date', label: 'Management Start', sortable: true, render: (r:any) => r.management_start_date ? new Date(r.management_start_date).toLocaleDateString() : 'N/A' },
-  { key: 'updated_at', label: 'Updated', sortable: true, render: (r:any) => r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '' }
-];
+export default function OwnersPage() {
+  const { data = [], loading } = useCollection('owners');
+  const [, setLocation] = useLocation();
 
-export default function Owners(){
-  const {data, loading, error} = useCollection("owners", { order:'updated_at.desc', limit: 200 });
+  const columns = [
+    { label: 'Name', accessor: 'display_name' },
+    { label: 'Company', accessor: 'company_name' },
+    { label: 'First Name', accessor: 'first_name' },
+    { label: 'Last Name', accessor: 'last_name' },
+    { label: 'Contact Info', accessor: 'notes' },
+    {
+      label: 'Active',
+      accessor: 'active',
+      render: (value: any) => (
+        <span style={{ 
+          color: value ? 'var(--color-status-good)' : 'var(--color-status-critical)'
+        }}>
+          {value ? 'Yes' : 'No'}
+        </span>
+      ),
+    },
+    {
+      label: 'Management Start',
+      accessor: 'management_start_date',
+      render: (value: any) => value ? new Date(value).toLocaleDateString() : 'N/A',
+    },
+    { 
+      label: 'Updated', 
+      accessor: 'updated_at',
+      render: (value: any) => value ? new Date(value).toLocaleDateString() : ''
+    },
+  ];
+
+  const handleRowDoubleClick = (row: any) => {
+    setLocation(`/card/owner/${row.id}`);
+  };
+
+  // Calculate KPIs
+  const totalOwners = data.length;
+  const activeOwners = data.filter((o: any) => o.active).length;
+  const companyOwners = data.filter((o: any) => o.company_name).length;
+
+  if (loading) {
+    return (
+      <div style={{ padding: 'var(--spacing-lg)' }}>
+        <h1 style={{ color: 'var(--color-accent-primary)' }}>Portfolio: Owners</h1>
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <h1 className="pageTitle">Owners</h1>
-      {error && <div className="panel" style={{ padding:12, marginBottom:12 }}>API error: {String(error.message || error)}</div>}
-      <Table
-        rows={loading ? [] : data}
-        cols={cols}
-        cap={`${data.length} owners loaded`}
-        empty={loading ? 'Loading…' : 'No owners found'}
-        entityType="owner"
-        pageSize={25}
-      />
-    </>
+    <div style={{ padding: 'var(--spacing-lg)' }}>
+      <h1 style={{ color: 'var(--color-accent-primary)' }}>Portfolio: Owners</h1>
+
+      <div style={{ display: 'flex', gap: 'var(--spacing-md)', margin: 'var(--spacing-md) 0' }}>
+        <div className="card">Total Owners: {totalOwners}</div>
+        <div className="card">Active: {activeOwners}</div>
+        <div className="card">Companies: {companyOwners}</div>
+      </div>
+
+      <Table columns={columns} data={data} onRowDoubleClick={handleRowDoubleClick} />
+    </div>
   );
 }

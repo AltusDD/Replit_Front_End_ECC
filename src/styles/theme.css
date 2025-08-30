@@ -1,25 +1,47 @@
-:root{
-  /* Brand */
-  --gold:#F7C948;         /* accent */
-  --gold-600:#D6AE2F;
-  --gold-700:#B8921F;
+:root {
+  /* Enhanced Color System */
+  --color-background: #1A1A1A;
+  --color-panel: #2A2A2A;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B0B0B0;
+  --color-accent-primary: #FFD700;
+  --color-status-good: #38A169;
+  --color-status-warning: #ECC94B;
+  --color-status-critical: #E53E3E;
 
-  /* Surface + text */
-  --bg:#0B0E12;
-  --panel:#10151C;
-  --panel-2:#121923;
-  --panel-3:#0E1420;
-  --text:#E7ECF2;
-  --muted:#A5B0BD;
-  --border:#223043;
-  --success:#16A34A;
-  --warn:#F59E0B;
-  --danger:#EF4444;
-  --link:#5CA7FF;
+  /* Legacy Brand Variables for Backward Compatibility */
+  --gold: #FFD700;
+  --gold-600: #D6AE2F;
+  --gold-700: #B8921F;
+
+  /* Legacy Surface + Text for Backward Compatibility */
+  --bg: #1A1A1A;
+  --panel: #2A2A2A;
+  --panel-2: #333333;
+  --panel-3: #1E1E1E;
+  --text: #FFFFFF;
+  --muted: #B0B0B0;
+  --border: #444444;
+  --success: #38A169;
+  --warn: #ECC94B;
+  --danger: #E53E3E;
+  --link: #5CA7FF;
+
+  /* Enhanced Design Tokens */
+  --font-family: 'Inter', sans-serif;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  --border-radius: 8px;
 
   /* Layout */
   --sidebar-w: 248px;
-  --radius:12px;
+  --radius: 12px;
   --shadow: 0 6px 22px rgba(0,0,0,.35);
 }
 
@@ -54,7 +76,16 @@ a:hover{text-decoration:underline}
 
 .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
 .cards{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:16px}
-.card{padding:16px;border-radius:var(--radius);border:1px solid var(--border);background:var(--panel-2)}
+.card{
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border);
+  background: var(--color-panel);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+}
 .card h6{color:var(--muted);font-weight:600;margin-bottom:12px}
 .card .n{font-size:30px;font-weight:800}
 
