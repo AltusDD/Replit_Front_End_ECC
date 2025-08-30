@@ -179,12 +179,17 @@ export default function Nav() {
   const [collapsed, setCollapsed] = useState(false);
   const [collapsedLevel, setCollapsedLevel] = useState<"none" | "partial" | "full">("none");
   
-  // Automatically adjust sidebar width on collapse based on the first icon
+  // Measure icon container to define collapsed size
   useEffect(() => {
-    const icon = document.querySelector(".leaf svg");
-    if (icon instanceof HTMLElement) {
-      const computed = icon.offsetWidth + 16;
-      document.documentElement.style.setProperty("--collapsed-width", `${computed}px`);
+    const leafIcon = document.querySelector(".leaf svg");
+    if (leafIcon) {
+      const iconWidth = (leafIcon as HTMLElement).offsetWidth;
+      const padding = 24; // padding of container for icon + extra spacing
+      const collapsedWidth = iconWidth + padding;
+      const root = document.documentElement;
+      root.style.setProperty("--collapsed-width", `${collapsedWidth}px`);
+      // Also adjust logo max width dynamically
+      root.style.setProperty("--collapsed-logo", `${collapsedWidth * 0.8}px`);
     }
   }, [collapsed]);
   
