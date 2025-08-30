@@ -249,12 +249,13 @@ a:hover{text-decoration:underline}
 
 /* Collapsed Sidebar States */
 .sidebar.collapsed {
-  width: 64px;
+  /* Width controlled by earlier rule with !important */
 }
 
 .sidebar.collapsed:hover {
-  width: var(--sidebar-w);
+  width: 240px !important;
   box-shadow: var(--shadow);
+  z-index: 1000;
 }
 
 .sidebar.collapsed .leaf a {
