@@ -1,0 +1,79 @@
+
+:root {
+  --sidebar-width: 260px;
+  --collapsed-width: var(--icon-size);
+  --icon-color: #ffcc55;
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  transition: width 0.3s;
+  position: relative;
+  background: #0a0f1a;
+  color: white;
+}
+
+.sidebar.collapsed {
+  width: var(--collapsed-width);
+  overflow-x: hidden;
+}
+
+.logoContainer {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.brandLogo {
+  width: 100%;
+  max-width: 160px;
+  transition: all 0.3s ease;
+}
+.sidebar.collapsed .brandLogo {
+  max-width: 48px;
+}
+
+.navSection {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0.5rem;
+}
+
+.groupBtn,
+.leaf {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.6rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--icon-color);
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: background 0.2s;
+}
+.leaf.active {
+  background-color: #1e2a40;
+  border-left: 4px solid var(--icon-color);
+}
+.groupBtn:hover,
+.leaf:hover {
+  background-color: #1a2233;
+  cursor: pointer;
+}
+
+.pinRow {
+  position: absolute;
+  bottom: 1rem;
+  width: 100%;
+  text-align: center;
+}
+
+.pinRow button {
+  background: none;
+  border: 1px solid #333;
+  color: white;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
