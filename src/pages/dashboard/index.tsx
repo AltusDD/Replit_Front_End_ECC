@@ -1,23 +1,22 @@
-import StatCard from "@/components/ui/StatCard";
-import { useCounts } from "@/lib/useApi";
+import StatCard from '@/components/ui/StatCard';
+import { useCounts } from '@lib/useApi';
 
 export default function Dashboard(){
-  const { data } = useCounts();
-  const c = data || {};
-  const items = [
-    { label:"Properties", value: c.properties ?? "…" },
-    { label:"Units",      value: c.units ?? "…" },
-    { label:"Leases",     value: c.leases ?? "…" },
-    { label:"Tenants",    value: c.tenants ?? "…" },
-    { label:"Owners",     value: c.owners ?? "…" },
-  ];
+  const { data, loading, error } = useCounts();
+  const v = (k:string)=> data?.[k];
+
   return (
-    <div className="stack">
-      <h1 className="page-title">Dashboard</h1>
-      <div className="cards">
-        {items.map(i => <StatCard key={i.label} label={i.label} value={i.value} />)}
+    <div className="page">
+      <h1 className="ec-title">Dashboard</h1>
+      {error && <div className="panel">API error: {String((error as any)?.message || error)}</div>}
+      <div className="grid-auto">
+        <StatCard title="Properties" value={v('properties')} loading={loading} />
+        <StatCard title="Units"      value={v('units')}      loading={loading} />
+        <StatCard title="Leases"     value={v('leases')}     loading={loading} />
+        <StatCard title="Tenants"    value={v('tenants')}    loading={loading} />
+        <StatCard title="Owners"     value={v('owners')}     loading={loading} />
       </div>
-      <div className="panel"><span className="badge primary">Powered by RPC</span></div>
+      <span className="badge">Powered by RPC</span>
     </div>
   );
 }

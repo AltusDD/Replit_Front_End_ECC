@@ -1,15 +1,18 @@
-export default [
+export type NavItem = { label:string; path:string };
+export type NavSection = { title:string; items:NavItem[] };
+
+export const NAV: NavSection[] = [
   { title: 'PRIMARY', items: [
-    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Dashboard', path: '/dashboard' },
   ]},
   { title: 'PORTFOLIO V3', items: [
-    { label: 'Properties', href: '/portfolio/properties' },
-    { label: 'Units',      href: '/portfolio/units' },
-    { label: 'Leases',     href: '/portfolio/leases' },
-    { label: 'Tenants',    href: '/portfolio/tenants' },
-    { label: 'Owners',     href: '/portfolio/owners' },
+    { label: 'Properties', path: '/portfolio/properties' },
+    { label: 'Units',      path: '/portfolio/units'      },
+    { label: 'Leases',     path: '/portfolio/leases'     },
+    { label: 'Tenants',    path: '/portfolio/tenants'    },
+    { label: 'Owners',     path: '/portfolio/owners'     },
   ]},
   { title: 'TOOLS', items: [
-    { label: 'API Probe', href: '/tools/probe' },
+    { label: 'API Probe', path: '/tools/probe' },
   ]},
-] as const
+];

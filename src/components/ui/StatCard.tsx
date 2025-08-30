@@ -1,8 +1,8 @@
-export default function StatCard({ label, value }:{label:string; value:React.ReactNode}) {
+export default function StatCard({ title, value, loading }: { title: string; value?: number|string; loading?: boolean }) {
   return (
-    <div className="card">
-      <div className="label">{label}</div>
-      <div className="value">{value}</div>
+    <div className="panel stat">
+      <h4>{title}</h4>
+      <div className="num">{loading ? '…' : (value ?? '…')}</div>
     </div>
   );
 }

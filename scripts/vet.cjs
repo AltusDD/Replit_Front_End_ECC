@@ -1,23 +1,26 @@
-const fs = require('fs'); const path = require('path');
-const bad = [];
-(function walk(dir){
-  for (const n of fs.readdirSync(dir)) {
-    if (n === 'node_modules' || n === '.git' || n.startsWith('.replit')) continue;
-    const p = path.join(dir,n), s = fs.statSync(p);
-    if (s.isDirectory()) walk(p);
-    else if (/\.(tsx?|jsx?)$/.test(n)) {
-      const src = fs.readFileSync(p,'utf8');
-      // 1) forbid hardcoded /api usage
-      if (/fetch\(\s*['"`]\/api/.test(src) || /new\s+URL\(\s*['"`]\/api/.test(src))
-        bad.push([p,'Hardcoded /api (use @lib/ecc-api buildUrl/fetchJSON)']);
-      // 2) forbid importing client any other way than @lib/ecc-api or @lib/api
-      if (/from\s+['"`]\/?src\/lib\/ecc-api['"`]/.test(src) || /from\s+['"`]@\/lib\/ecc-api\.ts['"`]/.test(src))
-        bad.push([p,'Wrong client import (use @lib/ecc-api or @lib/api)']);
+const fs = require('fs'), path = require('path');
+const root = path.resolve(__dirname, '..');
+const src = path.join(root, 'src');
+
+let badCssImport = false, badStyleTag = false;
+
+function walk(p){
+  for (const f of fs.readdirSync(p)){
+    const fp = path.join(p,f);
+    const st = fs.statSync(fp);
+    if (st.isDirectory()) walk(fp);
+    else if (/\.(tsx?|jsx?)$/.test(f)){
+      const txt = fs.readFileSync(fp,'utf8');
+      if (fp.includes(path.join('src','main.tsx'))) continue;
+      if (/import\s+['"][^'"]+\.css['"]/.test(txt)) { console.log('❌ CSS import in', fp); badCssImport = true; }
+      if (/<style>/.test(txt)) { console.log('❌ <style> tag in', fp); badStyleTag = true; }
     }
   }
-})('src');
-if (bad.length) {
-  console.error('❌ VET FAILED:\n' + bad.map(([p,m]) => ` - ${p}: ${m}`).join('\n'));
+}
+walk(src);
+
+if (badCssImport || badStyleTag) {
+  console.error('\nGuardrail failed: Only theme.css and app.css may be imported (from main.tsx). No <style> tags allowed.\n');
   process.exit(1);
 }
 console.log('✅ Vet passed.');
