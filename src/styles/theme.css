@@ -646,3 +646,16 @@ a:hover{text-decoration:underline}
   background: rgba(245, 158, 11, 0.2);
   color: var(--warn);
 }
+
+/* === Altus Theme Safe Additions === */
+:root {
+  --altus-black: #000000;
+  --altus-panel-grey: #1F2023;
+  --altus-header-grey: #2A2A2A;
+  --altus-hover: #2F2F2F;
+  --altus-border: #333333;
+
+  --altus-status-good: #38A169;
+  --altus-status-warning: #ECC94B;
+  --altus-status-critical: #E53E3E;
+}

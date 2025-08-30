@@ -1,3 +1,12 @@
+afe Patch for SmartTable.tsx
+
+Replace the contents of your file at:
+
+src/components/ui/SmartTable.tsx
+
+
+with this:
+
 import React, { useState } from 'react';
 
 type Props = {
@@ -115,3 +124,14 @@ export default function SmartTable({ rows, loading, error, title, onRowDoubleCli
     </div>
   );
 }
+
+🧩 Integration Tips:
+
+In PropertiesPage.tsx, pass a handleRowDoubleClick callback to open the detail card:
+
+<SmartTable
+  rows={properties}
+  loading={loading}
+  error={error}
+  onRowDoubleClick={(id) => navigate(`/property/${id}`)}
+/>
