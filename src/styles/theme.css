@@ -200,6 +200,15 @@ a:hover{text-decoration:underline}
   padding-left: 12px;
 }
 
+/* Collapsed state: stack child icons vertically without indentation */
+.sidebar.collapsed .leafList {
+  margin-left: 0;
+  border-left: none;
+  padding-left: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .leaf-item {
   display: flex;
   align-items: center;
@@ -238,14 +247,19 @@ a:hover{text-decoration:underline}
 .sidebar.collapsed .lbl {
   display: none;
 }
-.sidebar.collapsed .leafList {
-  display: flex;
-  flex-direction: column;
+/* Child icons in collapsed mode: center them properly */
+.sidebar.collapsed .leaf-item {
+  padding: 8px;
+  justify-content: center;
+  margin: 2px 0;
 }
-.sidebar.collapsed .leafList .nav-icon {
-  display: inline-flex;
+
+.sidebar.collapsed .leaf-item .nav-icon {
+  margin: 0;
+  min-width: auto;
 }
-.sidebar.collapsed .leafList .lbl {
+
+.sidebar.collapsed .leaf-label {
   display: none;
 }
 
