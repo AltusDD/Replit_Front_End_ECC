@@ -1,0 +1,146 @@
+set -euo pipefail
+
+# 1) Snapshot utility — quick freezepoint you can run anytime
+mkdir -p snapshots
+cat > scripts/snapshot.cjs <<'CJS'
+const {execSync} = require('child_process');
+const fs = require('fs');
+const ts = new Date().toISOString().replace(/[:.]/g,'-');
+const out = `snapshots/ecc-${ts}.zip`;
+execSync(`zip -qr ${out} . -x "node_modules/*" "snapshots/*" ".git/*"` , {stdio:'inherit'});
+console.log('✅ Snapshot:', out);
+CJS
+node -e "const p=require('./package.json');p.scripts=p.scripts||{};p.scripts.snapshot='node scripts/snapshot.cjs';require('fs').writeFileSync('package.json',JSON.stringify(p,null,2));console.log('✅ package.json: added snapshot script');"
+
+# (optional) take a freezepoint right now
+npm run snapshot || true
+
+# 2) UI kit — Badge, StatCard, Table (token-only styling)
+mkdir -p src/components/ui
+
+cat > src/components/ui/Badge.tsx <<'TSX'
+type Tone = 'neutral'|'info'|'success'|'warn'|'danger';
+export default function Badge({children, tone='neutral'}:{children:React.ReactNode, tone?:Tone}) {
+  const style:Record<Tone,React.CSSProperties>={
+    neutral:{ borderColor:'var(--border)', color:'var(--muted)' },
+    info:{ borderColor:'color-mix(in srgb, var(--link) 40%, var(--border))', color:'var(--link)' },
+    success:{ borderColor:'color-mix(in srgb, var(--success) 40%, var(--border))', color:'var(--success)' },
+    warn:{ borderColor:'color-mix(in srgb, var(--warn) 40%, var(--border))', color:'var(--warn)' },
+    danger:{ borderColor:'color-mix(in srgb, var(--danger) 40%, var(--border))', color:'var(--danger)' },
+  };
+  return <span className="badge" style={style[tone]}>{children}</span>;
+}
+TSX
+
+cat > src/components/ui/StatCard.tsx <<'TSX'
+import Badge from './Badge';
+export default function StatCard({
+  title, value, badge, trend
+}:{ title:string; value:React.ReactNode; badge?:{tone?:'neutral'|'info'|'success'|'warn'|'danger'; text:string}; trend?:string; }){
+  return (
+    <div className="card">
+      <h6>{title}</h6>
+      <div className="n">{value ?? '—'}</div>
+      <div style={{display:'flex',gap:8,marginTop:8,alignItems:'center'}}>
+        {badge ? <Badge tone={badge.tone||'neutral'}>{badge.text}</Badge> : null}
+        {trend ? <span style={{color:'var(--muted)'}}>{trend}</span> : null}
+      </div>
+    </div>
+  );
+}
+TSX
+
+cat > src/components/ui/Table.tsx <<'TSX'
+type Col<T> = { key: keyof T | string; label: string; render?: (row:T)=>React.ReactNode; width?: number|string; };
+export default function Table<T extends Record<string,any>>({
+  rows, cols, empty='No results', cap
+}:{ rows:T[]; cols:Col<T>[]; empty?:string; cap?:string }){
+  return (
+    <div className="panel" style={{padding:12}}>
+      {cap ? <div style={{fontSize:12,color:'var(--muted)',marginBottom:8}}>{cap}</div> : null}
+      <table className="table">
+        <thead><tr>{cols.map((c,i)=><th key={i} style={{width:c.width}}>{c.label}</th>)}</tr></thead>
+        <tbody>
+          {rows.length===0 ? <tr><td>{empty}</td></tr> :
+            rows.map((r,ri)=><tr key={ri}>
+              {cols.map((c,ci)=>{
+                const val = c.render ? c.render(r) : (r[c.key as string] ?? '');
+                return <td key={ci}>{String(val)}</td>;
+              })}
+            </tr>)}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+TSX
+
+# 3) Wire Dashboard to StatCard (no RPC dependency; uses counts fallback hook)
+applypatch <<'PATCH'
+*** Begin Patch
+*** Update File: src/pages/dashboard/index.tsx
+@@
+-import { useCounts } from "@lib/useApi";
+-
+-function Stat({label, value}:{label:string, value:any}){
+-  return (
+-    <div className="card">
+-      <h6>{label}</h6>
+-      <div className="n">{value ?? "…"}</div>
+-    </div>
+-  );
+-}
++import { useCounts } from "@lib/useApi";
++import StatCard from "@/components/ui/StatCard";
+ 
+ export default function Dashboard(){
+   const {data, error} = useCounts();
+   return (
+     <>
+       <h1 className="pageTitle">Dashboard</h1>
+       {error && <div className="panel" style={{padding:12,marginBottom:12}}>API error: {String(error.message||error)}</div>}
+-      <div className="cards">
+-        <Stat label="Properties" value={data?.properties}/>
+-        <Stat label="Units" value={data?.units}/>
+-        <Stat label="Leases" value={data?.leases}/>
+-        <Stat label="Tenants" value={data?.tenants}/>
+-        <Stat label="Owners" value={data?.owners}/>
+-      </div>
+-      <div style={{marginTop:16}}><span className="kvp">Powered by RPC</span></div>
++      <div className="cards">
++        <StatCard title="Properties" value={data?.properties} />
++        <StatCard title="Units" value={data?.units} />
++        <StatCard title="Leases" value={data?.leases} />
++        <StatCard title="Tenants" value={data?.tenants} />
++        <StatCard title="Owners" value={data?.owners} />
++      </div>
++      <div style={{marginTop:16}}><span className="kvp">Counts from V3; RPC optional</span></div>
+     </>
+   );
+ }
+*** End Patch
+PATCH
+
+# 4) (Optional) add README + PATCHLOG scaffolds if missing
+[ -f README.merge.md ] || cat > README.merge.md <<'MD'
+# Empire Command Center — Frontend
+- Theme tokens: `src/styles/theme.css`
+- App globals: `src/styles/app.css`
+- Canonical nav: `src/components/layout/navConfig.ts`
+- UI kit: `src/components/ui`
+- API client: `src/lib/useApi.ts`
+- Develop: `npm run dev`
+- Snapshot current state: `npm run snapshot` (writes to `./snapshots`)
+MD
+
+[ -f PATCHLOG.md ] || cat > PATCHLOG.md <<'MD'
+# PATCHLOG
+- Added snapshot script (npm run snapshot) for frozen zips inside repo.
+- Introduced UI kit: Badge, StatCard, Table (token-only).
+- Dashboard now uses StatCard.
+- Portfolio pages left as-is for data continuity; will migrate to `Table` component next.
+MD
+
+# 5) restart
+pkill -f vite >/dev/null 2>&1 || true
+npm run dev

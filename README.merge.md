@@ -1,8 +1,11 @@
-# ECC — Genesis Refactor (Baseline)
-
-This package is a **clean, production‑ready baseline** that implements your **Genesis-Grade Refactoring Contract**.
-It runs in Replit with zero manual cleanup, provides stable V3 portfolio pages, a KPI‑first dashboard, and an API Probe.
-RPC endpoints are **optional** and never block UI.
+# Empire Command Center — Frontend
+- Theme tokens: `src/styles/theme.css`
+- App globals: `src/styles/app.css`
+- Canonical nav: `src/components/layout/navConfig.ts`
+- UI kit: `src/components/ui`
+- API client: `src/lib/useApi.ts`
+- Develop: `npm run dev`
+- Snapshot current state: `npm run snapshot` (writes to `./snapshots`)
 
 ## Quick Start (Replit)
 1) Create a new Replit from this zip, or upload into an empty project.
