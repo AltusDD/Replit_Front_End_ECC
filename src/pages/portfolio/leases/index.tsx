@@ -5,9 +5,10 @@ export default function Leases(){
   const {data, loading, error} = useCollection("leases");
   
   const columns = [
-    { key: 'tenant_name', label: 'Name' },
-    { key: 'unit_number', label: 'Unit' },
-    { key: 'rent_amount', label: 'Rent', render: (row:any) => row.rent_amount ? `$${row.rent_amount}` : '' },
+    { key: 'property_id', label: 'Property ID' },
+    { key: 'unit_id', label: 'Unit ID' },
+    { key: 'rent_cents', label: 'Rent', render: (row:any) => row.rent_cents ? `$${(row.rent_cents/100).toFixed(2)}` : '' },
+    { key: 'status', label: 'Status' },
     { key: 'updated_at', label: 'Updated', render: (row:any) => row.updated_at ? new Date(row.updated_at).toLocaleDateString() : '' }
   ];
 

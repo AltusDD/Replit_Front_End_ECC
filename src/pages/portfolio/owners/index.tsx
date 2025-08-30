@@ -5,9 +5,10 @@ export default function Owners(){
   const {data, loading, error} = useCollection("owners");
   
   const columns = [
-    { key: 'name', label: 'Name' },
-    { key: 'email', label: 'Email' },
-    { key: 'phone', label: 'Phone' },
+    { key: 'display_name', label: 'Name' },
+    { key: 'company_name', label: 'Company' },
+    { key: 'notes', label: 'Contact' },
+    { key: 'active', label: 'Active', render: (row:any) => row.active ? 'Yes' : 'No' },
     { key: 'updated_at', label: 'Updated', render: (row:any) => row.updated_at ? new Date(row.updated_at).toLocaleDateString() : '' }
   ];
 

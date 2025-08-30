@@ -5,9 +5,9 @@ export default function Tenants(){
   const {data, loading, error} = useCollection("tenants");
   
   const columns = [
-    { key: 'name', label: 'Name' },
+    { key: 'display_name', label: 'Name' },
+    { key: 'type', label: 'Type' },
     { key: 'email', label: 'Email' },
-    { key: 'phone', label: 'Phone' },
     { key: 'updated_at', label: 'Updated', render: (row:any) => row.updated_at ? new Date(row.updated_at).toLocaleDateString() : '' }
   ];
 
