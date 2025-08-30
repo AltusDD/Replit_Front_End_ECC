@@ -4,14 +4,14 @@ import { NAV } from './navConfig';
 
 function NavLink({ href, children }:{ href:string, children:React.ReactNode}){
   const [match] = useRoute(href);
-  return <Link href={href}><a className={match?'active':''}>{children}</a></Link>;
+  return <Link href={href} className={match?'active':''}>{children}</Link>;
 }
 
 export default function Sidebar(){
   return (
     <aside className="sidebar">
       <div className="brand">
-        <img alt="Empire" src="/logo.svg"/><strong>Empire Command Center</strong>
+        <img alt="Altus" src="/logo.png" style={{width:32,height:32}}/><strong>Empire Command Center</strong>
       </div>
       {NAV.map(section=>(
         <div key={section.label} className="nav">
