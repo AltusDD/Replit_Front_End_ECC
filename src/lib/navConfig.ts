@@ -6,11 +6,11 @@ const NAV: Section[] = [
   { label: "Dashboard", groups: [{ label: "Dashboard", items: [{ label: "Home", path: "/dashboard" }] }] },
 
   { label: "Portfolio", groups: [{ label: "Portfolio", items: [
-    { label: "Properties", path: "/properties" },
-    { label: "Units", path: "/units" },
-    { label: "Leases", path: "/leases" },
-    { label: "Tenants", path: "/tenants" },
-    { label: "Owners", path: "/owners" }
+    { label: "Properties", path: "/portfolio/properties" },
+    { label: "Units", path: "/portfolio/units" },
+    { label: "Leases", path: "/portfolio/leases" },
+    { label: "Tenants", path: "/portfolio/tenants" },
+    { label: "Owners", path: "/portfolio/owners" }
   ] }] },
 
   { label: "Cards", groups: [{ label: "Cards", items: [
