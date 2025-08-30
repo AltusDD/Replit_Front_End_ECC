@@ -1,0 +1,90 @@
+Immediate Fix and Re-alignment Instructions
+
+Here’s a Replit-ready patch to revise your theme and table styling to match the approved Altus visual identity:
+
+set -euo pipefail
+
+# Override theme.tokens to use true Altus black and approved grey
+cat > src/styles/theme.css << 'CSS'
+:root {
+  --color-background: #000000;             /* Altus Black */
+  --color-panel: #1F2023;                  /* Approved light grey for table backgrounds */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B0B0B0;
+  --color-accent-primary: #FFD700;
+  --color-status-good: #38A169;
+  --color-status-warning: #ECC94B;
+  --color-status-critical: #E53E3E;
+
+  --font-family: 'Inter', sans-serif;
+
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+
+  --font-size-base: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+
+  --border-radius: 6px;
+}
+CSS
+
+# Update Table.css to use panel background and remove brown hue
+cat > src/components/Table.css << 'CSS'
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--color-panel);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+}
+
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+}
+
+.custom-table thead {
+  background-color: #2a2a2a;
+  font-weight: bold;
+  border-bottom: 2px solid var(--color-accent-primary);
+}
+
+.custom-table th,
+.custom-table td {
+  padding: var(--spacing-sm);
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+
+.custom-table tr:hover {
+  background-color: #3a3a3a;
+  cursor: pointer;
+}
+
+.custom-table tr:nth-child(even) {
+  background-color: #2f2f2f;
+}
+CSS
+
+# Restart dev server to apply updates
+pkill -f vite >/dev/null 2>&1 || true
+npm run dev
+
+Why This Fix Works:
+Change	Purpose
+--color-background: #000000	Applies true Altus black as the main canvas
+--color-panel: #1F2023	Ensures table wrappers use the approved grey, not brown
+Clean table styling colors	Removes unintended brown hue and visual drift
+What to Check Immediately After Patch:
+
+Confirm the overall page background is pure black.
+
+Table backgrounds should now be the approved grey tone.
+
+No brown or muddy colors.
+
+Everything else functions normally.
