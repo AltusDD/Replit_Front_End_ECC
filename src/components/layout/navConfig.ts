@@ -1,6 +1,6 @@
 export type NavLeaf = { type:"leaf"; label:string; path:string };
 export type NavParent = { type:"parent"; label:string; items:(NavLeaf)[] };
-export type NavSection = { label:string; items:(NavParent | NavLeaf)[] };
+export type NavSection = { label:string; items:(NavParent)[] };
 export const NAV: NavSection[] = [
   {
     "label": "Primary",

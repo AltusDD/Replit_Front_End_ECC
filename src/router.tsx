@@ -1,6 +1,6 @@
 import React from 'react';
 import { Route, Switch } from 'wouter';
-import dashboard from './pages/dashboard/index';
+import dashboard from './pages/dashboard';
 import portfolio_properties from './pages/portfolio/properties';
 import portfolio_units from './pages/portfolio/units';
 import portfolio_leases from './pages/portfolio/leases';
