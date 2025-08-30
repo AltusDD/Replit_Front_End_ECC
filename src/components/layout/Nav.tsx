@@ -1,155 +1,145 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { 
-  Home, Building2, Users, FileText, UserCheck, Crown,
-  Inbox, CheckSquare, TrendingUp, AlertTriangle, Zap,
-  Calculator, CreditCard, Landmark, Building, FileBarChart,
-  Receipt, PieChart, DollarSign, Archive, ShieldCheck,
-  Hammer, RotateCcw, HardHat, Wrench,
-  FileCheck, Search, Shield, CreditCard as Insurance,
-  Network, UserPlus, BarChart3,
-  ShoppingCart, Megaphone,
-  Settings, UserCog,
-  Download, Upload, Copy, Archive as ArchiveIcon, FileSearch,
-  Eye, Banknote, FileBarChart as Statements,
-  GitBranch, Calculator as QuickBooks, Cloud, Webhook,
-  Cpu, Pin, PinOff
+  Home, Building2, Inbox, Briefcase, TrendingUp, Settings, Database, Eye, Network, Cpu,
+  Calculator, FileText, Hammer, Shield, Archive,
+  Pin, PinOff, ChevronDown, ChevronRight
 } from "lucide-react";
 import { NAV, Section, Group, Leaf } from "./navConfig";
 
-// Icon mapping for navigation labels
-const getIcon = (label: string) => {
+// Icon mapping for Sections and Groups only
+const getSectionIcon = (label: string) => {
   const iconMap: Record<string, any> = {
-    // Primary
-    'Dashboard': Home,
-    
-    // Portfolio V3
-    'Properties': Building2,
-    'Units': Building,
-    'Leases': FileText,
-    'Tenants': Users,
-    'Owners': Crown,
-    
-    // Cards
-    'Inbox': Inbox,
-    'Tasks': CheckSquare,
-    'Opportunities': TrendingUp,
-    'Anomalies': AlertTriangle,
-    'Next Best Action': Zap,
-    
-    // Operations - Accounting
-    'AR': Calculator,
-    'AP': CreditCard,
-    'GL': Landmark,
-    'Banking': Building,
-    'Close': FileBarChart,
-    'Reporting': Receipt,
-    'Budgets': PieChart,
-    'Taxes': DollarSign,
-    'Vendors': Archive,
-    'Receipts': Receipt,
-    'Allocations': ShieldCheck,
-    'Audit Trail': Archive,
-    
-    // Operations - Leasing
-    'Applications': FileText,
-    'Screening': Search,
-    'Renewals': RotateCcw,
-    'Move-in/Move-out': Users,
-    'Delinquencies': AlertTriangle,
-    
-    // Operations - Maintenance
-    'Work Orders': Hammer,
-    'Turns': RotateCcw,
-    'CapEx': HardHat,
-    
-    // Operations - Compliance
-    'Docs': FileCheck,
-    'Inspections': Search,
-    'Insurance': Shield,
-    'Licenses': ShieldCheck,
-    
-    // Operations - Vendors
-    'Directory': Network,
-    'Onboarding': UserPlus,
-    'Scorecards': BarChart3,
-    
-    // Growth
-    'Acquisitions': ShoppingCart,
-    'Marketing': Megaphone,
-    
-    // System
-    'Settings': Settings,
-    'Users & Roles': UserCog,
-    
-    // Data Management
-    'Imports': Download,
-    'Exports': Upload,
-    'Dedupe': Copy,
-    'Archives': ArchiveIcon,
-    'Audit Logs': FileSearch,
-    
-    // Investor Portal
-    'Overview': Eye,
-    'Distributions': Banknote,
-    'Statements': Statements,
-    
-    // Integrations
-    'DoorLoop': GitBranch,
-    'QuickBooks': QuickBooks,
-    'Azure': Cloud,
-    'Webhooks': Webhook,
-    
-    // Tools
-    'API Probe': Cpu
+    'Primary': Home,
+    'Portfolio V3': Building2,
+    'Cards': Inbox,
+    'Operations': Briefcase,
+    'Growth': TrendingUp,
+    'System': Settings,
+    'Data Management': Database,
+    'Investor Portal': Eye,
+    'Integrations': Network,
+    'Tools': Cpu
   };
   
-  const IconComponent = iconMap[label] || FileText;
+  const IconComponent = iconMap[label] || Briefcase;
   return <IconComponent className="nav-icon" />;
 };
 
-function LeafLink({leaf, collapsed}:{leaf:Leaf, collapsed:boolean}) {
+const getGroupIcon = (label: string) => {
+  const iconMap: Record<string, any> = {
+    'Accounting': Calculator,
+    'Leasing': FileText,
+    'Maintenance': Hammer,
+    'Compliance': Shield,
+    'Vendors': Archive
+  };
+  
+  const IconComponent = iconMap[label] || Briefcase;
+  return <IconComponent className="nav-icon" />;
+};
+
+function LeafLink({leaf}: {leaf: Leaf}) {
   const [loc] = useLocation();
   const active = loc === leaf.path;
   return (
     <li className="leaf">
       <Link href={leaf.path} className={active ? "active" : ""}>
-        {getIcon(leaf.label)}
         <span className="lbl">{leaf.label}</span>
       </Link>
     </li>
   );
 }
 
-function RenderItem({item, collapsed}: {item: Leaf | Group, collapsed: boolean}) {
-  if ('path' in item) return <LeafLink leaf={item} collapsed={collapsed} />;
+function GroupItem({
+  group, 
+  sectionId, 
+  openGroups, 
+  toggleGroup, 
+  collapsed
+}: {
+  group: Group;
+  sectionId: string;
+  openGroups: Record<string, string | null>;
+  toggleGroup: (sectionId: string, groupLabel: string) => void;
+  collapsed: boolean;
+}) {
+  const groupId = `${sectionId}-${group.label}`;
+  const isOpen = openGroups[sectionId] === group.label;
+  
   return (
     <li className="group">
-      <div className="gH">{item.label}</div>
-      <ul className="nav">
-        {item.children.map((c) => <LeafLink key={c.path} leaf={c} collapsed={collapsed} />)}
-      </ul>
+      <button 
+        className="group-toggle" 
+        onClick={() => toggleGroup(sectionId, group.label)}
+      >
+        {getGroupIcon(group.label)}
+        <span className="lbl">{group.label}</span>
+        {!collapsed && (
+          <span className="toggle-icon">
+            {isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          </span>
+        )}
+      </button>
+      
+      {isOpen && (
+        <ul className="group-children">
+          {group.children.map((child) => (
+            <LeafLink key={child.path} leaf={child} />
+          ))}
+        </ul>
+      )}
     </li>
   );
 }
 
-function SectionBlock({sec, collapsed}:{sec:Section, collapsed:boolean}) {
+function SectionBlock({
+  sec, 
+  collapsed, 
+  openGroups, 
+  toggleGroup
+}: {
+  sec: Section;
+  collapsed: boolean;
+  openGroups: Record<string, string | null>;
+  toggleGroup: (sectionId: string, groupLabel: string) => void;
+}) {
+  const sectionId = sec.label.replace(/\s+/g, '-').toLowerCase();
+  
   return (
-    <div className="navSec">
-      <div className="secH">{sec.label}</div>
-      <ul className="nav">
-        {sec.items.map((it, i) => 
-          <div key={i+(('path'in it)?it.path:it.label)}>
-            <RenderItem item={it} collapsed={collapsed} />
-          </div>
-        )}
+    <div className="nav-section">
+      <div className="section-header">
+        {getSectionIcon(sec.label)}
+        <span className="lbl">{sec.label}</span>
+      </div>
+      
+      <ul className="section-items">
+        {sec.items.map((item, i) => {
+          if ('path' in item) {
+            // Direct leaf item
+            return <LeafLink key={item.path} leaf={item} />;
+          } else {
+            // Group item
+            return (
+              <GroupItem
+                key={item.label}
+                group={item}
+                sectionId={sectionId}
+                openGroups={openGroups}
+                toggleGroup={toggleGroup}
+                collapsed={collapsed}
+              />
+            );
+          }
+        })}
       </ul>
     </div>
   );
 }
 
-export default function Nav(){
+export default function Nav() {
   const [pinned, setPinned] = useState(true);
+  const [openGroups, setOpenGroups] = useState<Record<string, string | null>>({});
   
   useEffect(() => {
     const saved = localStorage.getItem('ecc.sidebarPinned');
@@ -168,6 +158,13 @@ export default function Nav(){
       detail: { pinned: newPinned } 
     }));
   };
+  
+  const toggleGroup = (sectionId: string, groupLabel: string) => {
+    setOpenGroups(prev => ({
+      ...prev,
+      [sectionId]: prev[sectionId] === groupLabel ? null : groupLabel
+    }));
+  };
 
   return (
     <aside className={`sidebar ${!pinned ? 'collapsed' : ''}`}>
@@ -180,9 +177,17 @@ export default function Nav(){
         <div className="title">Empire Command Center</div>
       </div>
       
-      {NAV.map((sec, i) => 
-        <SectionBlock key={sec.label+i} sec={sec} collapsed={!pinned} />
-      )}
+      <div className="nav-content">
+        {NAV.map((sec) => (
+          <SectionBlock
+            key={sec.label}
+            sec={sec}
+            collapsed={!pinned}
+            openGroups={openGroups}
+            toggleGroup={toggleGroup}
+          />
+        ))}
+      </div>
     </aside>
   );
 }
