@@ -21,37 +21,119 @@ import {
   BadgeCheck,
   LineChart,
   ClipboardList,
+  Calculator,
+  DollarSign,
+  Receipt,
+  Banknote,
+  PieChart,
+  FileBarChart,
+  TrendingUp,
+  Search,
+  RotateCcw,
+  AlertTriangle,
+  HardHat,
+  Archive,
+  Network,
+  UserPlus,
+  Download,
+  Upload,
+  Copy,
+  Eye,
+  GitBranch,
+  Cloud,
+  Webhook,
+  Cpu,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 import { NAV, Section, Group, Leaf } from "./navConfig";
 
-const iconFor = (label: string) => {
+const getGroupIcon = (label: string) => {
   const k = label.toLowerCase();
   if (k.includes("dashboard")) return Home;
-  if (k.includes("portfolio")) return Building2;
-  if (k.includes("units") || k.includes("allocations")) return Layers;
-  if (k.includes("lease")) return KeyRound;
-  if (k.includes("tenants")) return Users;
-  if (k.includes("owner") || k.includes("vendors")) return User;
-  if (k.includes("compliance")) return ShieldCheck;
-  if (k.includes("maintenance")) return Wrench;
-  if (k.includes("growth") || k.includes("marketing")) return BarChart3;
-  if (k.includes("settings") || k.includes("system")) return Settings;
-  if (k.includes("data")) return Database;
-  if (k.includes("integration") || k.includes("webhook")) return Plug;
-  if (k.includes("tools") || k.includes("api")) return Hammer;
-  if (k.includes("cards") || k.includes("inbox") || k.includes("tasks")) return ActivitySquare;
-  if (k.includes("screening") || k.includes("applications")) return ClipboardList;
-  if (k.includes("insurance") || k.includes("licenses")) return BadgeCheck;
+  if (k.includes("asset")) return Building2;
+  if (k.includes("workflow")) return ActivitySquare;
+  if (k.includes("operation") && k.includes("accounting")) return Calculator;
+  if (k.includes("process")) return KeyRound;
+  if (k.includes("operation") && k.includes("maintenance")) return Wrench;
+  if (k.includes("legal")) return ShieldCheck;
+  if (k.includes("management")) return Users;
+  if (k.includes("pipeline")) return TrendingUp;
+  if (k.includes("admin")) return Settings;
+  if (k.includes("management") && k.includes("data")) return Database;
+  if (k.includes("portal")) return Eye;
+  if (k.includes("connection")) return Plug;
+  if (k.includes("system")) return Cpu;
   return FolderTree;
+};
+
+const getLeafIcon = (label: string) => {
+  const k = label.toLowerCase();
+  if (k.includes("dashboard")) return Home;
+  if (k.includes("properties")) return Building2;
+  if (k.includes("units")) return Layers;
+  if (k.includes("leases")) return KeyRound;
+  if (k.includes("tenants")) return Users;
+  if (k.includes("owners")) return User;
+  if (k.includes("inbox")) return Mail;
+  if (k.includes("tasks")) return ClipboardList;
+  if (k.includes("opportunities")) return TrendingUp;
+  if (k.includes("anomalies")) return AlertTriangle;
+  if (k.includes("next best")) return ActivitySquare;
+  if (k.includes("ar")) return Calculator;
+  if (k.includes("ap")) return Receipt;
+  if (k.includes("gl")) return FileBarChart;
+  if (k.includes("banking")) return Banknote;
+  if (k.includes("close")) return Archive;
+  if (k.includes("reporting")) return LineChart;
+  if (k.includes("budgets")) return PieChart;
+  if (k.includes("taxes")) return DollarSign;
+  if (k.includes("vendors")) return Users;
+  if (k.includes("receipts")) return Receipt;
+  if (k.includes("allocations")) return Layers;
+  if (k.includes("audit")) return Search;
+  if (k.includes("applications")) return FileText;
+  if (k.includes("screening")) return Search;
+  if (k.includes("renewals")) return RotateCcw;
+  if (k.includes("move")) return Users;
+  if (k.includes("delinquencies")) return AlertTriangle;
+  if (k.includes("work orders")) return Wrench;
+  if (k.includes("turns")) return RotateCcw;
+  if (k.includes("capex")) return HardHat;
+  if (k.includes("docs")) return FileText;
+  if (k.includes("inspections")) return Search;
+  if (k.includes("insurance")) return ShieldCheck;
+  if (k.includes("licenses")) return BadgeCheck;
+  if (k.includes("directory")) return Network;
+  if (k.includes("onboarding")) return UserPlus;
+  if (k.includes("scorecards")) return BarChart3;
+  if (k.includes("acquisitions")) return Building2;
+  if (k.includes("marketing")) return TrendingUp;
+  if (k.includes("settings")) return Settings;
+  if (k.includes("users")) return Users;
+  if (k.includes("imports")) return Download;
+  if (k.includes("exports")) return Upload;
+  if (k.includes("dedupe")) return Copy;
+  if (k.includes("archives")) return Archive;
+  if (k.includes("audit logs")) return FileBarChart;
+  if (k.includes("overview")) return Eye;
+  if (k.includes("distributions")) return Banknote;
+  if (k.includes("statements")) return FileBarChart;
+  if (k.includes("doorloop")) return GitBranch;
+  if (k.includes("quickbooks")) return Calculator;
+  if (k.includes("azure")) return Cloud;
+  if (k.includes("webhooks")) return Webhook;
+  if (k.includes("api probe")) return Cpu;
+  return FileText;
 };
 
 function LeafLink({ leaf }: { leaf: Leaf }) {
   const [loc] = useLocation();
   const active = loc === leaf.path;
-  const Icon = iconFor(leaf.label);
+  const Icon = getLeafIcon(leaf.label);
   return (
     <li className={`leaf ${active ? "active" : ""}`}>
-      <Link href={leaf.path} title={leaf.label}>
+      <Link href={leaf.path} title={leaf.label} className={active ? "active" : ""}>
         <Icon size={18} color="#F7C948" />
         <span className="lbl">{leaf.label}</span>
       </Link>
@@ -60,18 +142,25 @@ function LeafLink({ leaf }: { leaf: Leaf }) {
 }
 
 function GroupBlock({ grp }: { grp: Group }) {
-  const Icon = iconFor(grp.label);
+  const [open, setOpen] = useState(false);
+  const Icon = getGroupIcon(grp.label);
+  
   return (
     <div className="group">
-      <button className="groupBtn">
+      <button className="groupBtn" onClick={() => setOpen(!open)}>
         <Icon size={18} color="#F7C948" />
         <span className="lbl">{grp.label}</span>
+        <span className="toggle-icon">
+          {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        </span>
       </button>
-      <ul className="leafList">
-        {grp.items.map((leaf, i) => (
-          <LeafLink key={leaf.label + i} leaf={leaf} />
-        ))}
-      </ul>
+      {open && (
+        <ul className="leafList">
+          {grp.items.map((leaf, i) => (
+            <LeafLink key={leaf.label + i} leaf={leaf} />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -96,10 +185,8 @@ export default function Nav() {
 
   useEffect(() => {
     localStorage.setItem("ecc.sidebarPinned", pinned ? "1" : "0");
-    const layout = document.querySelector(".layout");
-    const sidebar = document.querySelector(".sidebar");
-    layout?.classList.toggle("collapsed", !pinned);
-    sidebar?.classList.toggle("collapsed", !pinned);
+    document.querySelector(".layout")?.classList.toggle("collapsed", !pinned);
+    document.querySelector(".sidebar")?.classList.toggle("collapsed", !pinned);
   }, [pinned]);
 
   return (
@@ -111,7 +198,6 @@ export default function Nav() {
       </div>
       <div className="brand">
         <img src="/logo.png" className="brandLogo" alt="Altus Realty Group" />
-        <div className="title">Empire Command Center</div>
       </div>
       {NAV.map((s, i) => (
         <SectionBlock key={s.label + i} sec={s} />

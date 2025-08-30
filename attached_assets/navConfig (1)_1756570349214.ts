@@ -156,13 +156,3 @@ export const NAV: Section[] = [
     ]
   }
 ];
-
-export function flattenLeaves() {
-  const leaves: Leaf[] = [];
-  for (const sec of NAV) {
-    for (const grp of sec.groups) {
-      grp.items.forEach(leaf => leaves.push(leaf));
-    }
-  }
-  return leaves;
-}
