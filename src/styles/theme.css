@@ -157,6 +157,26 @@ a:hover{text-decoration:underline}
   white-space: nowrap;
 }
 
+/* Active Page Highlighting */
+.leaf.active, .leaf.active a {
+  border-left: 2px solid #F7C948;
+  background: rgba(247, 201, 72, 0.08);
+  font-weight: 600;
+}
+
+/* Brand Logo Styling */
+.brandLogo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.sidebar:not(.collapsed) .brandLogo {
+  width: 36px;
+  height: auto;
+}
+
 /* Collapsed States */
 .sidebar.collapsed {
   width: 64px;
@@ -173,6 +193,11 @@ a:hover{text-decoration:underline}
 .sidebar.collapsed .groupBtn .lbl,
 .sidebar.collapsed .title {
   display: none;
+}
+
+.sidebar.collapsed .brandLogo {
+  width: 28px;
+  height: 28px;
 }
 
 .sidebar.collapsed:hover .leaf .lbl,
