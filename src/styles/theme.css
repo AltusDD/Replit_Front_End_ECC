@@ -64,12 +64,12 @@ a:hover{text-decoration:underline}
 
 /* Sidebar Layout */
 .layout.collapsed {
-  grid-template-columns: 64px 1fr;
+  grid-template-columns: var(--collapsed-width) 1fr;
 }
 
 /* Responsive Auto-Collapse */
 .layout.collapsed-partial {
-  grid-template-columns: 64px 1fr;
+  grid-template-columns: var(--collapsed-width) 1fr;
 }
 
 .layout.collapsed-full {
@@ -82,6 +82,12 @@ a:hover{text-decoration:underline}
   z-index: 1000;
 }
 
+/* CSS Variables for Dynamic Sizing */
+:root {
+  --sidebar-icon-size: 18px;
+  --collapsed-width: 64px;
+}
+
 .sidebar {
   background: var(--panel-3);
   border-right: 1px solid var(--border);
@@ -89,25 +95,40 @@ a:hover{text-decoration:underline}
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow: auto;
+  overflow: hidden;
   transition: width 0.2s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar.collapsed {
   padding: 12px 6px;
 }
 
-/* Pin Button */
+/* Sidebar Content Layout */
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.nav-sections {
+  padding-bottom: 20px;
+}
+
+/* Pin Button - Bottom Positioned */
 .pinRow {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 8px;
-  padding-right: 6px;
+  padding: 12px 6px 8px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+  background: var(--panel-3);
 }
 
 .sidebar.collapsed .pinRow {
   justify-content: center;
-  padding-right: 0;
+  padding: 12px 0 8px;
 }
 
 .pinBtn {
@@ -125,20 +146,28 @@ a:hover{text-decoration:underline}
   color: var(--text);
 }
 
-/* Brand Logo */
-.brandLogo {
-  height: 40px;
-  margin: 0 auto 20px;
-  display: block;
+/* Brand Logo - Responsive Handling */
+.brand {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
 }
 
-.sidebar .brand .title {
-  display: none;
+.brandLogo {
+  height: 40px;
+  width: auto;
+  max-width: 160px;
+  display: block;
+  margin: 0 auto;
+  transition: all 0.3s ease;
+  object-fit: contain;
 }
 
 .sidebar.collapsed .brandLogo {
   height: 36px;
-  margin: 0 auto 12px;
+  max-width: var(--sidebar-icon-size);
+  margin: 0 auto;
 }
 
 /* Section Styles */

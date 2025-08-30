@@ -179,6 +179,21 @@ export default function Nav() {
   const [pinned, setPinned] = useState(true);
   const [collapsedLevel, setCollapsedLevel] = useState<"none" | "partial" | "full">("none");
   
+  // Dynamic icon sizing for consistent layout
+  useEffect(() => {
+    const updateIconSize = () => {
+      const firstIcon = document.querySelector(".sidebar svg");
+      if (firstIcon) {
+        const iconWidth = (firstIcon as HTMLElement).offsetWidth;
+        document.documentElement.style.setProperty("--sidebar-icon-size", `${iconWidth}px`);
+        document.documentElement.style.setProperty("--collapsed-width", `${iconWidth + 32}px`);
+      }
+    };
+    updateIconSize();
+    window.addEventListener('resize', updateIconSize);
+    return () => window.removeEventListener('resize', updateIconSize);
+  }, [pinned]);
+  
   useEffect(() => {
     const checkCollapse = () => {
       const width = window.innerWidth;
@@ -214,17 +229,21 @@ export default function Nav() {
 
   return (
     <aside className="sidebar">
+      <div className="sidebar-content">
+        <div className="brand">
+          <img src="/logo.png" className="brandLogo" alt="Altus Realty Group" />
+        </div>
+        <nav className="nav-sections">
+          {NAV.map((s, i) => (
+            <SectionBlock key={s.label + i} sec={s} />
+          ))}
+        </nav>
+      </div>
       <div className="pinRow">
         <button className="pinBtn" onClick={() => setPinned((v) => !v)}>
           {pinned ? "Pin ▣" : "Unpin ◻︎"}
         </button>
       </div>
-      <div className="brand">
-        <img src="/logo.png" className="brandLogo" alt="Altus Realty Group" />
-      </div>
-      {NAV.map((s, i) => (
-        <SectionBlock key={s.label + i} sec={s} />
-      ))}
     </aside>
   );
 }
