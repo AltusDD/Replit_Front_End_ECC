@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useRoute } from "wouter";
 import {
   Home,
   Building2,
@@ -128,12 +128,11 @@ const getLeafIcon = (label: string) => {
 };
 
 function LeafLink({ leaf }: { leaf: Leaf }) {
-  const [loc] = useLocation();
-  const active = loc === leaf.path;
+  const [isActive] = useRoute(leaf.path);
   const Icon = getLeafIcon(leaf.label);
   return (
-    <li className={`leaf ${active ? "active" : ""}`}>
-      <Link href={leaf.path} title={leaf.label} className={active ? "active" : ""}>
+    <li className={`leaf ${isActive ? "active" : ""}`}>
+      <Link href={leaf.path} title={leaf.label} className={isActive ? "active" : ""}>
         <Icon size={18} color="#F7C948" />
         <span className="lbl">{leaf.label}</span>
       </Link>
@@ -182,11 +181,11 @@ export default function Nav() {
   // Dynamic icon sizing for consistent layout
   useEffect(() => {
     const updateIconSize = () => {
-      const firstIcon = document.querySelector(".sidebar svg");
+      const firstIcon = document.querySelector(".leaf svg");
       if (firstIcon) {
         const iconWidth = (firstIcon as HTMLElement).offsetWidth;
         document.documentElement.style.setProperty("--sidebar-icon-size", `${iconWidth}px`);
-        document.documentElement.style.setProperty("--collapsed-width", `${iconWidth + 32}px`);
+        document.documentElement.style.setProperty("--collapsed-width", `${iconWidth + 16}px`);
       }
     };
     updateIconSize();

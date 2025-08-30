@@ -118,17 +118,12 @@ a:hover{text-decoration:underline}
 
 /* Pin Button - Bottom Positioned */
 .pinRow {
+  position: absolute;
+  bottom: 16px;
+  width: 100%;
   display: flex;
-  justify-content: flex-end;
-  padding: 12px 6px 8px;
-  border-top: 1px solid var(--border);
-  margin-top: auto;
-  background: var(--panel-3);
-}
-
-.sidebar.collapsed .pinRow {
   justify-content: center;
-  padding: 12px 0 8px;
+  padding: 0 6px;
 }
 
 .pinBtn {
@@ -166,7 +161,7 @@ a:hover{text-decoration:underline}
 
 .sidebar.collapsed .brandLogo {
   height: 36px;
-  max-width: var(--sidebar-icon-size);
+  max-width: 60px;
   margin: 0 auto;
 }
 

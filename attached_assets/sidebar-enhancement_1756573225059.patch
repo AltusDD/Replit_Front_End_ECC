@@ -1,0 +1,54 @@
+*** Begin Patch
+*** Update File: src/components/layout/Nav.tsx
+@@
++import { useRoute } from "wouter";
++useEffect(() => {
++  const icon = document.querySelector(".leaf svg");
++  if (icon) {
++    const w = (icon as HTMLElement).offsetWidth;
++    document.documentElement.style.setProperty("--collapsed-width", `${w + 16}px`);
++  }
++}, []);
+*** Update File: src/components/layout/LeafLink.tsx
+@@
+-import { Link, useLocation } from "wouter";
++import { Link, useRoute } from "wouter";
+@@ function LeafLink({leaf}:{leaf:Leaf}){
+-  const [loc] = useLocation();
+-  const active = loc === leaf.path;
+-  return <li className="leaf"><Link href={leaf.path} className={active?"active":""}>{leaf.label}</Link></li>;
++  const [isActive] = useRoute(leaf.path);
++  return (
++    <li className={\`leaf \${isActive ? "active" : ""}\`}>
++      <Link href={leaf.path}>
++        <Icon color="#F7C948" size={18}/>
++        <span className="lbl">{leaf.label}</span>
++      </Link>
++    </li>
++  );
+*** Update File: src/styles/theme.css
+@@
+ .sidebar.collapsed {
+-  width: 64px;
++  width: var(--collapsed-width);
+ }
+
+ .brandLogo {
+   max-width: 160px;
+ }
+ .sidebar.collapsed .brandLogo {
+   max-width: 60px;
+ }
+
+ .pinRow {
+   position: absolute;
+   bottom: 16px;
+   width: 100%;
+   display: flex;
+   justify-content: center;
+ }
+ .pinBtn {
+   padding: 4px 6px;
+   font-size: 12px;
+ }
+*** End Patch
