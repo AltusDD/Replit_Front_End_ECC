@@ -38,111 +38,82 @@ const iconFor = (label: string) => {
   return Folder;
 };
 
-export default function Sidebar() {
-  const [isCollapsed, setCollapsed] = useState(true); // Default to collapsed (icons only)
-  const [hoverExpand, setHoverExpand] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+function SectionBlock({ sec }: { sec: Section }) {
+  return (
+    <div className="section">
+      {sec.groups.map((g, i) => (
+        <GroupBlock key={g.label + i} grp={g} />
+      ))}
+    </div>
+  );
+}
+
+function GroupBlock({ grp }: { grp: Group }) {
+  const [open, setOpen] = useState(false);
+  const Icon = iconFor(grp.label);
+  
+  return (
+    <div className="group">
+      <button className="groupBtn" onClick={() => setOpen(!open)}>
+        <Icon size={18} color="#F7C948" />
+        <span className="lbl">{grp.label}</span>
+        <span className="toggle-icon">
+          {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        </span>
+      </button>
+      {open && (
+        <ul className="leafList">
+          {grp.items.map((leaf, i) => (
+            <LeafLink key={leaf.label + i} leaf={leaf} />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function LeafLink({ leaf }: { leaf: Leaf }) {
   const [loc] = useLocation();
+  const isActive = loc === leaf.path;
+  const Icon = iconFor(leaf.label);
+  return (
+    <li className={`leaf ${isActive ? "active" : ""}`}>
+      <Link href={leaf.path} className={isActive ? "active" : ""}>
+        <Icon size={18} color="#F7C948" />
+        <span className="lbl">{leaf.label}</span>
+      </Link>
+    </li>
+  );
+}
 
-  // Show labels only when pinned open OR hovering
-  const showLabels = !isCollapsed || hoverExpand;
-  const collapsed = !showLabels;
+export default function Nav() {
+  const [pinned, setPinned] = useState(true);
 
-  // Ensure parent stays open if user selected a child
   useEffect(() => {
-    const activeItem = NAV
-      .flatMap(sec => sec.groups)
-      .find(grp => grp.items.some(item => item.path === loc));
-    if (activeItem) {
-      setOpenGroups(prev => new Set([...prev, activeItem.label]));
-    }
-  }, [loc]);
+    const raw = localStorage.getItem("ecc.sidebarPinned");
+    if (raw != null) setPinned(raw === "1");
+  }, []);
 
   useEffect(() => {
-    const icon = document.querySelector(".nav-icon svg");
-    if (icon instanceof HTMLElement) {
-      const iconW = icon.offsetWidth + 24;
-      document.documentElement.style.setProperty("--collapsed-width", `${iconW}px`);
-      document.documentElement.style.setProperty("--collapsed-logo", `${iconW * 0.8}px`);
-    }
-  }, [showLabels]);
-
-  const toggleGroup = (groupLabel: string) => {
-    const newOpenGroups = new Set(openGroups);
-    if (newOpenGroups.has(groupLabel)) {
-      newOpenGroups.delete(groupLabel);
-    } else {
-      newOpenGroups.add(groupLabel);
-    }
-    setOpenGroups(newOpenGroups);
-  };
+    localStorage.setItem("ecc.sidebarPinned", pinned ? "1" : "0");
+    const layout = document.querySelector(".layout");
+    const sidebar = document.querySelector(".sidebar");
+    layout?.classList.toggle("collapsed", !pinned);
+    sidebar?.classList.toggle("collapsed", !pinned);
+  }, [pinned]);
 
   return (
-    <aside
-      className={`sidebar ${collapsed ? "collapsed" : ""}`}
-      onMouseEnter={() => setHoverExpand(true)}
-      onMouseLeave={() => setHoverExpand(false)}
-    >
-      <div className="sidebar-logo">
-        <img src="/logo.png" alt="Logo" />
-      </div>
-      <nav className="nav">
-        {NAV.map((section: Section) => (
-          <div key={section.label} className="nav-section">
-{showLabels && <div className="nav-title">{section.label}</div>}
-            {section.groups.map((group: Group) => (
-              <div key={group.label} className="group">
-                <button
-                  className="groupBtn"
-                  onClick={() => toggleGroup(group.label)}
-                >
-                  <div className="nav-icon">
-                    {(() => {
-                      const Icon = iconFor(group.label);
-                      return <Icon size={18} color="#F7C948" />;
-                    })()}
-                  </div>
-{showLabels && (
-                    <>
-                      <span className="lbl">{group.label}</span>
-                      <div className="expand-icon">
-                        {openGroups.has(group.label) ? 
-                          <ChevronDown size={14} /> : 
-                          <ChevronRight size={14} />
-                        }
-                      </div>
-                    </>
-                  )}
-                </button>
-                {openGroups.has(group.label) && (
-                  <div className="leafList">
-                    {group.items.map((leaf: Leaf) => (
-                      <Link
-                        key={leaf.label}
-                        href={leaf.path}
-                        className={`leaf-item ${loc === leaf.path ? "active" : ""}`}
-                      >
-                        <div className="nav-icon">
-                          {(() => {
-                            const Icon = iconFor(leaf.label);
-                            return <Icon size={16} color="#F7C948" />;
-                          })()}
-                        </div>
-{showLabels && <span className="leaf-label">{leaf.label}</span>}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ))}
-      </nav>
-      <div className="sidebar-footer">
-        <button className="pinBtn" onClick={() => setCollapsed(!isCollapsed)}>
-          {isCollapsed ? "Unpin" : "Pin"}
+    <aside className="sidebar">
+      <div className="pinRow">
+        <button className="pinBtn" onClick={() => setPinned((v) => !v)}>
+          {pinned ? "Pin ▣" : "Unpin ◻︎"}
         </button>
       </div>
+      <div className="brand">
+        <img src="/logo.png" className="logo" alt="Altus Realty" />
+        <div className="title">Empire Command Center</div>
+      </div>
+      {NAV.map((s, i) => <SectionBlock key={s.label + i} sec={s} />)}
     </aside>
   );
 }

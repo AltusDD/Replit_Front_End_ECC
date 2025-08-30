@@ -1,16 +1,14 @@
 /* Navigation-specific styles */
 
 .sidebar {
-  width: 280px;
-  background: var(--panel);
-  border-right: 1px solid var(--border);
-  padding: 16px;
-  overflow-y: auto;
-  height: 100vh;
-  position: fixed;
-  left: 0;
+  background: var(--color-panel);
+  border-right: 1px solid #333;
+  padding: 16px 10px;
+  position: sticky;
   top: 0;
-  z-index: 100;
+  height: 100vh;
+  overflow: auto;
+  transition: width 0.2s ease;
 }
 
 .brand {
@@ -23,24 +21,32 @@
 }
 
 .logo {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, var(--gold), #e6b800);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--bg);
-  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.sidebar:not(.collapsed) .logo {
+  width: 36px;
+  height: auto;
 }
 
 .title {
   font-size: 18px;
   font-weight: 600;
-  color: var(--text);
+  color: var(--color-text-primary);
   line-height: 1.3;
+}
+
+.sidebar.collapsed .title,
+.sidebar.collapsed .lbl {
+  display: none;
+}
+
+.sidebar.collapsed:hover .title,
+.sidebar.collapsed:hover .lbl {
+  display: inline;
 }
 
 .navSec {
@@ -138,12 +144,83 @@
   color: var(--bg);
 }
 
-/* Main content area adjustment */
-.layout {
-  margin-left: 280px;
-  min-height: 100vh;
-  padding: 24px;
-  background: var(--bg);
+/* Group and leaf styling */
+.groupBtn {
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.groupBtn:hover {
+  background: #333;
+}
+
+.leafList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  margin-left: 16px;
+}
+
+.leaf {
+  margin-bottom: 2px;
+}
+
+.leaf a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.leaf a:hover {
+  background: #333;
+  color: var(--color-text-primary);
+}
+
+.leaf a.active {
+  background: var(--color-accent-primary);
+  color: #000;
+  font-weight: 600;
+}
+
+.pinRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.pinBtn {
+  background: transparent;
+  border: 1px solid #333;
+  color: var(--color-text-secondary);
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pinBtn:hover {
+  border-color: var(--color-accent-primary);
+  color: var(--color-text-primary);
+}
+
+.sidebar.collapsed {
+  padding: 12px 6px;
+}
+
+.sidebar.collapsed:hover {
+  width: 240px;
 }
 
 /* Responsive behavior */

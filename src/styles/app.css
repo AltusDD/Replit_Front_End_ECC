@@ -1,3 +1,20 @@
+/* Layout */
+.layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+.layout.collapsed {
+  grid-template-columns: 64px 1fr;
+}
+
+.main {
+  padding: var(--spacing-lg);
+  background: var(--color-background);
+  overflow-x: auto;
+}
+
 .pageTitle{font-size:26px;font-weight:800;margin-bottom:16px}
 .kv{display:flex;gap:10px;flex-wrap:wrap}
 .kv .kvp{border:1px solid var(--border);padding:8px 10px;border-radius:999px;color:var(--muted)}
