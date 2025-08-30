@@ -4,8 +4,11 @@ import { useCollection } from "@lib/useApi";
 const cols = [
   { key: 'display_name', label: 'Name' },
   { key: 'company_name', label: 'Company' },
-  { key: 'notes', label: 'Contact' },
+  { key: 'first_name', label: 'First Name' },
+  { key: 'last_name', label: 'Last Name' },
+  { key: 'notes', label: 'Contact Info' },
   { key: 'active', label: 'Active', render: (r:any) => r.active ? 'Yes' : 'No' },
+  { key: 'management_start_date', label: 'Management Start', render: (r:any) => r.management_start_date ? new Date(r.management_start_date).toLocaleDateString() : 'N/A' },
   { key: 'updated_at', label: 'Updated', render: (r:any) => r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '' }
 ];
 

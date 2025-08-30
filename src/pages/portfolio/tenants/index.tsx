@@ -3,8 +3,12 @@ import { useCollection } from "@lib/useApi";
 
 const cols = [
   { key: 'display_name', label: 'Name' },
+  { key: 'first_name', label: 'First Name' },
+  { key: 'last_name', label: 'Last Name' },
   { key: 'type', label: 'Type' },
   { key: 'email', label: 'Email' },
+  { key: 'company_name', label: 'Company' },
+  { key: 'credit_score', label: 'Credit Score' },
   { key: 'updated_at', label: 'Updated', render: (r:any) => r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '' }
 ];
 
