@@ -1,3 +1,6 @@
+Restore Full Navigation Hierarchy (Replit Drop-In Steps)
+1. Replace navConfig.ts with the full, structured version including all sections and their items:
+// src/lib/navConfig.ts
 export type Leaf = { label: string; path: string };
 export type Group = { label: string; items: Leaf[] };
 export type Section = { label: string; groups: Group[] };
@@ -99,3 +102,50 @@ const NAV: Section[] = [
 ];
 
 export default NAV;
+
+2. Ensure Sidebar.tsx Renders Nested Groups Properly
+
+Update the rendering logic to nest groups and their children:
+
+<nav className="nav">
+  {NAV.map((section) => (
+    <div key={section.label} className="nav-section">
+      {!collapsed && <div className="nav-title">{section.label}</div>}
+      {section.groups.map((group) => (
+        <div key={group.label} className="group">
+          <button
+            className="groupBtn"
+            onClick={() => setOpenGroup(group.label)}
+          >
+            {iconFor(group.label)}
+            {!collapsed && <span>{group.label}</span>}
+          </button>
+          {openGroup === group.label && (
+            <div className="leafList">
+              {group.items.map((leaf) => (
+                <Link
+                  key={leaf.label}
+                  href={leaf.path}
+                  className={loc === leaf.path ? "active nav-item" : "nav-item"}
+                >
+                  {iconFor(leaf.label)}
+                  {!collapsed && <span>{leaf.label}</span>}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  ))}
+</nav>
+
+Summary for Replit Implementation
+
+Add full navConfig.ts from above.
+
+Update Sidebar.tsx to render groups and nested leaves.
+
+Ensure collapse logic retains openGroup state so expanded groups stay open when navigating.
+
+Push to Replit and test navigation thoroughly.
