@@ -6,11 +6,11 @@ function primitiveColumns(rows: any[]): string[] {
   if (!rows?.length) return [];
   const first = rows.find((r: any) => r && typeof r === 'object') ?? {};
   return Object.keys(first)
-    .filter((k) => ['string','number','boolean'].includes(typeof (first as any)[k]))
+    .filter((k) => ['string', 'number', 'boolean'].includes(typeof (first as any)[k]))
     .slice(0, 8);
 }
 
-function fmt(v: any){
+function fmt(v: any) {
   if (v == null) return '';
   if (typeof v === 'boolean') return v ? 'Yes' : 'No';
   if (typeof v === 'object') return JSON.stringify(v);
@@ -31,11 +31,19 @@ export default function SmartTable({ rows, loading, error, title }: Props) {
       ) : (
         <div className="table-wrap">
           <table className="table">
-            <thead><tr>{cols.map((c) => <th key={c}>{c}</th>)}</tr></thead>
+            <thead>
+              <tr>
+                {cols.map((c) => (
+                  <th key={c}>{c}</th>
+                ))}
+              </tr>
+            </thead>
             <tbody>
               {rows.map((r: any, i: number) => (
                 <tr key={r.id ?? r._id ?? i}>
-                  {cols.map((c) => <td key={c}>{fmt(r[c])}</td>)}
+                  {cols.map((c) => (
+                    <td key={c}>{fmt(r[c])}</td>
+                  ))}
                 </tr>
               ))}
             </tbody>

@@ -1,0 +1,77 @@
+# == altus_enforce_theme_nav.sh ==
+set -euo pipefail
+
+echo "1) Ensure canonical style files exist"
+mkdir -p src/styles
+test -f src/styles/tokens.css || cat > src/styles/tokens.css <<'CSS'
+:root{
+  /* Brand */
+  --gold:#c6a86b;
+  --bg:#0b0d10; --panel:#12161b; --border:#26303b;
+  --text:#e7eaee; --muted:#9fb0c0;
+  /* Spacing / Radii */
+  --gap:16px; --gap-lg:24px; --r:12px;
+  /* Elevation */
+  --shadow:0 2px 10px rgba(0,0,0,.35);
+}
+CSS
+
+cat > src/styles/theme.css <<'CSS'
+@import './tokens.css';
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+h1,h2,h3{margin:0 0 12px}
+a{color:var(--gold);text-decoration:none}
+a:hover{text-decoration:underline}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.badge{display:inline-block;padding:4px 8px;border:1px solid var(--border);border-radius:999px;font-size:12px;color:var(--muted)}
+.sidebar{width:240px;background:#0e1318;border-right:1px solid var(--border)}
+.sidebar .active{color:var(--gold)}
+.grid-kpis{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:var(--gap)}
+@media (max-width:1200px){.grid-kpis{grid-template-columns:repeat(3,minmax(220px,1fr))}}
+@media (max-width:800px){.grid-kpis{grid-template-columns:repeat(2,minmax(220px,1fr))}}
+CSS
+
+echo "2) Force main.tsx to import only tokens.css + theme.css"
+if grep -q "styles/" src/main.tsx; then
+  sed -i -E "/import .+\\.css';/d" src/main.tsx
+fi
+grep -q "styles/theme.css" src/main.tsx || sed -i "1i import './styles/theme.css';" src/main.tsx
+grep -q "styles/tokens.css" src/main.tsx || sed -i "1i import './styles/tokens.css';" src/main.tsx
+
+echo "3) Purge rogue CSS imports and inline <style> blocks"
+rg -n --glob '!src/styles/**' "import .+\\.css" src || true
+rg -n "<style>" src || true
+# Remove non-canonical global css imports:
+fd -e ts -e tsx src | xargs -I{} sed -i -E "/import .+\\.css';/ {/styles\\/theme\\.css|styles\\/tokens\\.css/!d}" {}
+
+echo "4) Dashboard must not contain tables"
+if rg -n "<table" src/pages/dashboard >/dev/null 2>&1; then
+  echo "ERROR: tables found in dashboard; move them to src/pages/portfolio" >&2; exit 1
+fi
+
+echo "5) Ensure single navConfig source"
+test -f src/components/layout/navConfig.ts && sed -n '1,200p' src/components/layout/navConfig.ts | head -n 1 >/dev/null || {
+  mkdir -p src/components/layout
+  cat > src/components/layout/navConfig.ts <<'TS'
+export type NavItem={label:string,href:string,section:'PRIMARY'|'PORTFOLIO'|'TOOLS'};
+export const NAV:NavItem[]=[
+  {section:'PRIMARY',label:'Dashboard',href:'/dashboard'},
+  {section:'PORTFOLIO',label:'Properties',href:'/portfolio/properties'},
+  {section:'PORTFOLIO',label:'Units',href:'/portfolio/units'},
+  {section:'PORTFOLIO',label:'Leases',href:'/portfolio/leases'},
+  {section:'PORTFOLIO',label:'Tenants',href:'/portfolio/tenants'},
+  {section:'PORTFOLIO',label:'Owners',href:'/portfolio/owners'},
+  {section:'TOOLS',label:'API Probe',href:'/tools/probe'}
+];
+TS
+}
+
+echo "6) Verify API hooks export surface (buildUrl/useCounts/useCollection/fetchCollection)"
+rg -n "export function buildUrl|export function useCounts|export function useCollection|export (async )?function fetchCollection" src/lib/useApi.ts
+
+echo "7) Restart dev"
+pkill -f vite >/dev/null 2>&1 || true
+pnpm dev &>/dev/null & disown || npm run dev &>/dev/null & disown
+echo "Done. Open the Preview. Expect themed KPIs and proper sidebar."

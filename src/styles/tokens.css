@@ -1,0 +1,52 @@
+/* Brand Palette */
+:root {
+  /* Colors - Dark theme empire branding */
+  --color-bg: #0b0d10;
+  --color-panel: #12161b;
+  --color-border: #26303b;
+  --color-text: #e7eaee;
+  --color-muted: #9fb0bf;
+  --color-brand: #3b82f6;
+  --color-brand-weak: #1f4dd8;
+  --color-gold: #fbbf24;
+  --color-gold-hover: #f59e0b;
+  --color-ok: #16a34a;
+  --color-warn: #f59e0b;
+  --color-err: #ef4444;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  /* Elevation/Shadows */
+  --elevation-low: 0 2px 8px rgba(0, 0, 0, 0.12);
+  --elevation-medium: 0 6px 18px rgba(0, 0, 0, 0.24);
+  --elevation-high: 0 12px 36px rgba(0, 0, 0, 0.36);
+
+  /* Typography */
+  --font-family: Inter, system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 28px;
+  --line-height-tight: 1.25;
+  --line-height-base: 1.45;
+  --line-height-relaxed: 1.6;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 64px;
+}

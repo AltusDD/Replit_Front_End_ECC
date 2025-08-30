@@ -1,5 +1,5 @@
 import { Link, useRoute } from 'wouter';
-function NavLink({ href, children }:{href:string;children:React.ReactNode}) {
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const [active] = useRoute(href === '/' ? '/' : `${href}/*`);
   return (
     <Link href={href} className={active ? 'active' : ''}>
@@ -7,7 +7,7 @@ function NavLink({ href, children }:{href:string;children:React.ReactNode}) {
     </Link>
   );
 }
-export default function Nav(){
+export default function Nav() {
   return (
     <nav>
       <div className="section-title">PRIMARY</div>

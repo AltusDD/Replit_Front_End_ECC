@@ -2,14 +2,10 @@ type Tone = 'neutral' | 'info' | 'success' | 'warn' | 'danger';
 
 export default function Badge({
   tone = 'neutral',
-  children
+  children,
 }: {
   tone?: Tone;
   children: React.ReactNode;
 }) {
-  return (
-    <span className={`badge ${tone}`}>
-      {children}
-    </span>
-  );
+  return <span className={`badge ${tone}`}>{children}</span>;
 }
