@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
+// Updated Nav.tsx (logo fix, icon colors, active page indicator)
+
 import {
   Home,
   Building2,
@@ -16,12 +16,14 @@ import {
   Settings,
   Database,
   Plug,
-  Hammer,
+  Tool,
   FolderTree,
   BadgeCheck,
   LineChart,
   ClipboardList,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "wouter";
 import { NAV, Section, Group, Leaf } from "./navConfig";
 
 const iconFor = (label: string) => {
@@ -38,7 +40,7 @@ const iconFor = (label: string) => {
   if (k.includes("settings") || k.includes("system")) return Settings;
   if (k.includes("data")) return Database;
   if (k.includes("integration") || k.includes("webhook")) return Plug;
-  if (k.includes("tools") || k.includes("api")) return Hammer;
+  if (k.includes("tools") || k.includes("api")) return Tool;
   if (k.includes("cards") || k.includes("inbox") || k.includes("tasks")) return ActivitySquare;
   if (k.includes("screening") || k.includes("applications")) return ClipboardList;
   if (k.includes("insurance") || k.includes("licenses")) return BadgeCheck;
@@ -60,11 +62,10 @@ function LeafLink({ leaf }: { leaf: Leaf }) {
 }
 
 function GroupBlock({ grp }: { grp: Group }) {
-  const Icon = iconFor(grp.label);
   return (
     <div className="group">
       <button className="groupBtn">
-        <Icon size={18} color="#F7C948" />
+        {iconFor(grp.label)({ size: 18, color: "#F7C948" })}
         <span className="lbl">{grp.label}</span>
       </button>
       <ul className="leafList">
@@ -96,10 +97,8 @@ export default function Nav() {
 
   useEffect(() => {
     localStorage.setItem("ecc.sidebarPinned", pinned ? "1" : "0");
-    const layout = document.querySelector(".layout");
-    const sidebar = document.querySelector(".sidebar");
-    layout?.classList.toggle("collapsed", !pinned);
-    sidebar?.classList.toggle("collapsed", !pinned);
+    document.querySelector(".layout")?.classList.toggle("collapsed", !pinned);
+    document.querySelector(".sidebar")?.classList.toggle("collapsed", !pinned);
   }, [pinned]);
 
   return (
