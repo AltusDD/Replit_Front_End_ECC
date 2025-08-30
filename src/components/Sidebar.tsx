@@ -39,13 +39,14 @@ const iconFor = (label: string) => {
 };
 
 export default function Sidebar() {
-  const [isCollapsed, setCollapsed] = useState(false);
+  const [isCollapsed, setCollapsed] = useState(true); // Default to collapsed (icons only)
   const [hoverExpand, setHoverExpand] = useState(false);
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [loc] = useLocation();
 
-  // Keep group open if it's active or hovered, even when sidebar is collapsed
-  const collapsed = isCollapsed && !hoverExpand && openGroups.size === 0;
+  // Show labels only when pinned open OR hovering
+  const showLabels = !isCollapsed || hoverExpand;
+  const collapsed = !showLabels;
 
   // Ensure parent stays open if user selected a child
   useEffect(() => {
@@ -64,7 +65,7 @@ export default function Sidebar() {
       document.documentElement.style.setProperty("--collapsed-width", `${iconW}px`);
       document.documentElement.style.setProperty("--collapsed-logo", `${iconW * 0.8}px`);
     }
-  }, [collapsed]);
+  }, [showLabels]);
 
   const toggleGroup = (groupLabel: string) => {
     const newOpenGroups = new Set(openGroups);
@@ -88,7 +89,7 @@ export default function Sidebar() {
       <nav className="nav">
         {NAV.map((section: Section) => (
           <div key={section.label} className="nav-section">
-            {!collapsed && <div className="nav-title">{section.label}</div>}
+{showLabels && <div className="nav-title">{section.label}</div>}
             {section.groups.map((group: Group) => (
               <div key={group.label} className="group">
                 <button
@@ -101,7 +102,7 @@ export default function Sidebar() {
                       return <Icon size={18} color="#F7C948" />;
                     })()}
                   </div>
-                  {!collapsed && (
+{showLabels && (
                     <>
                       <span className="lbl">{group.label}</span>
                       <div className="expand-icon">
@@ -127,7 +128,7 @@ export default function Sidebar() {
                             return <Icon size={16} color="#F7C948" />;
                           })()}
                         </div>
-                        {!collapsed && <span className="leaf-label">{leaf.label}</span>}
+{showLabels && <span className="leaf-label">{leaf.label}</span>}
                       </Link>
                     ))}
                   </div>
