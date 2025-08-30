@@ -18,7 +18,7 @@ export default function Owners(){
   return (
     <>
       <h1 className="pageTitle">Owners</h1>
-      {error ? <div className="panel" style={{padding:12,marginBottom:12}}>API error: {String(error.message||error)}</div> : null}
+      {error && <div className="panel" style={{ padding:12, marginBottom:12 }}>API error: {String(error.message || error)}</div>}
       <Table
         rows={loading ? [] : data}
         cols={cols}

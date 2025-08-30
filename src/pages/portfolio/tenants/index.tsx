@@ -8,7 +8,7 @@ const cols = [
   { key: 'type', label: 'Type' },
   { key: 'email', label: 'Email' },
   { key: 'company_name', label: 'Company' },
-  { key: 'credit_score', label: 'Credit Score' },
+  { key: 'credit_score', label: 'Credit Score', render: (r:any) => r.credit_score || 'N/A' },
   { key: 'updated_at', label: 'Updated', render: (r:any) => r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '' }
 ];
 
@@ -18,7 +18,7 @@ export default function Tenants(){
   return (
     <>
       <h1 className="pageTitle">Tenants</h1>
-      {error ? <div className="panel" style={{padding:12,marginBottom:12}}>API error: {String(error.message||error)}</div> : null}
+      {error && <div className="panel" style={{ padding:12, marginBottom:12 }}>API error: {String(error.message || error)}</div>}
       <Table
         rows={loading ? [] : data}
         cols={cols}
