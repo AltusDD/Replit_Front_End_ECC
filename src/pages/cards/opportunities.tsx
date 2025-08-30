@@ -1,0 +1,1 @@
+export default function Opportunities(){ return <div className="panel" style={{padding:16}}><h1>Opportunities</h1><p className="badge">Stub • /cards/opportunities</p></div>; }

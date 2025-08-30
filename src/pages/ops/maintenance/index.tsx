@@ -1,0 +1,1 @@
+export default function Maintenance(){ return <div className="panel" style={{padding:16}}><h1>Maintenance</h1><p className="badge">Stub • /ops/maintenance</p></div>; }

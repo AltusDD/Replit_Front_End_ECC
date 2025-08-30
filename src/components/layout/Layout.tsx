@@ -1,11 +1,12 @@
-import React from 'react';
-import Sidebar from './Sidebar';
-
+import Nav from "./Nav";
+import React from "react";
 export default function Layout({children}:{children:React.ReactNode}){
   return (
-    <div className="shell">
-      <Sidebar/>
-      <main className="main">{children}</main>
+    <div className="layout">
+      <Nav />
+      <main className="main">
+        {children}
+      </main>
     </div>
   );
 }

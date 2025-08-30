@@ -1,0 +1,1 @@
+export default function System(){ return <div className="panel" style={{padding:16}}><h1>System</h1><p className="badge">Stub • /system</p></div>; }

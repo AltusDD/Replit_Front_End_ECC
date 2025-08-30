@@ -1,0 +1,1 @@
+export default function Leasing(){ return <div className="panel" style={{padding:16}}><h1>Leasing</h1><p className="badge">Stub • /ops/leasing</p></div>; }

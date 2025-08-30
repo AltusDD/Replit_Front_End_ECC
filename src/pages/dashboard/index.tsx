@@ -1,24 +1,28 @@
-import React from 'react';
-const Card = ({title,value}:{title:string,value:string}) => (
-  <div className="panel kpi"><h3>{title}</h3><div className="num">{value}</div></div>
-);
+import { useCounts } from "@lib/useApi";
+
+function Stat({label, value}:{label:string, value:any}){
+  return (
+    <div className="card">
+      <h6>{label}</h6>
+      <div className="n">{value ?? "…"}</div>
+    </div>
+  );
+}
 
 export default function Dashboard(){
+  const {data, error} = useCounts();
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <div className="kpi-grid">
-        <Card title="Properties" value="47"/>
-        <Card title="Units" value="312"/>
-        <Card title="Leases" value="298"/>
-        <Card title="Tenants" value="291"/>
-        <Card title="Owners" value="12"/>
+    <>
+      <h1 className="pageTitle">Dashboard</h1>
+      {error && <div className="panel" style={{padding:12,marginBottom:12}}>API error: {String(error.message||error)}</div>}
+      <div className="cards">
+        <Stat label="Properties" value={data?.properties}/>
+        <Stat label="Units" value={data?.units}/>
+        <Stat label="Leases" value={data?.leases}/>
+        <Stat label="Tenants" value={data?.tenants}/>
+        <Stat label="Owners" value={data?.owners}/>
       </div>
-      <div className="hr"/>
-      <div className="panel" style={{padding:16,marginTop:12}}>
-        <h2>Operations Center</h2>
-        <p className="badge">No tables in dashboard per Altus guardrails</p>
-      </div>
-    </div>
+      <div style={{marginTop:16}}><span className="badge">Powered by RPC</span></div>
+    </>
   );
 }

@@ -1,0 +1,1 @@
+export default function Inbox(){ return <div className="panel" style={{padding:16}}><h1>Inbox</h1><p className="badge">Stub • /cards/inbox</p></div>; }
