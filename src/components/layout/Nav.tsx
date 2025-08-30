@@ -176,6 +176,7 @@ function SectionBlock({ sec }: { sec: Section }) {
 
 export default function Nav() {
   const [pinned, setPinned] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const [collapsedLevel, setCollapsedLevel] = useState<"none" | "partial" | "full">("none");
   
   // Automatically adjust sidebar width on collapse based on the first icon
@@ -185,7 +186,7 @@ export default function Nav() {
       const computed = icon.offsetWidth + 16;
       document.documentElement.style.setProperty("--collapsed-width", `${computed}px`);
     }
-  }, [pinned]);
+  }, [collapsed]);
   
   useEffect(() => {
     const checkCollapse = () => {
@@ -216,8 +217,10 @@ export default function Nav() {
 
   useEffect(() => {
     localStorage.setItem("ecc.sidebarPinned", pinned ? "1" : "0");
-    document.querySelector(".layout")?.classList.toggle("collapsed", !pinned);
-    document.querySelector(".sidebar")?.classList.toggle("collapsed", !pinned);
+    const isCollapsed = !pinned;
+    setCollapsed(isCollapsed);
+    document.querySelector(".layout")?.classList.toggle("collapsed", isCollapsed);
+    document.querySelector(".sidebar")?.classList.toggle("collapsed", isCollapsed);
   }, [pinned]);
 
   return (
