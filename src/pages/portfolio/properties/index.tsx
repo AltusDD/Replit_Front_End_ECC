@@ -6,9 +6,9 @@ export default function Properties(){
   
   const columns = [
     { key: 'name', label: 'Name' },
-    { key: 'city', label: 'City' },
-    { key: 'state', label: 'State' },
-    { key: 'updated', label: 'Updated' }
+    { key: 'address_city', label: 'City' },
+    { key: 'address_state', label: 'State' },
+    { key: 'updated_at', label: 'Updated', render: (row:any) => row.updated_at ? new Date(row.updated_at).toLocaleDateString() : '' }
   ];
 
   return (

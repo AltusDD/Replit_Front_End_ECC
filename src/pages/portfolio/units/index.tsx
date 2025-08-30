@@ -5,10 +5,10 @@ export default function Units(){
   const {data, loading, error} = useCollection("units");
   
   const columns = [
-    { key: 'name', label: 'Name' },
-    { key: 'city', label: 'City' },
-    { key: 'state', label: 'State' },
-    { key: 'updated', label: 'Updated' }
+    { key: 'unit_number', label: 'Name' },
+    { key: 'beds', label: 'Beds' },
+    { key: 'rent_amount', label: 'Rent', render: (row:any) => row.rent_amount ? `$${row.rent_amount}` : '' },
+    { key: 'updated_at', label: 'Updated', render: (row:any) => row.updated_at ? new Date(row.updated_at).toLocaleDateString() : '' }
   ];
 
   return (
