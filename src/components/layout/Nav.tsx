@@ -46,7 +46,7 @@ import {
   ChevronDown,
   ChevronRight
 } from "lucide-react";
-import { NAV, Section, Group, Leaf } from "./navConfig";
+import NAV, { Section, Group, Leaf } from "@/lib/navConfig";
 
 const getGroupIcon = (label: string) => {
   const k = label.toLowerCase();

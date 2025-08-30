@@ -1,0 +1,1 @@
+export default function CaseManager(){ return <div className="panel" style={{padding:16}}><h1>Case Manager</h1><p className="badge">Stub • /ops/legal/case-manager</p></div>; }

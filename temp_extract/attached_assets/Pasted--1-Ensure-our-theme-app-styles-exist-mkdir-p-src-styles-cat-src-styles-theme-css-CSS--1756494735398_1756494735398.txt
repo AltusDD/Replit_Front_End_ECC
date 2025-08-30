@@ -1,0 +1,92 @@
+# 1) Ensure our theme + app styles exist
+mkdir -p src/styles
+
+cat > src/styles/theme.css <<'CSS'
+:root{
+  --bg:#0b0d10; --panel:#12161b; --border:#26303b;
+  --text:#e7eaee; --muted:#a7b0bb;
+  --info:#3b82f6; --success:#16a34a; --warn:#f59e0b; --danger:#ef4444;
+}
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:14px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+a{color:var(--info);text-decoration:none}
+a:hover{text-decoration:underline}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+.badge.info{border-color:var(--info);color:var(--info)}
+.badge.success{border-color:var(--success);color:var(--success)}
+.badge.warn{border-color:var(--warn);color:var(--warn)}
+.badge.danger{border-color:var(--danger);color:var(--danger)}
+/* Table (compact, zebra) */
+.table{width:100%;border-collapse:separate;border-spacing:0 6px}
+.table th{color:var(--muted);font-weight:600;text-align:left;padding:8px 10px}
+.table td{padding:10px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.table tr{background:var(--panel)}
+.table tr:hover{filter:brightness(1.05)}
+/* Stat cards */
+.stat{display:flex;flex-direction:column;gap:8px;min-height:96px}
+.stat .title{font-size:12px;letter-spacing:.08em;color:var(--muted)}
+.stat .value{font-size:28px;font-weight:700}
+.stat .hint{color:var(--muted);font-size:12px}
+/* Layout */
+.layout{display:grid;grid-template-columns:260px 1fr;height:100%}
+.sidebar{background:#0f1318;border-right:1px solid var(--border);padding:18px}
+.brand{font-weight:800;margin:0 0 18px}
+.nav a{display:block;padding:8px 10px;border-radius:8px;color:var(--muted)}
+.nav a.active,.nav a:hover{background:#121820;color:var(--text)}
+.content{padding:22px 26px;overflow:auto}
+CSS
+
+cat > src/styles/app.css <<'CSS'
+/* page-level wrappers (kept generic so they match any markup) */
+.grid{display:grid;gap:16px}
+.grid.cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:1100px){.grid.cols-5{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){.grid.cols-5{grid-template-columns:1fr}}
+CSS
+
+# 2) Make 100% sure the styles are imported
+node - <<'NODE'
+const fs=require('fs'), p='src/main.tsx';
+let s=fs.readFileSync(p,'utf8');
+if (!s.includes("./styles/theme.css")) s = `import "./styles/theme.css";\n` + s;
+if (!s.includes("./styles/app.css"))   s = `import "./styles/app.css";\n`   + s;
+fs.writeFileSync(p,s);
+console.log('main.tsx imports verified');
+NODE
+
+# 3) (Belt & suspenders) also include theme.css directly in index.html <head>
+node - <<'NODE'
+const fs=require('fs'), p='index.html';
+let s=fs.readFileSync(p,'utf8');
+if (!/styles\/theme\.css/.test(s)) {
+  s = s.replace('</head>','  <link rel="stylesheet" href="/src/styles/theme.css"/>\n  <link rel="stylesheet" href="/src/styles/app.css"/>\n</head>');
+  fs.writeFileSync(p,s);
+  console.log('index.html linked to theme/app css');
+} else {
+  console.log('index.html already linked');
+}
+NODE
+
+# 4) Optional: add lightweight classes to existing layout if not present
+# (harmless if already styled)
+node - <<'NODE'
+const fs=require('fs'), path=require('path');
+const files=['src/components/Layout.tsx','src/components/Nav.tsx'];
+for (const f of files){
+  if (!fs.existsSync(f)) continue;
+  let s=fs.readFileSync(f,'utf8');
+  s = s.replace(/className="sidebar"/g,'className="sidebar nav"')
+       .replace(/<main([^>]*)>/,'<main$1 className="content">')
+       .replace(/<div([^>]*)>\s*<\/div>/g,(m,attrs)=>`<div${attrs} className="panel"></div>`);
+  if (!/className="layout"/.test(s)) s = s.replace(/return\s*\(\s*<div/,'return (<div className="layout"');
+  fs.writeFileSync(f,s);
+}
+console.log('layout/nav gently normalized');
+NODE
+
+# 5) Restart vite
+pkill -f vite >/dev/null 2>&1 || true
+npm run dev

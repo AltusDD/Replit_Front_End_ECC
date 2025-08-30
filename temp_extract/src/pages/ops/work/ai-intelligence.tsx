@@ -1,0 +1,1 @@
+export default function AIIntelligence(){ return <div className="panel" style={{padding:16}}><h1>AI Intelligence</h1><p className="badge">Stub • /ops/work/ai-intelligence</p></div>; }

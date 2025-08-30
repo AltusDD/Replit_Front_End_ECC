@@ -2,7 +2,7 @@ export type Leaf = { label: string; path: string };
 export type Group = { label: string; items: Leaf[] };
 export type Section = { label: string; groups: Group[] };
 
-const NAV: Section[] = [
+export const NAV: Section[] = [
   { label: "Dashboard", groups: [{ label: "Dashboard", items: [{ label: "Home", path: "/dashboard" }] }] },
 
   { label: "Portfolio", groups: [{ label: "Portfolio", items: [
@@ -23,74 +23,71 @@ const NAV: Section[] = [
 
   { label: "Operations", groups: [
     { label: "Accounting", items: [
-      { label: "AR", path: "/ops/accounting/ar" },
-      { label: "AP", path: "/ops/accounting/ap" },
-      { label: "GL", path: "/ops/accounting/gl" },
-      { label: "Banking", path: "/ops/accounting/banking" },
-      { label: "Close", path: "/ops/accounting/close" },
-      { label: "Reporting", path: "/ops/accounting/reporting" },
-      { label: "Budgets", path: "/ops/accounting/budgets" },
-      { label: "Taxes", path: "/ops/accounting/taxes" },
-      { label: "Vendors", path: "/ops/accounting/vendors" },
-      { label: "Receipts", path: "/ops/accounting/receipts" },
-      { label: "Allocations", path: "/ops/accounting/allocations" },
-      { label: "Audit Trail", path: "/ops/accounting/audit" }
+      { label: "Overview", path: "/ops/accounting/overview" },
+      { label: "Collections Dashboard", path: "/ops/accounting/collections-dashboard" },
+      { label: "Rent Collection", path: "/ops/accounting/rent-collection" },
+      { label: "Tenant Ledgers", path: "/ops/accounting/tenant-ledgers" },
+      { label: "Financial Reports", path: "/ops/accounting/financial-reports" },
+      { label: "Deposits", path: "/ops/accounting/deposits" },
+      { label: "Expenses", path: "/ops/accounting/expenses" },
+      { label: "Payment Plans", path: "/ops/accounting/payment-plans" },
+      { label: "Transfers", path: "/ops/accounting/transfers" }
     ]},
-    { label: "Leasing", items: [
-      { label: "Applications", path: "/ops/leasing/apps" },
-      { label: "Screening", path: "/ops/leasing/screening" },
-      { label: "Renewals", path: "/ops/leasing/renewals" },
-      { label: "Move-in/Move-out", path: "/ops/leasing/mimo" },
-      { label: "Delinquencies", path: "/ops/leasing/delinquencies" }
+    { label: "AI Intelligence", items: [
+      { label: "Risk Summary", path: "/ops/ai/risk-summary" },
+      { label: "Vacancy Analytics", path: "/ops/ai/vacancy-analytics" },
+      { label: "Renewal Forecasting", path: "/ops/ai/renewal-forecasting" },
+      { label: "ML Leasing Logs", path: "/ops/ai/ml-leasing-logs" }
     ]},
-    { label: "Maintenance", items: [
-      { label: "Work Orders", path: "/ops/maint/work-orders" },
-      { label: "Turns", path: "/ops/maint/turns" },
-      { label: "CapEx", path: "/ops/maint/capex" },
-      { label: "Vendors", path: "/ops/maint/vendors" }
+    { label: "Work Management", items: [
+      { label: "Work Orders", path: "/ops/work/work-orders" },
+      { label: "Capital Projects", path: "/ops/work/capital-projects" },
+      { label: "Build & Repair", path: "/ops/work/build-repair-projects" },
+      { label: "Vendors", path: "/ops/work/vendors" },
+      { label: "AI Intelligence", path: "/ops/work/ai-intelligence" },
+      { label: "Smart Routing", path: "/ops/work/smart-routing" },
+      { label: "Materials Inventory", path: "/ops/work/materials-inventory" }
     ]},
-    { label: "Compliance", items: [
-      { label: "Docs", path: "/ops/compliance/docs" },
-      { label: "Inspections", path: "/ops/compliance/inspections" },
-      { label: "Insurance", path: "/ops/compliance/insurance" },
-      { label: "Licenses", path: "/ops/compliance/licenses" }
+    { label: "Legal", items: [
+      { label: "Docs", path: "/ops/legal/docs" },
+      { label: "Attorney Reports", path: "/ops/legal/attorney-reports" },
+      { label: "Case Manager", path: "/ops/legal/case-manager" },
+      { label: "Advanced", path: "/ops/legal/advanced" }
     ]},
-    { label: "Vendors", items: [
-      { label: "Directory", path: "/ops/vendors/directory" },
-      { label: "Onboarding", path: "/ops/vendors/onboarding" },
-      { label: "Scorecards", path: "/ops/vendors/scorecards" }
+    { label: "Communications", items: [
+      { label: "Logs", path: "/ops/comms/logs" },
+      { label: "Queue", path: "/ops/comms/queue" },
+      { label: "Templates", path: "/ops/comms/templates" }
     ]}
   ]},
 
   { label: "Growth", groups: [{ label: "Growth", items: [
-    { label: "Acquisitions", path: "/growth/acquisitions" },
-    { label: "Marketing", path: "/growth/marketing" }
+    { label: "Marketing", path: "/growth/marketing" },
+    { label: "Inventory", path: "/growth/inventory" }
   ]}] },
 
   { label: "System", groups: [{ label: "System", items: [
     { label: "Settings", path: "/system/settings" },
-    { label: "Users & Roles", path: "/system/users" }
+    { label: "Automation", path: "/system/automation" }
   ]}] },
 
   { label: "Data Management", groups: [{ label: "Data Management", items: [
-    { label: "Imports", path: "/data/imports" },
-    { label: "Exports", path: "/data/exports" },
-    { label: "Dedupe", path: "/data/dedupe" },
-    { label: "Archives", path: "/data/archives" },
-    { label: "Audit Logs", path: "/data/audit" }
+    { label: "Raw Data", path: "/data/raw" },
+    { label: "Sync Audit", path: "/data/sync-audit" },
+    { label: "Sync Logs", path: "/data/sync-logs" }
   ]}] },
 
   { label: "Investor Portal", groups: [{ label: "Investor Portal", items: [
-    { label: "Overview", path: "/investor/overview" },
-    { label: "Distributions", path: "/investor/distributions" },
-    { label: "Statements", path: "/investor/statements" }
+    { label: "Dashboard", path: "/investor/dashboard" },
+    { label: "Financial Reports", path: "/investor/financial-reports" },
+    { label: "Portfolio Analytics", path: "/investor/portfolio-analytics" }
   ]}] },
 
   { label: "Integrations", groups: [{ label: "Integrations", items: [
-    { label: "DoorLoop", path: "/integrations/doorloop" },
-    { label: "QuickBooks", path: "/integrations/quickbooks" },
-    { label: "Azure", path: "/integrations/azure" },
-    { label: "Webhooks", path: "/integrations/webhooks" }
+    { label: "CoreLogic", path: "/integrations/corelogic" },
+    { label: "Field App", path: "/integrations/field-app" },
+    { label: "Dropbox", path: "/integrations/dropbox" },
+    { label: "Deal Room", path: "/integrations/deal-room" }
   ]}] },
 
   { label: "Tools", groups: [{ label: "Tools", items: [

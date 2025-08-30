@@ -1,0 +1,70 @@
+# 1) Create/overwrite an app-level stylesheet with layout + nav + cards
+cat > src/styles/app.css <<'CSS'
+/* --- Layout -------------------------------------------------------------- */
+html,body,#root{height:100%}
+#root > .app,                 /* if App renders a single wrapper */
+body > #root > div{           /* fallback: generic top-level app wrapper */
+  display:grid;
+  grid-template-columns: 240px 1fr;
+  min-height:100vh;
+}
+
+/* --- Sidebar ------------------------------------------------------------- */
+aside{
+  background:var(--panel);
+  border-right:1px solid var(--border);
+  padding:16px 14px;
+  position:sticky; top:0; height:100vh; overflow:auto;
+}
+aside .brand{font-weight:700; margin-bottom:8px}
+aside nav{display:flex; flex-direction:column; gap:6px; margin-top:8px}
+aside nav a{
+  display:block;
+  color:var(--text);
+  opacity:.85;
+  padding:8px 10px;
+  border-radius:8px;
+}
+aside nav a:hover{background:#0e1318; opacity:1}
+aside .section-title{
+  font-size:11px; letter-spacing:.08em; color:var(--muted);
+  margin:18px 0 6px; text-transform:uppercase;
+}
+
+/* --- Main content -------------------------------------------------------- */
+main{padding:24px 28px}
+
+/* --- Headings ------------------------------------------------------------ */
+h1{font-size:28px; font-weight:800; margin:0 0 16px}
+
+/* --- KPI cards ----------------------------------------------------------- */
+.kpis{display:grid; grid-template-columns: repeat(5,minmax(180px,1fr)); gap:16px}
+@media (max-width:1200px){.kpis{grid-template-columns: repeat(3,1fr)}}
+@media (max-width:800px){.kpis{grid-template-columns: repeat(2,1fr)}}
+.card,.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px;
+}
+.card .title, .panel .title{
+  color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px
+}
+.card .value, .panel .value{font-weight:800; font-size:28px}
+
+/* --- Badges / helpers ---------------------------------------------------- */
+.badge{
+  display:inline-block; font-size:12px; padding:4px 8px; border-radius:999px;
+  background:rgba(59,130,246,.15); color:var(--info); border:1px solid rgba(59,130,246,.45)
+}
+.section{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-top:16px}
+.row{display:flex; align-items:center; gap:10px}
+CSS
+
+# 2) Import app.css right after the theme in main.tsx (idempotent)
+grep -q "styles/app.css" src/main.tsx || sed -i "/styles\/theme.css/a import './styles/app.css';" src/main.tsx
+
+# 3) Quick restart (in case Vite didn’t hot-apply CSS)
+pkill -f vite >/dev/null 2>&1 || true
+npm run dev --silent >/dev/null 2>&1 & disown
+echo "✅ Styles applied. Hard-refresh the :5173 URL (Ctrl/Cmd+Shift+R)."

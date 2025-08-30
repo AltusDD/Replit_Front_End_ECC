@@ -1,0 +1,45 @@
+## Project Overview
+Empire Command Center (React SPA). Enforce Altus guardrails: Theme Foundation v1 + Nav Fortress v2.
+
+## Authoritative Rules (do not deviate)
+- Theme: use **src/styles/tokens.css** and **src/styles/theme.css** only. No other global CSS; no page-level CSS; no raw hex (tokens only). (Theme Foundation v1)  
+- Navigation: **Nav Fortress v2** behavior: fly-out when collapsed; pin toggles persistent open; gold active state.  
+- Routing: `/dashboard` has KPIs only (no tables). All V3 tables live under `/portfolio/{properties|units|leases|tenants|owners}`.  
+- Keep Vite proxy to Azure Functions; do not change API paths, only fix imports/exports and styles.
+
+## Tasks (execute in order)
+1) **Theme reset**
+   - Create/normalize `src/styles/tokens.css` (brand palette, spacing, radii, elevation vars).
+   - Create/normalize `src/styles/theme.css` (base, typography, panel, button, badges, sidebar, grid helpers).
+   - Ensure `src/main.tsx` imports ONLY:
+     ```ts
+     import './styles/tokens.css';
+     import './styles/theme.css';
+     ```
+   - Remove/inline-null any other `*.css` imports in TS/TSX files (except component-scoped CSS modules if present).
+
+2) **Purge drift**
+   - Grep repo for `import '.+\\.css'` and `<style>` blocks; delete or move styles into theme files.
+   - Ensure **no** tables in `src/pages/dashboard/**`. If found, move to `src/pages/portfolio/**`.
+
+3) **Nav Fortress v2 hookup**
+   - Centralize items in `src/components/layout/navConfig.ts` (single source of truth).
+   - Ensure `Sidebar` reads `navConfig` and uses classes/tokens for gold active + fly-out/pin logic.
+   - Fix nested `<a>` issues (no anchor-in-anchor).
+
+4) **API hooks are stable**
+   - `src/lib/useApi.ts` must export: `API_BASE`, `buildUrl`, `useCounts`, `useCollection`, and (named) `fetchCollection`.
+   - Counts: try `/api/portfolio/counts`, fallback `/api/counts`, then `/api/rpc/portfolio_counts`. Don’t break tables.
+
+5) **Lint + format + restart**
+   - Run eslint/prettier. Keep `.replit` run = `pnpm dev`. Don’t touch Tailwind or PostCSS.
+
+## Acceptance Criteria
+- Only `tokens.css` and `theme.css` are globally imported.
+- Sidebar fly-out + pin works; active item is gold; no nested anchors.
+- Dashboard shows KPI cards; **no** tables in dashboard HTML.
+- `/portfolio/*` tables render with theme styles (dark panel, border, spacing).
+- No raw hex in code—tokens only.
+
+## References (Altus docs)
+- Theme/Sidebar/Drift guardrails and runbook are authoritative. Use them to guide decisions.

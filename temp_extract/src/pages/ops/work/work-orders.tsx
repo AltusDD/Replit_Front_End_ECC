@@ -1,0 +1,1 @@
+export default function WorkOrders(){ return <div className="panel" style={{padding:16}}><h1>Work Orders</h1><p className="badge">Stub • /ops/work/work-orders</p></div>; }
