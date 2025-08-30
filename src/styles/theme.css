@@ -85,7 +85,7 @@ a:hover{text-decoration:underline}
 /* CSS Variables for Dynamic Sizing */
 :root {
   --sidebar-icon-size: 18px;
-  --collapsed-width: 64px;
+  --collapsed-width: 64px; /* fallback if icons are missing */
 }
 
 .sidebar {
@@ -103,6 +103,7 @@ a:hover{text-decoration:underline}
 
 .sidebar.collapsed {
   width: var(--collapsed-width);
+  overflow-x: hidden;
   padding: 12px 6px;
 }
 
@@ -162,7 +163,7 @@ a:hover{text-decoration:underline}
 
 .sidebar.collapsed .brandLogo {
   height: 36px;
-  max-width: 60px;
+  max-width: 80px;
   margin: 0 auto;
 }
 

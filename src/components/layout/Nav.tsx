@@ -178,19 +178,13 @@ export default function Nav() {
   const [pinned, setPinned] = useState(true);
   const [collapsedLevel, setCollapsedLevel] = useState<"none" | "partial" | "full">("none");
   
-  // Dynamic icon sizing for consistent layout
+  // Automatically adjust sidebar width on collapse based on the first icon
   useEffect(() => {
-    const updateIconSize = () => {
-      const firstIcon = document.querySelector(".leaf svg");
-      if (firstIcon) {
-        const iconWidth = (firstIcon as HTMLElement).offsetWidth;
-        document.documentElement.style.setProperty("--sidebar-icon-size", `${iconWidth}px`);
-        document.documentElement.style.setProperty("--collapsed-width", `${iconWidth + 16}px`);
-      }
-    };
-    updateIconSize();
-    window.addEventListener('resize', updateIconSize);
-    return () => window.removeEventListener('resize', updateIconSize);
+    const icon = document.querySelector(".leaf svg");
+    if (icon instanceof HTMLElement) {
+      const computed = icon.offsetWidth + 16;
+      document.documentElement.style.setProperty("--collapsed-width", `${computed}px`);
+    }
   }, [pinned]);
   
   useEffect(() => {
