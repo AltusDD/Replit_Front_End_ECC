@@ -236,6 +236,16 @@ a:hover{text-decoration:underline}
 .sidebar.collapsed .lbl {
   display: none;
 }
+.sidebar.collapsed .leafList {
+  display: flex;
+  flex-direction: column;
+}
+.sidebar.collapsed .leafList .nav-icon {
+  display: inline-flex;
+}
+.sidebar.collapsed .leafList .lbl {
+  display: none;
+}
 
 .sidebar-footer {
   display: none; /* hide when collapsed or expand */

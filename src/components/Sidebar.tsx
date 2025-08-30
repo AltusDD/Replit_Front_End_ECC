@@ -44,7 +44,8 @@ export default function Sidebar() {
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [loc] = useLocation();
 
-  const collapsed = isCollapsed && !hoverExpand;
+  // Keep group open if it's active or hovered, even when sidebar is collapsed
+  const collapsed = isCollapsed && !hoverExpand && openGroups.size === 0;
 
   // Ensure parent stays open if user selected a child
   useEffect(() => {
