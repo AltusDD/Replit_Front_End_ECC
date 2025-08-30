@@ -1,10 +1,10 @@
-import Nav from "./Nav";
+import Sidebar from "@/components/Sidebar";
 import React from "react";
 
 export default function Layout({children}:{children:React.ReactNode}){
   return (
     <div className="layout">
-      <Nav />
+      <Sidebar />
       <main className="main">
         {children}
       </main>

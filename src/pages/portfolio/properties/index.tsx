@@ -1,5 +1,5 @@
 import React from 'react';
-import Table from '@/components/ui/Table';
+import Table from '@/components/Table';
 import { useCollection } from '@lib/useApi';
 import { useLocation } from 'wouter';
 
@@ -8,53 +8,56 @@ export default function PropertiesPage() {
   const [, setLocation] = useLocation();
 
   const columns = [
-    { key: 'name', label: 'Name' },
-    { key: 'address_city', label: 'City' },
-    { key: 'address_state', label: 'State' },
-    { key: 'type', label: 'Type' },
+    { label: 'Name', accessor: 'name' },
+    { label: 'City', accessor: 'address_city' },
+    { label: 'State', accessor: 'address_state' },
+    { label: 'Type', accessor: 'type' },
     {
-      key: 'unit_count',
       label: 'Units',
-      render: (row: any) => row.unit_count ?? 'N/A',
+      accessor: 'unit_count',
+      render: (value: any) => value ?? 'N/A',
     },
     {
-      key: 'occupancy_rate',
       label: 'Occupancy',
-      render: (row: any) => (
-        <span style={{ color: row.occupancy_rate > 90 ? 'var(--color-status-good)' : 'var(--color-status-warning)' }}>
-          {row.occupancy_rate ? `${row.occupancy_rate}%` : 'N/A'}
+      accessor: 'occupancy_rate',
+      render: (value: any) => (
+        <span style={{ color: value > 90 ? 'var(--color-status-good)' : 'var(--color-status-warning)' }}>
+          {value ? `${value}%` : 'N/A'}
         </span>
       ),
     },
     {
-      key: 'open_units',
       label: 'Open Units',
-      render: (row: any) =>
-        row.open_units > 0 ? (
-          <span style={{ color: 'var(--color-status-warning)' }}>{row.open_units}</span>
+      accessor: 'open_units',
+      render: (value: any) =>
+        value > 0 ? (
+          <span style={{ color: 'var(--color-status-warning)' }}>{value}</span>
         ) : (
-          <span>{row.open_units || '0'}</span>
+          <span>{value || '0'}</span>
         ),
     },
     {
-      key: 'health_score',
       label: 'Health',
-      render: (row: any) =>
-        row.health_score >= 80 ? (
-          <span style={{ color: 'var(--color-status-good)' }}>{row.health_score}</span>
-        ) : row.health_score >= 50 ? (
-          <span style={{ color: 'var(--color-status-warning)' }}>{row.health_score}</span>
+      accessor: 'health_score',
+      render: (value: any) =>
+        value >= 80 ? (
+          <span style={{ color: 'var(--color-status-good)' }}>{value}</span>
+        ) : value >= 50 ? (
+          <span style={{ color: 'var(--color-status-warning)' }}>{value}</span>
         ) : (
-          <span style={{ color: 'var(--color-status-critical)' }}>{row.health_score || 'N/A'}</span>
+          <span style={{ color: 'var(--color-status-critical)' }}>{value || 'N/A'}</span>
         ),
     },
     { 
-      key: 'updated_at',
       label: 'Updated', 
-      render: (row: any) => row.updated_at ? new Date(row.updated_at).toLocaleDateString() : ''
+      accessor: 'updated_at',
+      render: (value: any) => value ? new Date(value).toLocaleDateString() : ''
     },
   ];
 
+  const handleRowDoubleClick = (row: any) => {
+    setLocation(`/card/property/${row.id}`);
+  };
 
   // Calculate KPIs
   const totalProperties = data.length;
@@ -80,7 +83,7 @@ export default function PropertiesPage() {
         <div className="card">Open Units: {openUnits}</div>
       </div>
 
-      <Table rows={data} cols={columns} entityType="property" onRowClick={(row) => setLocation(`/card/property/${row.id}`)} />
+      <Table columns={columns} data={data} onRowDoubleClick={handleRowDoubleClick} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import Table from '@/components/ui/Table';
+import Table from '@/components/Table';
 import { useCollection } from '@lib/useApi';
 import { useLocation } from 'wouter';
 
@@ -8,39 +8,42 @@ export default function TenantsPage() {
   const [, setLocation] = useLocation();
 
   const columns = [
-    { key: 'display_name', label: 'Name' },
-    { key: 'first_name', label: 'First Name' },
-    { key: 'last_name', label: 'Last Name' },
-    { key: 'type', label: 'Type' },
-    { key: 'email', label: 'Email' },
-    { key: 'company_name', label: 'Company' },
+    { label: 'Name', accessor: 'display_name' },
+    { label: 'First Name', accessor: 'first_name' },
+    { label: 'Last Name', accessor: 'last_name' },
+    { label: 'Type', accessor: 'type' },
+    { label: 'Email', accessor: 'email' },
+    { label: 'Company', accessor: 'company_name' },
     {
-      key: 'credit_score',
       label: 'Credit Score',
-      render: (row: any) => {
-        if (!row.credit_score) return 'N/A';
-        const color = row.credit_score >= 700 ? 'var(--color-status-good)' : 
-                     row.credit_score >= 600 ? 'var(--color-status-warning)' : 
+      accessor: 'credit_score',
+      render: (value: any) => {
+        if (!value) return 'N/A';
+        const color = value >= 700 ? 'var(--color-status-good)' : 
+                     value >= 600 ? 'var(--color-status-warning)' : 
                      'var(--color-status-critical)';
-        return <span style={{color}}>{row.credit_score}</span>;
+        return <span style={{color}}>{value}</span>;
       },
     },
     {
-      key: 'total_balance_due',
       label: 'Balance Due',
-      render: (row: any) => {
-        const amount = row.total_balance_due || 0;
+      accessor: 'total_balance_due',
+      render: (value: any) => {
+        const amount = value || 0;
         const color = amount > 0 ? 'var(--color-status-critical)' : 'var(--color-status-good)';
         return <span style={{color}}>${amount.toFixed(2)}</span>;
       },
     },
     { 
-      key: 'updated_at',
       label: 'Updated', 
-      render: (row: any) => row.updated_at ? new Date(row.updated_at).toLocaleDateString() : ''
+      accessor: 'updated_at',
+      render: (value: any) => value ? new Date(value).toLocaleDateString() : ''
     },
   ];
 
+  const handleRowDoubleClick = (row: any) => {
+    setLocation(`/card/tenant/${row.id}`);
+  };
 
   // Calculate KPIs
   const totalTenants = data.length;
@@ -66,7 +69,7 @@ export default function TenantsPage() {
         <div className="card">Avg Credit Score: {avgCreditScore}</div>
       </div>
 
-      <Table rows={data} cols={columns} entityType="tenant" onRowClick={(row) => setLocation(`/card/tenant/${row.id}`)} />
+      <Table columns={columns} data={data} onRowDoubleClick={handleRowDoubleClick} />
     </div>
   );
 }

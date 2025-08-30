@@ -1,5 +1,5 @@
 import React from 'react';
-import Table from '@/components/ui/Table';
+import Table from '@/components/Table';
 import { useCollection } from '@lib/useApi';
 import { useLocation } from 'wouter';
 
@@ -8,45 +8,48 @@ export default function UnitsPage() {
   const [, setLocation] = useLocation();
 
   const columns = [
-    { key: 'unit_number', label: 'Unit' },
-    { key: 'beds', label: 'Beds' },
-    { key: 'baths', label: 'Baths' },
-    { key: 'sq_ft', label: 'Sq Ft', render: (row: any) => row.sq_ft || 'N/A' },
+    { label: 'Unit', accessor: 'unit_number' },
+    { label: 'Beds', accessor: 'beds' },
+    { label: 'Baths', accessor: 'baths' },
+    { label: 'Sq Ft', accessor: 'sq_ft', render: (value: any) => value || 'N/A' },
     {
-      key: 'rent_amount',
       label: 'Rent',
-      render: (row: any) => row.rent_amount ? `$${row.rent_amount}` : 'N/A',
+      accessor: 'rent_amount',
+      render: (value: any) => value ? `$${value}` : 'N/A',
     },
     {
-      key: 'status',
       label: 'Status',
-      render: (row: any) => (
+      accessor: 'status',
+      render: (value: any) => (
         <span style={{ 
-          color: row.status === 'occupied' ? 'var(--color-status-good)' : 
-                 row.status === 'vacant' ? 'var(--color-status-warning)' : 
+          color: value === 'occupied' ? 'var(--color-status-good)' : 
+                 value === 'vacant' ? 'var(--color-status-warning)' : 
                  'var(--color-text-primary)'
         }}>
-          {row.status || 'N/A'}
+          {value || 'N/A'}
         </span>
       ),
     },
     {
-      key: 'lease_end_date',
       label: 'Lease Ends',
-      render: (row: any) => row.lease_end_date ? new Date(row.lease_end_date).toLocaleDateString() : 'N/A',
+      accessor: 'lease_end_date',
+      render: (value: any) => value ? new Date(value).toLocaleDateString() : 'N/A',
     },
     {
-      key: 'tenant_name',
       label: 'Tenant',
-      render: (row: any) => row.tenant_name || <span style={{ color: 'var(--color-status-warning)' }}>Vacant</span>,
+      accessor: 'tenant_name',
+      render: (value: any) => value || <span style={{ color: 'var(--color-status-warning)' }}>Vacant</span>,
     },
     { 
-      key: 'updated_at',
       label: 'Updated', 
-      render: (row: any) => row.updated_at ? new Date(row.updated_at).toLocaleDateString() : ''
+      accessor: 'updated_at',
+      render: (value: any) => value ? new Date(value).toLocaleDateString() : ''
     },
   ];
 
+  const handleRowDoubleClick = (row: any) => {
+    setLocation(`/card/unit/${row.id}`);
+  };
 
   // Calculate KPIs
   const totalUnits = data.length;
@@ -72,7 +75,7 @@ export default function UnitsPage() {
         <div className="card">Avg Rent: ${avgRent}</div>
       </div>
 
-      <Table rows={data} cols={columns} entityType="unit" onRowClick={(row) => setLocation(`/card/unit/${row.id}`)} />
+      <Table columns={columns} data={data} onRowDoubleClick={handleRowDoubleClick} />
     </div>
   );
 }
