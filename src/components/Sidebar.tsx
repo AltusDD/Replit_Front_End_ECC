@@ -121,6 +121,12 @@ export default function Sidebar() {
                         href={leaf.path}
                         className={`leaf-item ${loc === leaf.path ? "active" : ""}`}
                       >
+                        <div className="nav-icon">
+                          {(() => {
+                            const Icon = iconFor(leaf.label);
+                            return <Icon size={16} color="#F7C948" />;
+                          })()}
+                        </div>
                         {!collapsed && <span className="leaf-label">{leaf.label}</span>}
                       </Link>
                     ))}

@@ -201,7 +201,9 @@ a:hover{text-decoration:underline}
 }
 
 .leaf-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 6px 16px;
   color: var(--muted);
   text-decoration: none;
