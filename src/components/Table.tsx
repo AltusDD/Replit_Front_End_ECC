@@ -1,36 +1,38 @@
-import React from 'react';
 
-interface TableColumn {
+import React from "react";
+
+interface Column<T> {
   header: string;
-  accessor: string;
+  accessor: keyof T;
+  className?: string;
+  render?: (value: any, row: T) => React.ReactNode;
 }
 
-interface TableProps {
-  columns: TableColumn[];
-  data: Record<string, any>[];
-  onRowDoubleClick: (row: Record<string, any>) => void;
+interface TableProps<T> {
+  data: T[];
+  columns: Column<T>[];
 }
 
-const Table: React.FC<TableProps> = ({ columns, data, onRowDoubleClick }) => {
+export function Table<T>({ data, columns }: TableProps<T>) {
   return (
-    <div className="table-wrapper">
-      <table className="enhanced-table">
-        <thead>
+    <div className="overflow-x-auto border border-panel rounded-md">
+      <table className="min-w-full text-sm text-left">
+        <thead className="bg-panel-2 text-muted uppercase text-xs">
           <tr>
-            {columns.map((col, index) => (
-              <th key={index} className="table-header">{col.header}</th>
+            {columns.map((col, idx) => (
+              <th key={idx} className={`px-4 py-2 ${col.className || ""}`}>
+                {col.header}
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {data.map((row, rowIndex) => (
-            <tr
-              key={rowIndex}
-              className="table-row"
-              onDoubleClick={() => onRowDoubleClick(row)}
-            >
-              {columns.map((col, colIndex) => (
-                <td key={colIndex}>{row[col.accessor]}</td>
+          {data.map((row, i) => (
+            <tr key={i} className="even:bg-panel-3 hover:bg-panel-2 transition-colors">
+              {columns.map((col, j) => (
+                <td key={j} className={`px-4 py-2 ${col.className || ""}`}>
+                  {col.render ? col.render(row[col.accessor], row) : (row[col.accessor] as React.ReactNode)}
+                </td>
               ))}
             </tr>
           ))}
@@ -38,6 +40,4 @@ const Table: React.FC<TableProps> = ({ columns, data, onRowDoubleClick }) => {
       </table>
     </div>
   );
-};
-
-export default Table;
+}
