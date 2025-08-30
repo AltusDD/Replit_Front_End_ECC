@@ -1,1 +1,30 @@
-/* App-specific styles go here */
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.enhanced-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel);
+}
+.table-header {
+  padding: 12px;
+  border-bottom: 2px solid var(--border);
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--panel-2);
+}
+.table-row {
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.table-row:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+.table-row:hover {
+  background: rgba(247, 201, 72, 0.1);
+}
