@@ -1,0 +1,563 @@
+0) One-time deps
+npm i wouter lucide-react
+
+1) src/components/layout/navConfig.ts (replace)
+// src/components/layout/navConfig.ts
+// Canonical nav + icon names (Lucide); parents gold, children alt-blue (styled in CSS)
+
+export type Leaf = { label: string; to: string; icon: string };
+export type Group = { label: string; icon: string; children: Leaf[] };
+export type Item = Leaf | Group;
+export type Section = { title?: string; items: Item[] };
+
+const sections: Section[] = [
+  {
+    title: "Primary",
+    items: [{ label: "Dashboard", to: "/dashboard", icon: "LayoutDashboard" }],
+  },
+
+  {
+    title: "Portfolio V3",
+    items: [
+      { label: "Properties", to: "/portfolio/properties", icon: "Building2" },
+      { label: "Units", to: "/portfolio/units", icon: "Layers" },
+      { label: "Leases", to: "/portfolio/leases", icon: "FileText" },
+      { label: "Tenants", to: "/portfolio/tenants", icon: "Users2" },
+      { label: "Owners", to: "/portfolio/owners", icon: "UserCheck" },
+    ],
+  },
+
+  {
+    title: "Cards (Entity Hubs)",
+    items: [
+      { label: "Property Card", to: "/card/property/:id", icon: "Home" },
+      { label: "Unit Card", to: "/card/unit/:id", icon: "SquareStack" },
+      { label: "Lease Card", to: "/card/lease/:id", icon: "FileBadge2" },
+      { label: "Tenant Card", to: "/card/tenant/:id", icon: "UserRound" },
+      { label: "Owner Card", to: "/card/owner/:id", icon: "Crown" },
+    ],
+  },
+
+  {
+    title: "Operations",
+    items: [
+      {
+        label: "Accounting",
+        icon: "Wallet",
+        children: [
+          { label: "Overview", to: "/ops/accounting/overview", icon: "ChartPie" },
+          { label: "Rent Collection", to: "/ops/accounting/rent-collection", icon: "Coins" },
+          { label: "Expenses", to: "/ops/accounting/expenses", icon: "ReceiptText" },
+          { label: "Financial Reports", to: "/ops/accounting/financial-reports", icon: "Receipt" },
+          { label: "Tenant Ledgers", to: "/ops/accounting/tenant-ledgers", icon: "BookOpenText" },
+          { label: "Collections Dashboard", to: "/ops/accounting/collections-dashboard", icon: "BarChart3" },
+          { label: "Collections Log", to: "/ops/accounting/collections-log", icon: "NotepadText" },
+          { label: "Payment Plans", to: "/ops/accounting/payment-plans", icon: "CalendarCheck2" },
+          { label: "Deposits", to: "/ops/accounting/deposits", icon: "Banknote" },
+          { label: "Transfers", to: "/ops/accounting/transfers", icon: "ArrowLeftRight" },
+          { label: "Subsidized Housing", to: "/ops/accounting/subsidized-housing", icon: "Building" },
+          { label: "Assistance Programs", to: "/ops/accounting/assistance-programs", icon: "HelpingHand" },
+        ],
+      },
+      {
+        label: "AI Analytics",
+        icon: "Brain",
+        children: [
+          { label: "Risk Summary", to: "/ops/ai/risk-summary", icon: "ShieldAlert" },
+          { label: "Renewal Forecasting", to: "/ops/ai/renewal-forecasting", icon: "TrendingUp" },
+          { label: "Vacancy Analytics", to: "/ops/ai/vacancy-analytics", icon: "ChartLine" },
+          { label: "ML Leasing Logs", to: "/ops/ai/ml-leasing-logs", icon: "ListTree" },
+        ],
+      },
+      {
+        label: "Legal Tracker",
+        icon: "Scale",
+        children: [
+          { label: "Case Manager", to: "/ops/legal/case-manager", icon: "CaseSensitive" },
+          { label: "Advanced Legal Ops", to: "/ops/legal/advanced", icon: "Gavel" },
+          { label: "Legal Docs", to: "/ops/legal/docs", icon: "FileArchive" },
+          { label: "Attorney Reports", to: "/ops/legal/attorney-reports", icon: "FileSearch" },
+        ],
+      },
+      {
+        label: "Communication",
+        icon: "MessageSquare",
+        children: [
+          { label: "Queue", to: "/ops/comms/queue", icon: "Inbox" },
+          { label: "Templates", to: "/ops/comms/templates", icon: "FileCode2" },
+          { label: "Logs", to: "/ops/comms/logs", icon: "ClipboardList" },
+        ],
+      },
+      {
+        label: "Work Orders",
+        icon: "Wrench",
+        children: [
+          { label: "Work Orders", to: "/ops/work/work-orders", icon: "ClipboardCheck" },
+          { label: "Vendors", to: "/ops/work/vendors", icon: "Handshake" },
+          { label: "Materials & Inventory", to: "/ops/work/materials-inventory", icon: "Boxes" },
+          { label: "Smart Routing", to: "/ops/work/smart-routing", icon: "Workflow" },
+          { label: "AI Intelligence", to: "/ops/work/ai-intelligence", icon: "Sparkles" },
+          { label: "Build/Repair Projects", to: "/ops/work/build-repair-projects", icon: "Hammer" },
+          { label: "Capital Projects", to: "/ops/work/capital-projects", icon: "Factory" },
+        ],
+      },
+      { label: "Reports", to: "/ops/reports", icon: "FileBarChart2" },
+    ],
+  },
+
+  {
+    title: "Growth",
+    items: [
+      { label: "Inventory", to: "/growth/inventory", icon: "Boxes" },
+      { label: "Marketing", to: "/growth/marketing", icon: "Megaphone" },
+    ],
+  },
+
+  {
+    title: "System",
+    items: [
+      { label: "Automation", to: "/system/automation", icon: "Workflow" },
+      { label: "Settings", to: "/system/settings", icon: "Settings" },
+    ],
+  },
+
+  {
+    title: "Data Management",
+    items: [
+      { label: "Sync Audit", to: "/data/sync-audit", icon: "ClipboardList" },
+      { label: "Sync Management", to: "/data/sync-management", icon: "Network" },
+      { label: "Raw Data", to: "/data/raw", icon: "Database" },
+      { label: "Sync Logs", to: "/data/sync-logs", icon: "FileClock" },
+      { label: "System Settings", to: "/data/system-settings", icon: "Settings2" },
+    ],
+  },
+
+  {
+    title: "Investor Portal",
+    items: [
+      { label: "Dashboard", to: "/investor/dashboard", icon: "Gauge" },
+      { label: "Portfolio Analytics", to: "/investor/portfolio-analytics", icon: "LineChart" },
+      { label: "Financial Reports", to: "/investor/financial-reports", icon: "FileSpreadsheet" },
+    ],
+  },
+
+  {
+    title: "Integrations",
+    items: [
+      { label: "Dropbox Files", to: "/integrations/dropbox", icon: "FolderKanban" },
+      { label: "CoreLogic / MLS Grid", to: "/integrations/corelogic", icon: "Globe" },
+      { label: "Field App Link", to: "/integrations/field-app", icon: "Smartphone" },
+      { label: "Deal Room Link", to: "/integrations/deal-room", icon: "Handshake" },
+    ],
+  },
+];
+
+export { sections };
+export default sections;
+
+2) src/components/Sidebar.tsx (replace)
+// src/components/Sidebar.tsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation } from "wouter";
+
+// icons
+import * as Lucide from "lucide-react";
+
+/* Local types (keep file self-contained) */
+type Leaf = { label: string; to: string; icon: string };
+type Group = { label: string; icon: string; children: Leaf[] };
+type Item = Leaf | Group;
+type Section = { title?: string; items: Item[] };
+function isGroup(i: Item): i is Group {
+  // @ts-ignore
+  return i && (i as Group).children && Array.isArray((i as Group).children);
+}
+
+/* Import nav config (robust) */
+import * as Nav from "@/components/layout/navConfig";
+const RAW: any =
+  (Nav as any).sections ??
+  (Nav as any).default ??
+  (Array.isArray(Nav) ? Nav : []);
+
+const SECTIONS: Section[] = Array.isArray(RAW) && RAW.length ? RAW : [
+  { title: "Primary", items: [{ label: "Dashboard", to: "/dashboard", icon: "LayoutDashboard" }] },
+];
+
+/* Util: map icon string -> component */
+const getIcon = (name?: string) => {
+  const key = (name || "").trim();
+  const Comp = (Lucide as any)[key] || Lucide.CircleDot;
+  return Comp as React.ComponentType<any>;
+};
+
+export default function Sidebar() {
+  const [location] = useLocation();
+  const current = location || "/";
+
+  // collapsed & hover flyout state
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem("ecc:nav:collapsed") === "1"; } catch { return false; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("ecc:nav:collapsed", collapsed ? "1" : "0"); } catch {}
+  }, [collapsed]);
+
+  const [hovering, setHovering] = useState(false);
+  const flyoutRef = useRef<HTMLDivElement | null>(null);
+
+  // auto-open groups containing the active child
+  const initialExpanded = useMemo(() => {
+    const map = new Map<string, boolean>();
+    SECTIONS.forEach((section, sIdx) => {
+      (section.items || []).forEach((it, iIdx) => {
+        if (isGroup(it)) {
+          const open = (it.children || []).some((c) => current.startsWith(c.to));
+          map.set(`${sIdx}:${iIdx}`, open);
+        }
+      });
+    });
+    return map;
+  }, [current]);
+
+  const [expanded, setExpanded] = useState(initialExpanded);
+  useEffect(() => setExpanded(initialExpanded), [initialExpanded]);
+
+  const toggle = (key: string) =>
+    setExpanded((prev) => new Map(prev).set(key, !prev.get(key)));
+
+  // sticky pin button: hide when collapsed
+  const PinIcon = collapsed ? Lucide.PinOff : Lucide.Pin;
+
+  // close flyout if we leave sidebar area entirely
+  useEffect(() => {
+    const onDocMove = (e: MouseEvent) => {
+      if (!flyoutRef.current) return;
+      if (!flyoutRef.current.contains(e.target as Node)) {
+        // let hovering be driven by sidebar container’s mouseenter/leave
+      }
+    };
+    document.addEventListener("mousemove", onDocMove);
+    return () => document.removeEventListener("mousemove", onDocMove);
+  }, []);
+
+  return (
+    <aside
+      className={`sidebar ${collapsed ? "collapsed" : ""}`}
+      data-role="sidebar"
+      aria-label="Primary Navigation"
+      onMouseEnter={() => collapsed && setHovering(true)}
+      onMouseLeave={() => collapsed && setHovering(false)}
+    >
+      {/* Brand */}
+      <div className="brand">
+        <img
+          src="/logo.png"
+          alt="Altus Realty Group"
+          className="brand-logo"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        />
+      </div>
+
+      {/* Nav controls (pin) */}
+      <div className="nav-controls">
+        {!collapsed && (
+          <button className="pinBtn" onClick={() => setCollapsed(!collapsed)} title={collapsed ? "Unpin" : "Pin"}>
+            <PinIcon size={16} />
+            <span> {collapsed ? "Unpin" : "Collapse"}</span>
+          </button>
+        )}
+      </div>
+
+      {/* Scrollable nav */}
+      <div className="sidebar-scroll">
+        <nav role="navigation" aria-label="Main">
+          {SECTIONS.map((section, sIdx) => (
+            <div className="section" key={section.title || sIdx}>
+              {section.title && <div className="section-title">{section.title}</div>}
+
+              {(section.items || []).map((it, iIdx) => {
+                const key = `${sIdx}:${iIdx}`;
+
+                if (isGroup(it)) {
+                  const open = expanded.get(key) ?? false;
+                  const ParentIcon = getIcon(it.icon);
+                  return (
+                    <div className="group" key={key}>
+                      <button
+                        type="button"
+                        className={`nav-row group-row ${open ? "open" : ""}`}
+                        aria-expanded={open}
+                        onClick={() => toggle(key)}
+                      >
+                        <span className="icon parent"><ParentIcon size={18} /></span>
+                        <span className="label">{it.label}</span>
+                        <Lucide.ChevronDown className="expand" size={16} />
+                      </button>
+
+                      <div className="leafList" hidden={!open}>
+                        {(it.children || []).map((ch) => {
+                          const active = current.startsWith(ch.to);
+                          const ChildIcon = getIcon(ch.icon);
+                          return (
+                            <Link
+                              key={ch.to}
+                              href={ch.to}
+                              className={`nav-row leaf ${active ? "active" : ""}`}
+                              aria-current={active ? "page" : undefined}
+                            >
+                              <span className="icon child"><ChildIcon size={18} /></span>
+                              <span className="label">{ch.label}</span>
+                              <span className="expand" />
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                }
+
+                // leaf
+                const leaf = it as Leaf;
+                const active = current.startsWith(leaf.to);
+                const LeafIcon = getIcon(leaf.icon);
+                return (
+                  <Link
+                    key={leaf.to}
+                    href={leaf.to}
+                    className={`nav-row leaf ${active ? "active" : ""}`}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    <span className="icon child"><LeafIcon size={18} /></span>
+                    <span className="label">{leaf.label}</span>
+                    <span className="expand" />
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+      </div>
+
+      {/* Collapsed hover flyout */}
+      {collapsed && (
+        <div
+          ref={flyoutRef}
+          className={`flyout ${hovering ? "show" : ""}`}
+          aria-hidden={!hovering}
+        >
+          <div className="flyout-header">
+            <img src="/logo.png" alt="Altus" />
+          </div>
+
+          <div className="flyout-body">
+            {SECTIONS.map((section, sIdx) => (
+              <div className="flyout-section" key={section.title || sIdx}>
+                {section.title && <div className="flyout-title">{section.title}</div>}
+
+                {(section.items || []).map((it, iIdx) => {
+                  if (isGroup(it)) {
+                    const ParentIcon = getIcon(it.icon);
+                    return (
+                      <div className="flyout-group" key={`${sIdx}:${iIdx}`}>
+                        <div className="flyout-parent">
+                          <span className="icon parent"><ParentIcon size={18} /></span>
+                          <span className="label">{it.label}</span>
+                        </div>
+                        <div className="flyout-children">
+                          {(it.children || []).map((ch) => {
+                            const ChildIcon = getIcon(ch.icon);
+                            const active = current.startsWith(ch.to);
+                            return (
+                              <Link
+                                key={ch.to}
+                                href={ch.to}
+                                className={`flyout-leaf ${active ? "active" : ""}`}
+                              >
+                                <span className="icon child"><ChildIcon size={16} /></span>
+                                <span className="label">{ch.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  }
+                  // single leaf in flyout
+                  const leaf = it as Leaf;
+                  const LeafIcon = getIcon(leaf.icon);
+                  const active = current.startsWith(leaf.to);
+                  return (
+                    <Link key={leaf.to} href={leaf.to} className={`flyout-leaf ${active ? "active" : ""}`}>
+                      <span className="icon child"><LeafIcon size={16} /></span>
+                      <span className="label">{leaf.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </aside>
+  );
+}
+
+3) src/styles/_ecc-override.css (replace)
+/* src/styles/_ecc-override.css */
+/* Altus tokens */
+:root{
+  --ecc-sidebar-w: 280px;
+  --ecc-sidebar-w-collapsed: 72px;
+  --ecc-bg: #121417;
+  --ecc-panel: #1a1c1f;
+  --ecc-seam: #2b2d31;
+  --ecc-text: #e5e7eb;     /* brighter for parent/labels */
+  --ecc-dim: #94a3b8;      /* child/icon alt color */
+  --ecc-gold: #ffd400;     /* Altus gold */
+  --ecc-hover: #23262a;
+  --ecc-active: #2d3036;
+  --ecc-radius: 12px;
+  --ecc-flyout-w: 280px;
+  --ecc-shadow: 0 10px 24px rgba(0,0,0,.35);
+}
+
+.sidebar{
+  position: relative;
+  width: var(--ecc-sidebar-w);
+  background: var(--ecc-panel);
+  color: var(--ecc-text);
+  display:flex; flex-direction:column;
+  border-right:1px solid var(--ecc-seam);
+  z-index:10;
+}
+.sidebar.collapsed{ width: var(--ecc-sidebar-w-collapsed); }
+
+/* brand */
+.sidebar .brand{ display:flex; align-items:center; gap:10px; padding:14px 14px 8px; }
+.sidebar .brand-logo{ height:48px; filter: brightness(1.15) drop-shadow(0 2px 6px rgba(255,212,0,.15)); transition: transform .3s ease, opacity .3s ease; }
+.sidebar.collapsed .brand-logo{ height:32px; margin: 6px auto; transform: translateX(-2px); }
+
+/* controls (pin) */
+.sidebar .nav-controls{ padding: 6px 10px; }
+.sidebar .pinBtn{
+  display:inline-flex; align-items:center; gap:8px;
+  font-size:12px; border:1px solid var(--ecc-seam); background:transparent;
+  color:var(--ecc-dim); border-radius: var(--ecc-radius); padding:6px 10px;
+  transition: background .2s;
+}
+.sidebar .pinBtn:hover{ background: var(--ecc-hover); }
+
+/* scroll */
+.sidebar .sidebar-scroll{
+  height: calc(100vh - 110px);
+  overflow-y:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+}
+.sidebar .sidebar-scroll::-webkit-scrollbar{ width:0; height:0; }
+
+/* sections */
+.sidebar .section{ padding:6px 8px; }
+.sidebar .section-title{
+  color:var(--ecc-dim); font-size:11px; letter-spacing:.08em; padding:8px 10px 6px; text-transform:uppercase;
+}
+
+/* nav rows */
+.sidebar .nav-row{
+  display:grid; grid-template-columns:20px minmax(0,1fr) auto; align-items:center; column-gap:12px;
+  padding:10px 12px; border-radius: var(--ecc-radius); text-decoration:none; color:inherit; transition: background .2s;
+}
+.sidebar .nav-row:hover{ background: var(--ecc-hover); }
+.sidebar .leaf.active{ background: var(--ecc-active); box-shadow: inset 0 0 0 2px var(--ecc-gold); }
+.sidebar .icon{ width:20px; min-width:20px; text-align:center; }
+.sidebar .icon.parent{ color: var(--ecc-gold); }
+.sidebar .icon.child{ color: var(--ecc-dim); }
+.sidebar .label{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sidebar .expand{ opacity:.55; }
+
+/* groups */
+.sidebar .group-row{ width:100%; text-align:left; background:transparent; border:0; color:inherit; }
+.sidebar .group-row.open .expand{ transform: rotate(180deg); transition: transform .2s; }
+.sidebar .leafList{ padding-left:22px; }
+
+/* collapsed */
+.sidebar.collapsed .nav-row{
+  grid-template-columns: 22px;
+  justify-items:center;
+  padding-left: calc((var(--ecc-sidebar-w-collapsed) - 22px)/2 - 2px);
+  padding-right: 6px;
+}
+.sidebar.collapsed .label,
+.sidebar.collapsed .expand,
+.sidebar.collapsed .section-title{ display:none; }
+
+/* —— Flyout (collapsed hover) —— */
+.sidebar .flyout{
+  position:absolute; top:0; left: calc(var(--ecc-sidebar-w-collapsed) - 2px);
+  width: var(--ecc-flyout-w);
+  height:100%;
+  background: var(--ecc-panel);
+  border-left:1px solid var(--ecc-seam);
+  box-shadow: var(--ecc-shadow);
+  opacity:0; transform: translateX(-8px); pointer-events:none; transition: opacity .18s ease, transform .18s ease;
+  display:flex; flex-direction:column;
+}
+.sidebar .flyout.show{ opacity:1; transform: translateX(0); pointer-events:auto; }
+.sidebar .flyout-header{ padding:12px; border-bottom:1px solid var(--ecc-seam); display:flex; align-items:center; }
+.sidebar .flyout-header img{ height:36px; filter: brightness(1.2) drop-shadow(0 2px 6px rgba(255,212,0,.2)); }
+.sidebar .flyout-body{ padding:8px; overflow:auto; }
+.sidebar .flyout-title{ color:var(--ecc-dim); font-size:11px; letter-spacing:.08em; text-transform:uppercase; padding:8px 6px; }
+.sidebar .flyout-group{ padding:6px; }
+.sidebar .flyout-parent{ display:flex; align-items:center; gap:10px; padding:6px; }
+.sidebar .flyout-children{ padding-left:24px; }
+.sidebar .flyout-leaf{
+  display:flex; align-items:center; gap:10px; padding:6px 8px; border-radius:10px; text-decoration:none; color:var(--ecc-text);
+}
+.sidebar .flyout-leaf .icon.child{ color: var(--ecc-dim); }
+.sidebar .flyout-leaf:hover{ background: var(--ecc-hover); }
+.sidebar .flyout-leaf.active{ background: var(--ecc-active); box-shadow: inset 0 0 0 2px var(--ecc-gold); }
+
+/* ensure the flyout never spans full screen */
+.sidebar .flyout{ max-width: var(--ecc-flyout-w); }
+
+/* tiny edge separator (prevents “orphaned column” look on content) */
+.sidebar::after{
+  content:""; position:absolute; top:0; right:-1px; width:1px; height:100%; background: var(--ecc-seam);
+}
+
+/* accessibility focus ring */
+.sidebar a:focus, .sidebar button:focus{ outline:2px solid var(--ecc-gold); outline-offset:2px; border-radius:8px; }
+
+/* hide pin when collapsed (button lives above) */
+.sidebar.collapsed .nav-controls{ display:none; }
+
+
+Why this fixes your issues
+• Parent icons now always render (gold), children render (alt-blue).
+• Collapsed hover fly-out is a contained panel (max-width: 280px), not full screen.
+• Text is brighter for legibility, with modern spacing/animations.
+• Logo is larger, brighter, and scales smoothly collapsed/expanded.
+• Pin sits in nav controls (below logo), hidden when collapsed.
+• Accordion + auto-expand on active child already wired.
+• A subtle right edge line prevents the “orphaned column” feel in the content area without touching app layout.
+
+4) src/main.tsx (confirm imports order only)
+import "@/styles/theme.css";
+import "@/styles/app.css";
+import "@/styles/_ecc-override.css"; // must be last
+// ...rest unchanged
+
+Quick QA checklist (what you should see)
+
+Hover the collapsed sidebar → a tidy fly-out no wider than ~280px, with full parents + children.
+
+Parent icons = gold; child icons = cool Altus blue.
+
+Active child shows bold gold bordered highlight; its parent auto-expanded in expanded mode.
+
+Pin button is in the nav controls area (below logo) and persists after refresh.
+
+Logo prominent when expanded, clean & centered when collapsed.
+
+No “full-screen flyout”, no missing parent icons, no dark/illegible text.
+
+Content no longer looks “caught” against the sidebar edge.
