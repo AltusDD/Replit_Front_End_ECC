@@ -1,47 +1,119 @@
+*,*::before,*::after{box-sizing:border-box}
+html,body,#root{height:100%}
+body{margin:0}
 
-:root {
-  /* Altus Brand Token System */
-  --color-background: #1A1A1A;
-  --color-panel: #2A2A2A;
-  --color-panel-2: #333333;
-  --color-panel-3: #1E1E1E;
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #B0B0B0;
-  --color-accent: #FFD700;
-  --color-status-good: #38A169;
-  --color-status-warning: #ECC94B;
-  --color-status-critical: #E53E3E;
+/* ===== Altus Empire — THEME TOKENS (authoritative) ===== */
+:root{
+  /* Neutral charcoal — no brown */
+  --color-background:#1A1A1A;
+  --color-panel:#212121;
+  --color-surface:#1E1E1E;
+  --color-border:#2E2E2E;
 
-  --bg: var(--color-background);
-  --panel: var(--color-panel);
-  --panel-2: var(--color-panel-2);
-  --panel-3: var(--color-panel-3);
-  --text: var(--color-text-primary);
-  --muted: var(--color-text-secondary);
-  --border: #444444;
-  --gold: var(--color-accent);
-  --gold-600: #D6AE2F;
-  --gold-700: #B8921F;
-  --success: var(--color-status-good);
-  --warn: var(--color-status-warning);
-  --danger: var(--color-status-critical);
-  --link: #5CA7FF;
+  --color-text-primary:#FFFFFF;
+  --color-text-secondary:#B0B0B0;
+  --color-text-muted:#9A9A9A;
 
-  --font-family: 'Inter', sans-serif;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.25rem;
-  --font-size-xl: 1.5rem;
+  /* Only accent: Altus Gold */
+  --color-accent:#FFD700;
+  --color-accent-contrast:#111111;
 
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
+  /* Status */
+  --color-status-good:#38A169;
+  --color-status-warning:#ECC94B;
+  --color-status-critical:#E53E3E;
 
-  --sidebar-w: 248px;
-  --collapsed-width: 64px;
-  --collapsed-logo: 48px;
-  --radius: 12px;
-  --border-radius: 8px;
-  --shadow: 0 6px 22px rgba(0,0,0,0.35);
+  /* Effects / radii / spacing / type */
+  --shadow-1:0 1px 2px rgba(0,0,0,.35);
+  --shadow-2:0 8px 24px rgba(0,0,0,.45);
+
+  --radius-xs:6px; --radius-sm:10px; --radius-md:14px; --radius-lg:20px;
+
+  --space-0:0; --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+  --space-5:20px; --space-6:24px; --space-7:32px; --space-8:40px;
+
+  --font-sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  --text-xs:12px; --text-sm:13px; --text-md:14px; --text-lg:16px; --text-xl:20px; --text-2xl:24px;
+  --line-tight:1.15; --line-snug:1.3; --line-normal:1.5;
+
+  /* Semantic aliases */
+  --bg:var(--color-background);
+  --panel:var(--color-panel);
+  --surface:var(--color-surface);
+  --border:var(--color-border);
+  --fg:var(--color-text-primary);
+  --muted:var(--color-text-secondary);
+
+  /* Nav */
+  --nav-bg:var(--panel);
+  --nav-fg:var(--fg);
+  --nav-active:var(--color-accent);
+  --nav-hover:rgba(255,215,0,.12);
+
+  /* Tables */
+  --table-row:var(--panel);
+  --table-row-alt:#1B1B1B;
+  --table-row-hover:#252525;
+  --table-head-bg:#171717;
+  --table-head-fg:var(--fg);
+  --table-border:var(--border);
+
+  /* Focus */
+  --focus-ring:0 0 0 2px rgba(255,215,0,.55);
 }
+
+/* ===== Base ===== */
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--font-sans);
+  font-size:var(--text-md); line-height:var(--line-normal);
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+h1,h2,h3{margin:var(--space-6) 0 var(--space-3); line-height:var(--line-tight); font-weight:600; color:var(--fg)}
+h1{font-size:var(--text-2xl)} h2{font-size:var(--text-xl)} h3{font-size:var(--text-lg)}
+p,ul,ol{color:var(--muted); margin:0 0 var(--space-5)}
+small{font-size:var(--text-xs); color:var(--color-text-muted)}
+a{color:var(--color-accent); text-decoration:none} a:hover{text-decoration:underline}
+
+/* ===== Primitives ===== */
+.panel{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow-1)}
+.pageTitle{font-size:var(--text-xl); margin:var(--space-4) 0; color:var(--fg)}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:var(--surface);color:var(--fg);font-size:var(--text-md);cursor:pointer}
+.btn:hover{background:#2A2A2A}
+.btn:focus-visible{outline:none; box-shadow:var(--focus-ring)}
+.btn-primary{background:var(--color-accent);border-color:var(--color-accent);color:var(--color-accent-contrast)}
+.btn-primary:hover{filter:brightness(.95)}
+
+/* ===== Nav ===== */
+.sidebar{position:sticky;top:0;background:var(--nav-bg);color:var(--nav-fg);border-right:1px solid var(--border);z-index:1000}
+.sidebar a{display:flex;align-items:center;padding:10px 12px;color:var(--nav-fg);border-radius:6px}
+.sidebar a:hover{background:var(--nav-hover)}
+.sidebar a[aria-current="page"]{color:var(--nav-active)}
+
+/* ===== Tables ===== */
+.table{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);
+  border:1px solid var(--table-border);border-radius:var(--radius-md);overflow:hidden;font-size:var(--text-sm)}
+.table thead th{text-align:left;padding:10px 12px;background:var(--table-head-bg);color:var(--table-head-fg);
+  border-bottom:1px solid var(--table-border);font-weight:600}
+.table tbody td{padding:10px 12px;border-bottom:1px solid var(--table-border);color:var(--muted)}
+.table tbody tr:nth-child(odd){background:var(--table-row)}
+.table tbody tr:nth-child(even){background:var(--table-row-alt)}
+.table tbody tr:hover{background:var(--table-row-hover)}
+.table caption{caption-side:top;padding:8px 12px;color:var(--color-text-muted);text-align:left}
+
+/* ===== Forms ===== */
+input,select,textarea{background:var(--surface);color:var(--fg);border:1px solid var(--border);
+  border-radius:var(--radius-xs);padding:8px 10px;font-size:var(--text-md)}
+input::placeholder,textarea::placeholder{color:var(--color-text-muted)}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;box-shadow:var(--focus-ring);border-color:var(--color-accent)}
+
+/* ===== Scrollbar ===== */
+*{scrollbar-color:var(--border) transparent; scrollbar-width:thin}
+*::-webkit-scrollbar{height:10px;width:10px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;border:2px solid transparent;background-clip:padding-box}
+
+/* ===== A11y ===== */
+:focus-visible{outline:none;box-shadow:var(--focus-ring);border-radius:6px}

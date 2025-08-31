@@ -1,47 +1,16 @@
+/* ===== Altus Empire — app.css (glue only) ===== */
+.app-shell{min-height:100%;display:grid;grid-template-columns:280px 1fr;gap:16px}
+.content{max-width:1720px;margin:0 auto;padding:16px}
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Emergency clamp: hero/header logos should never exceed 96px */
+header img, .header-logo img, .content > img:first-of-type,
+main > img:first-of-type, .panel > img:first-of-type { max-height:96px; width:auto; height:auto; display:block }
 
-:root {
-  --color-background: #1A1A1A;
-  --color-panel: #2A2A2A;
-  --color-panel-2: #333333;
-  --color-panel-3: #1E1E1E;
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #B0B0B0;
-  --color-accent: #FFD700;
-  --color-status-good: #38A169;
-  --color-status-warning: #ECC94B;
-  --color-status-critical: #E53E3E;
-  --border: #444444;
-  --font-family: 'Inter', sans-serif;
-}
+/* Generic media safety */
+.content img:not(.media), .panel img:not(.media) { max-width:100%; height:auto }
 
-body {
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
-  font-family: var(--font-family);
-}
+/* Table breathing room */
+.table-wrap{margin-top:12px}
+.panel.padded{padding:12px}
 
-/* Table Enhancements */
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-thead {
-  background-color: var(--color-panel-2);
-  color: var(--color-text-secondary);
-  font-weight: bold;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-}
-
-tbody tr:nth-child(even) {
-  background-color: var(--color-panel-3);
-}
-
-tbody tr:hover {
-  background-color: var(--color-panel-2);
-}
+.hidden{display:none!important}
