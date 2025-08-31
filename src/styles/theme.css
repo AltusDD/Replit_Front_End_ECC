@@ -221,16 +221,19 @@ p  { color: var(--muted-1); }
   margin: 0;
 }
 
-/* ECC Sidebar Styling */
+/* Modern Sidebar Styling */
 :root {
-  --ecc-sidebar-w: 280px;
-  --ecc-sidebar-w-collapsed: 76px;
-  --ecc-bg: #0e0f11;
-  --ecc-panel: #121316;
-  --ecc-seam: #222428;
-  --ecc-text: #d7d9dd;
-  --ecc-dim: #a6a8ac;
-  --ecc-gold: #ffd400;
+  --ecc-sidebar-w: 260px;
+  --ecc-sidebar-w-collapsed: 64px;
+  --ecc-bg: #121417;
+  --ecc-panel: #1a1c1f;
+  --ecc-seam: #2b2d31;
+  --ecc-text: #e4e6eb;
+  --ecc-dim: #8a8d93;
+  --ecc-gold: #f0c000;
+  --ecc-hover: #23262a;
+  --ecc-active: #2d3036;
+  --ecc-radius: 12px;
 }
 
 .sidebar {
@@ -240,6 +243,7 @@ p  { color: var(--muted-1); }
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--ecc-seam);
+  font-family: system-ui, sans-serif;
 }
 .sidebar.collapsed { width: var(--ecc-sidebar-w-collapsed); }
 
@@ -247,19 +251,29 @@ p  { color: var(--muted-1); }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 12px 8px;
+  padding: 16px 14px 10px;
 }
-.sidebar .brand-logo { height: 42px; width: auto; }
+.sidebar .brand-logo {
+  height: 40px;
+  width: auto;
+}
 .sidebar .pinBtn {
   margin-left: auto;
   font-size: 12px;
   border: 1px solid var(--ecc-seam);
   background: transparent;
   color: var(--ecc-dim);
-  border-radius: 10px;
+  border-radius: var(--ecc-radius);
   padding: 4px 10px;
+  transition: background 0.2s;
 }
-.sidebar.collapsed .pinBtn { font-size: 10px; padding: 2px 8px; }
+.sidebar .pinBtn:hover {
+  background: var(--ecc-hover);
+}
+.sidebar.collapsed .pinBtn {
+  font-size: 10px;
+  padding: 2px 8px;
+}
 
 .sidebar .sidebar-scroll {
   height: calc(100vh - 70px);
@@ -270,52 +284,84 @@ p  { color: var(--muted-1); }
 }
 .sidebar .sidebar-scroll::-webkit-scrollbar { width: 0; height: 0; }
 
-.sidebar .section { padding: 6px 8px; }
+.sidebar .section {
+  padding: 8px;
+}
 .sidebar .section-title {
   color: var(--ecc-dim);
-  font-size: 12px;
-  letter-spacing: .08em;
-  padding: 8px 10px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 6px 12px;
 }
 
 .sidebar .nav-row {
   display: grid;
-  grid-template-columns: 18px minmax(0,1fr) auto;
+  grid-template-columns: 20px minmax(0,1fr) auto;
   align-items: center;
-  column-gap: 10px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  column-gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--ecc-radius);
   text-decoration: none;
   color: inherit;
+  transition: background 0.2s;
 }
-.sidebar .nav-row:hover { background: #17181b; }
+.sidebar .nav-row:hover {
+  background: var(--ecc-hover);
+}
 .sidebar .leaf.active {
-  background: #17181b;
+  background: var(--ecc-active);
   box-shadow: inset 0 0 0 2px var(--ecc-gold);
 }
-.sidebar .icon { width: 18px; min-width: 18px; text-align: center; color: var(--ecc-gold); }
-.sidebar .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sidebar .expand { opacity: .5; }
+.sidebar .icon {
+  width: 18px;
+  min-width: 18px;
+  text-align: center;
+  color: var(--ecc-gold);
+}
+.sidebar .label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar .expand {
+  opacity: 0.4;
+}
 
 .sidebar .group-row {
   width: 100%;
   text-align: left;
   background: transparent;
-  border: 0;
+  border: none;
   color: inherit;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 20px minmax(0,1fr) auto;
+  align-items: center;
+  border-radius: var(--ecc-radius);
 }
-.sidebar .leafList { padding-left: 20px; }
+.sidebar .group-row:hover {
+  background: var(--ecc-hover);
+}
+.sidebar .leafList {
+  padding-left: 18px;
+}
 
 .sidebar.collapsed .nav-row {
-  grid-template-columns: 18px;
+  grid-template-columns: 20px;
   justify-items: center;
-  padding-left: calc((var(--ecc-sidebar-w-collapsed) - 18px) / 2 - 2px);
-  padding-right: 8px;
+  padding-left: calc((var(--ecc-sidebar-w-collapsed) - 20px) / 2 - 2px);
+  padding-right: 6px;
 }
 .sidebar.collapsed .label,
 .sidebar.collapsed .expand,
-.sidebar.collapsed .section-title { display: none; }
-.sidebar.collapsed .leafList { display: none; }
+.sidebar.collapsed .section-title {
+  display: none;
+}
+.sidebar.collapsed .leafList {
+  display: none;
+}
 
 /* Small badge chip */
 .badge { display:inline-flex; align-items:center; gap:8px; padding:2px 8px; border-radius:999px; border:1px solid var(--border-1); font-size:12px; }
