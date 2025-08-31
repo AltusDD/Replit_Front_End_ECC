@@ -1,168 +1,102 @@
-export type Leaf = { label: string, path: string };
-export type Group = { label: string, items: Leaf[] };
-export type Section = { label: string, groups: Group[] };
+export type Leaf = { label: string; path: string };
+export type Group = { label: string; items: Leaf[] };
+export type Section = { label: string; groups: Group[] };
 
-export const NAV: Section[] = [
-  {
-    label: "Primary",
-    groups: [
-      { label: "Dashboard", items: [ { label: "Dashboard", path: "/dashboard" } ] }
-    ]
-  },
-  {
-    label: "Portfolio",
-    groups: [
-      { label: "Assets", items: [
-        { label: "Properties", path: "/properties" },
-        { label: "Units", path: "/units" },
-        { label: "Leases", path: "/leases" },
-        { label: "Tenants", path: "/tenants" },
-        { label: "Owners", path: "/owners" }
-      ]}
-    ]
-  },
-  {
-    label: "Cards",
-    groups: [
-      { label: "Workflow", items: [
-        { label: "Inbox", path: "/inbox" },
-        { label: "Tasks", path: "/tasks" },
-        { label: "Opportunities", path: "/opportunities" },
-        { label: "Anomalies", path: "/anomalies" },
-        { label: "Next Best Action", path: "/next-best-action" }
-      ]}
-    ]
-  },
-  {
-    label: "Accounting",
-    groups: [
-      { label: "Operations", items: [
-        { label: "AR", path: "/ar" },
-        { label: "AP", path: "/ap" },
-        { label: "GL", path: "/gl" },
-        { label: "Banking", path: "/banking" },
-        { label: "Close", path: "/close" },
-        { label: "Reporting", path: "/reporting" },
-        { label: "Budgets", path: "/budgets" },
-        { label: "Taxes", path: "/taxes" },
-        { label: "Vendors", path: "/vendors-accounting" },
-        { label: "Receipts", path: "/receipts" },
-        { label: "Allocations", path: "/allocations" },
-        { label: "Audit Trail", path: "/audit-trail" }
-      ]}
-    ]
-  },
-  {
-    label: "Leasing",
-    groups: [
-      { label: "Process", items: [
-        { label: "Applications", path: "/applications" },
-        { label: "Screening", path: "/screening" },
-        { label: "Renewals", path: "/renewals" },
-        { label: "Move-in/Move-out", path: "/move" },
-        { label: "Delinquencies", path: "/delinquencies" }
-      ]}
-    ]
-  },
-  {
-    label: "Maintenance",
-    groups: [
-      { label: "Operations", items: [
-        { label: "Work Orders", path: "/work-orders" },
-        { label: "Turns", path: "/turns" },
-        { label: "CapEx", path: "/capex" },
-        { label: "Vendors", path: "/vendors-maintenance" }
-      ]}
-    ]
-  },
-  {
-    label: "Compliance",
-    groups: [
-      { label: "Legal", items: [
-        { label: "Docs", path: "/docs" },
-        { label: "Inspections", path: "/inspections" },
-        { label: "Insurance", path: "/insurance" },
-        { label: "Licenses", path: "/licenses" }
-      ]}
-    ]
-  },
-  {
-    label: "Vendors",
-    groups: [
-      { label: "Management", items: [
-        { label: "Directory", path: "/directory" },
-        { label: "Onboarding", path: "/onboarding" },
-        { label: "Scorecards", path: "/scorecards" }
-      ]}
-    ]
-  },
-  {
-    label: "Growth",
-    groups: [
-      { label: "Pipeline", items: [
-        { label: "Acquisitions", path: "/acquisitions" },
-        { label: "Marketing", path: "/marketing" }
-      ]}
-    ]
-  },
-  {
-    label: "System",
-    groups: [
-      { label: "Admin", items: [
-        { label: "Settings", path: "/settings" },
-        { label: "Users & Roles", path: "/users" }
-      ]}
-    ]
-  },
-  {
-    label: "Data",
-    groups: [
-      { label: "Management", items: [
-        { label: "Imports", path: "/imports" },
-        { label: "Exports", path: "/exports" },
-        { label: "Dedupe", path: "/dedupe" },
-        { label: "Archives", path: "/archives" },
-        { label: "Audit Logs", path: "/audit-logs" }
-      ]}
-    ]
-  },
-  {
-    label: "Investor",
-    groups: [
-      { label: "Portal", items: [
-        { label: "Overview", path: "/investor-overview" },
-        { label: "Distributions", path: "/distributions" },
-        { label: "Statements", path: "/statements" }
-      ]}
-    ]
-  },
-  {
-    label: "Integrations",
-    groups: [
-      { label: "Connections", items: [
-        { label: "DoorLoop", path: "/doorloop" },
-        { label: "QuickBooks", path: "/quickbooks" },
-        { label: "Azure", path: "/azure" },
-        { label: "Webhooks", path: "/webhooks" }
-      ]}
-    ]
-  },
-  {
-    label: "Tools",
-    groups: [
-      { label: "System", items: [
-        { label: "API Probe", path: "/api-probe" }
-      ]}
-    ]
-  }
+/** Canonical NAV (expanded) */
+const NAV: Section[] = [
+  // Dashboard
+  { label: "Dashboard", groups: [
+    { label: "Dashboard", items: [
+      { label: "Home", path: "/dashboard" },
+    ]},
+  ]},
+
+  // Portfolio V3
+  { label: "Portfolio V3", groups: [
+    { label: "Portfolio", items: [
+      { label: "Properties", path: "/portfolio/properties" },
+      { label: "Units",      path: "/portfolio/units" },
+      { label: "Leases",     path: "/portfolio/leases" },
+      { label: "Tenants",    path: "/portfolio/tenants" },
+      { label: "Owners",     path: "/portfolio/owners" },
+    ]},
+  ]},
+
+  // Cards
+  { label: "Cards", groups: [
+    { label: "Cards", items: [
+      { label: "Overview",      path: "/wip/cards/overview" },
+      { label: "Delinquencies", path: "/wip/cards/delinquencies" },
+      { label: "Vacancy",       path: "/wip/cards/vacancy" },
+      { label: "Turnover",      path: "/wip/cards/turnover" },
+      { label: "Work Orders",   path: "/wip/cards/work-orders" },
+      { label: "Revenue",       path: "/wip/cards/revenue" },
+      { label: "Expenses",      path: "/wip/cards/expenses" },
+    ]},
+  ]},
+
+  // Operations
+  { label: "Operations", groups: [
+    { label: "Accounting", items: [
+      { label: "AR",       path: "/wip/operations/accounting/ar" },
+      { label: "AP",       path: "/wip/operations/accounting/ap" },
+      { label: "Banking",  path: "/wip/operations/accounting/banking" },
+      { label: "Reports",  path: "/wip/operations/accounting/reports" },
+    ]},
+    { label: "Leasing", items: [
+      { label: "Applications", path: "/wip/operations/leasing/apps" },
+      { label: "Renewals",     path: "/wip/operations/leasing/renewals" },
+      { label: "Move-ins",     path: "/wip/operations/leasing/moveins" },
+      { label: "Move-outs",    path: "/wip/operations/leasing/moveouts" },
+    ]},
+    { label: "Maintenance", items: [
+      { label: "Work Orders", path: "/wip/operations/maintenance/work-orders" },
+      { label: "Vendors",     path: "/wip/operations/maintenance/vendors" },
+      { label: "Schedules",   path: "/wip/operations/maintenance/schedules" },
+    ]},
+    { label: "Marketing", items: [
+      { label: "Listings",  path: "/wip/operations/marketing/listings" },
+      { label: "Leads",     path: "/wip/operations/marketing/leads" },
+      { label: "Campaigns", path: "/wip/operations/marketing/campaigns" },
+    ]},
+  ]},
+
+  // AI Intelligence
+  { label: "AI Intelligence", groups: [
+    { label: "AI", items: [
+      { label: "Insights",         path: "/wip/ai/insights" },
+      { label: "Anomalies",        path: "/wip/ai/anomalies" },
+      { label: "Recommendations",  path: "/wip/ai/recommendations" },
+      { label: "Forecasts",        path: "/wip/ai/forecasts" },
+    ]},
+  ]},
+
+  // Work Management
+  { label: "Work Management", groups: [
+    { label: "Work", items: [
+      { label: "Tasks",    path: "/wip/work/tasks" },
+      { label: "Projects", path: "/wip/work/projects" },
+      { label: "Sprints",  path: "/wip/work/sprints" },
+      { label: "Backlog",  path: "/wip/work/backlog" },
+    ]},
+  ]},
+
+  // Legal
+  { label: "Legal", groups: [
+    { label: "Legal", items: [
+      { label: "Documents",  path: "/wip/legal/documents" },
+      { label: "Notices",    path: "/wip/legal/notices" },
+      { label: "Evictions",  path: "/wip/legal/evictions" },
+      { label: "Compliance", path: "/wip/legal/compliance" },
+    ]},
+  ]},
+
+  // Tools
+  { label: "Tools", groups: [
+    { label: "Tools", items: [
+      { label: "Probe", path: "/tools/probe" },
+    ]},
+  ]},
 ];
 
-export function flattenLeaves() {
-  const leaves: Leaf[] = [];
-  for (const sec of NAV) {
-    for (const grp of sec.groups) {
-      grp.items.forEach(leaf => leaves.push(leaf));
-    }
-  }
-  return leaves;
-}
+export default NAV;

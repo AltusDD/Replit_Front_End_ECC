@@ -1,16 +1,2 @@
-/* ===== Altus Empire — app.css (glue only) ===== */
-.app-shell{min-height:100%;display:grid;grid-template-columns:280px 1fr;gap:16px}
-.content{max-width:1720px;margin:0 auto;padding:16px}
-
-/* Emergency clamp: hero/header logos should never exceed 96px */
-header img, .header-logo img, .content > img:first-of-type,
-main > img:first-of-type, .panel > img:first-of-type { max-height:96px; width:auto; height:auto; display:block }
-
-/* Generic media safety */
-.content img:not(.media), .panel img:not(.media) { max-width:100%; height:auto }
-
-/* Table breathing room */
-.table-wrap{margin-top:12px}
-.panel.padded{padding:12px}
-
-.hidden{display:none!important}
+/* thin glue only (keep minimal) */
+.pageTitle{font-size:26px;font-weight:800;margin-bottom:16px}

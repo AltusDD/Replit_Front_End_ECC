@@ -1,0 +1,195 @@
+set -euo pipefail
+echo "== snapshot =="
+mkdir -p snapshots && zip -qry "snapshots/ecc_genesis_polish_$(date +%s).zip" src || true
+
+########################################
+# 1) Sidebar (child icons visible when collapsed + tooltips + auto-open active)
+########################################
+cat > src/components/Sidebar.tsx <<'TSX'
+import React,{useEffect,useMemo,useState} from "react";
+import { Link, useLocation } from "wouter";
+import NAV,{Section,Group,Leaf} from "@/components/layout/navConfig";
+import {
+  Home, LayoutDashboard, Building2, Layers, KeyRound, Users, User,
+  FileText, Calculator, TrendingUp, Wrench, Database, PieChart, Bot, Gavel,
+  ClipboardList, FolderKanban, ListChecks, Repeat2, ClipboardCheck, Megaphone,
+  Store, ChevronDown, ChevronRight
+} from "lucide-react";
+
+const mapIcon = (label:string) => {
+  const k = label.toLowerCase().replace(/\s+/g,"");
+  return (
+    k==="home" || k==="dashboard" ? Home :
+    k==="portfolio" ? LayoutDashboard :
+    k==="properties" ? Building2 :
+    k==="units" ? Layers :
+    k==="leases" ? KeyRound :
+    k==="tenants" ? Users :
+    k==="owners" ? User :
+    k==="cards" || k==="documents" ? FileText :
+    k==="accounting" ? Calculator :
+    k==="marketing" ? TrendingUp :
+    k==="tools" || k==="probe" ? Wrench :
+    k==="data" ? Database :
+    k==="analytics" ? PieChart :
+    k==="ai" || k==="aiintelligence" || k==="insights" ? Bot :
+    k==="legal" || k==="compliance" ? Gavel :
+    k==="tasks" ? ClipboardList :
+    k==="projects" ? FolderKanban :
+    k==="sprints" ? Repeat2 :
+    k==="backlog" ? ListChecks :
+    k==="workorders" || k==="work-orders" ? ClipboardCheck :
+    k==="listings" || k==="leads" || k==="campaigns" ? Megaphone :
+    k==="vendors" || k==="banking" || k==="store" ? Store :
+    FileText
+  );
+};
+
+export default function Sidebar(){
+  const [loc] = useLocation();
+  const [collapsed,setCollapsed]=useState<boolean>(()=>{ try{return localStorage.getItem("nav:collapsed")==="1"}catch{return false}});
+  useEffect(()=>{ try{localStorage.setItem("nav:collapsed",collapsed?"1":"0")}catch{} },[collapsed]);
+
+  // figure out which group contains the active route so we can auto-open it
+  const activeGroupKey = useMemo(()=>{
+    for(const section of NAV){
+      for(const g of section.groups){
+        for(const leaf of (g.items||[])){
+          if (leaf.path === loc) return `${section.label}/${g.label}`;
+        }
+      }
+    }
+    return "";
+  },[loc]);
+
+  const [open,setOpen]=useState<Record<string,boolean>>(()=>{try{return JSON.parse(localStorage.getItem("nav:open")||"{}")}catch{return{}}});
+  useEffect(()=>{
+    if (activeGroupKey && !open[activeGroupKey]) {
+      setOpen(s=>({...s, [activeGroupKey]: true}));
+    }
+  },[activeGroupKey]); // auto-open once when route changes
+  useEffect(()=>{ try{localStorage.setItem("nav:open",JSON.stringify(open))}catch{} },[open]);
+
+  const toggle=(k:string)=>setOpen(s=>({...s,[k]:!s[k]}));
+
+  return(
+    <aside className={`sidebar ${collapsed?"collapsed":""}`} data-ecc="sidebar">
+      <div className="brand">
+        <div className="logo"><img src="/logo.png" alt="Altus" /></div>
+        {/* no title text */}
+        <button className="pinBtn" onClick={()=>setCollapsed(!collapsed)} aria-label={collapsed?"Unpin":"Pin"}>
+          {collapsed?"»":"«"}
+        </button>
+      </div>
+
+      <nav className="nav">
+        {NAV.map((section:Section)=>(
+          <div className="section" key={section.label}>
+            <div className="group-label">{section.label}</div>
+            {section.groups.map((g:Group)=>{
+              const key=`${section.label}/${g.label}`;
+              const has=g.items?.length>0; const isOpen=!!open[key] || !has;
+              const GroupIcon = mapIcon(g.label);
+              return (
+                <div className="group" key={key}>
+                  <button className="group-row" data-tip={g.label} onClick={()=> has && toggle(key)}>
+                    <GroupIcon size={16} className="icon" />
+                    <span className="lbl">{g.label}</span>
+                    {has ? <span className="expand">{isOpen?<ChevronDown size={14}/>:<ChevronRight size={14}/>}</span> : null}
+                  </button>
+
+                  {/* In collapsed mode we still render the children as ICONS so users can see where they are */}
+                  {has && (
+                    <div className={`leafList ${isOpen?"open":""}`}>
+                      {g.items.map((leaf:Leaf)=>{
+                        const active=loc===leaf.path;
+                        const LeafIcon = mapIcon(leaf.label);
+                        return (
+                          <Link href={leaf.path} key={leaf.path}>
+                            <a className={`leaf ${active?"active":""}`} aria-current={active?"page":undefined} data-tip={leaf.label}>
+                              <LeafIcon size={14} className="icon" />
+                              <span className="lbl">{leaf.label}</span>
+                            </a>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      <div className="sidebar-footer">
+        <button className="pinBtn" onClick={()=>setCollapsed(!collapsed)}>{collapsed?"Unpin":"Pin"}</button>
+      </div>
+    </aside>
+  );
+}
+TSX
+
+########################################
+# 2) Genesis palette + collapse/fly-out UX + tooltips + child icons in rail
+########################################
+cat > src/styles/theme.css <<'CSS'
+/* ECC THEME — GENESIS */
+:root{
+  --gold:#FFD700;
+
+  /* Neutral blacks — no blue/brown cast */
+  --bg:#0A0A0A;
+  --panel:#0E0E0E;
+  --panel-2:#101010;
+  --panel-3:#0C0C0C;
+  --border:#1A1A1A;
+
+  --text:#F0F0F0;
+  --muted:#B3B3B3;
+
+  --success:#16A34A; --warn:#E6B800; --danger:#E53E3E;
+
+  --sidebar-w:280px;
+  --sidebar-w-collapsed:70px; /* a touch wider so icons + active marker breathe */
+}
+
+/* Base */
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial}
+a{color:var(--gold);text-decoration:none} a:hover{text-decoration:underline}
+.pageTitle{font-size:26px;font-weight:800;margin-bottom:16px}
+
+/* Panels / Tables — truly neutral */
+.panel{background:var(--panel)!important;border:1px solid var(--border);border-radius:12px}
+.table{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel)!important;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:13px}
+.table thead th{text-align:left;padding:10px 12px;background:#121212;color:var(--text);border-bottom:1px solid var(--border);font-weight:600}
+.table tbody td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--muted)}
+.table tbody tr:nth-child(odd){background:#0E0E0E!important}
+.table tbody tr:nth-child(even){background:#101010!important}
+.table tbody tr:hover{background:#171717!important}
+.table caption{caption-side:top;padding:8px 12px;color:#9A9A9A;text-align:left}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:auto 1fr;min-height:100vh}
+.main{padding:24px 28px;min-width:0}
+
+/* Sidebar */
+.sidebar{
+  width:var(--sidebar-w);
+  background:var(--panel-3);
+  border-right:1px solid var(--border);
+  padding:16px 10px;
+  position:sticky; top:0; height:100vh;
+  overflow:hidden; overflow-y:auto; /* allow tooltips outside */
+  transition: width .18s ease, box-shadow .18s ease;
+}
+.sidebar.collapsed{ width:var(--sidebar-w-collapsed); }
+.sidebar.collapsed:hover{ width:var(--sidebar-w); box-shadow:0 8px 24px rgba(0,0,0,.35); z-index:10; }
+
+.brand{display:flex;align-items:center;gap:8px;padding:10px 8px 12px;border-bottom:1px solid var(--border);margin-bottom:10px}
+.brand .logo{width:52px;height:52px;display:grid;place-items:center;overflow:hidden;border-radius:10px}
+.brand .logo img{max-height:52px;width:auto;height:auto;display:block}
+.brand .title{display:none}
+.pinBtn{all:unset;cursor:pointer;color:var(--muted);padding:6px 8px;border-radius:8px;margin-left:auto

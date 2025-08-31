@@ -11,6 +11,10 @@ externalPort = 5000
 localPort = 5001
 externalPort = 80
 
+[[ports]]
+localPort = 5173
+externalPort = 5173
+
 [nix]
 channel = "stable-25_05"
-packages = ["unzip"]
+packages = ["unzip", "zip"]
