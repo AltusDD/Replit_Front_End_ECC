@@ -25,7 +25,44 @@ html[data-sidebar-mounted="1"] #root > div:not(.sidebar) {
 
 /* ——— Ensure tokens have fallbacks ——— */
 .sidebar { width: var(--ecc-sidebar-w, 280px); }
-.sidebar.collapsed { width: var(--ecc-sidebar-w-collapsed, 72px); }
+/* Make sure anchors never go purple/blue in the sidebar */
+.sidebar a,
+.sidebar a:link,
+.sidebar a:visited,
+.sidebar a:active {
+  color: var(--ecc-text) !important;
+  text-decoration: none !important;
+}
+
+/* Collapsed should be icon-only — titles/labels must hide */
+.sidebar.collapsed .section-title,
+.sidebar.collapsed .label,
+.sidebar.collapsed .expand {
+  display: none !important;
+}
+
+/* Icon color discipline  */
+.sidebar .nav-row .icon.parent { color: var(--ecc-gold) !important; }
+.sidebar .nav-row .icon.child  { color: var(--ecc-dim)  !important; }
+
+/* Rail expand button look/placement (only visible when collapsed) */
+.sidebar .railExpand{
+  position: absolute;
+  bottom: 16px; left: 50%;
+  transform: translateX(-50%);
+  width: 38px; height: 38px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--ecc-seam);
+  background: var(--ecc-hover);
+  color: var(--ecc-text);
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.25);
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+  z-index: 70;
+}
+.sidebar .railExpand:hover{ transform: translateX(-50%) scale(1.05); }
+.sidebar:not(.collapsed) .railExpand{ display:none; }  /* hide when expanded */
 
 /* ——— Sidebar must be fixed & above content ——— */
 .sidebar {
@@ -37,7 +74,7 @@ html[data-sidebar-mounted="1"] #root > div:not(.sidebar) {
   background: var(--ecc-panel);
 }
 
-/* ——— Reserve space for sidebar across common wrappers (high specificity) ——— */
+/* ——— Reserve space for sidebar across common wrappers ——— */
 html[data-sidebar-mounted="1"] body,
 html[data-sidebar-mounted="1"] body[data-theme],
 html[data-sidebar-mounted="1"] #root,

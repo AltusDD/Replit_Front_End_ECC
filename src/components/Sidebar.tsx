@@ -243,33 +243,34 @@ export default function Sidebar() {
       )}
     {/* ——— Local, sidebar-scoped overrides to beat global/visited rules ——— */}
     <style
-      // This is safe: scoped to .sidebar only and sits after global CSS
+      // loads after global CSS; scoped to .sidebar; safe & surgical
       dangerouslySetInnerHTML={{
         __html: `
+        /* kill purple visited links & any theme link colors inside sidebar */
         .sidebar a,
         .sidebar a:link,
         .sidebar a:visited,
         .sidebar a:active,
         .sidebar .nav-row,
-        .sidebar .nav-row:visited,
-        .sidebar .leaf,
-        .sidebar .leaf:visited {
+        .sidebar .nav-row:visited {
           color: var(--ecc-text) !important;
           text-decoration: none !important;
         }
-        .sidebar .nav-row .label,
-        .sidebar .group-row .label {
-          color: var(--ecc-text) !important;
-        }
-        .sidebar .icon.parent { color: var(--ecc-gold) !important; }
-        .sidebar .icon.child  { color: var(--ecc-dim)  !important; }
 
-        /* Collapsed should be icon-only */
+        /* collapsed = icon-only */
         .sidebar.collapsed .section-title,
         .sidebar.collapsed .label,
-        .sidebar.collapsed .expand { display: none !important; }
+        .sidebar.collapsed .expand {
+          display: none !important;
+        }
 
-        /* Bounded fly-out; never full screen */
+        /* highest specificity so icons keep our colors */
+        .sidebar .nav-row .icon.parent { color: var(--ecc-gold) !important; }
+        .sidebar .nav-row .icon.child  { color: var(--ecc-dim) !important; }
+        .sidebar .flyout .icon.parent  { color: var(--ecc-gold) !important; }
+        .sidebar .flyout .icon.child   { color: var(--ecc-dim)  !important; }
+
+        /* fly-out always bounded */
         .sidebar .flyout { max-width: var(--ecc-flyout-w, 280px) !important; }
       `,
       }}
