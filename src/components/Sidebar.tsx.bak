@@ -1,222 +1,123 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "wouter";
 
-/* ──────────────────────────────────────────────────────────────
-   NAV NORMALIZER
-   Accepts a bunch of possible export styles and returns Section[]
-   ────────────────────────────────────────────────────────────── */
+import React, { useState } from 'react';
+import { Link, useLocation } from 'wouter';
+import { ChevronDown, ChevronRight, Menu, X } from 'lucide-react';
+import navConfig from './layout/navConfig';
+import Logo from './layout/Logo';
 
-type Leaf = { label: string; to: string };
-type Group = { label: string; children: Leaf[] };
-type Item = Leaf | Group;
-type Section = { title?: string; items: Item[] };
-
-function isGroup(i: Item): i is Group {
-  return (i as Group)?.children !== undefined;
-}
-
-// SAFETY FALLBACK – used if no valid export is found
-const DEFAULT_SECTIONS: Section[] = [
-  {
-    title: "Dashboard",
-    items: [{ label: "Home", to: "/dashboard" }],
-  },
-  {
-    title: "Portfolio V3",
-    items: [
-      { label: "Properties", to: "/portfolio/properties" },
-      { label: "Units", to: "/portfolio/units" },
-      { label: "Leases", to: "/portfolio/leases" },
-      { label: "Tenants", to: "/portfolio/tenants" },
-      { label: "Owners", to: "/portfolio/owners" },
-    ],
-  },
-  {
-    title: "Cards",
-    items: [{ label: "Overview", to: "/cards/overview" }],
-  },
-];
-
-function normalizeSections(raw: any): Section[] {
-  try {
-    // direct array
-    if (Array.isArray(raw)) return raw as Section[];
-
-    // { default: [...] }
-    if (raw?.default && Array.isArray(raw.default)) return raw.default as Section[];
-
-    // { sections: [...] }
-    if (raw?.sections && Array.isArray(raw.sections)) return raw.sections as Section[];
-
-    // { nav: [...] }  or { items: [...] }  (wrap into unnamed section)
-    if (raw?.nav && Array.isArray(raw.nav)) return [{ items: raw.nav as Item[] }];
-    if (raw?.items && Array.isArray(raw.items)) return [{ items: raw.items as Item[] }];
-
-    // If the module re-exports multiple named arrays, pick the first that looks right
-    for (const k of Object.keys(raw || {})) {
-      const v = (raw as any)[k];
-      if (Array.isArray(v) && v.length && (v[0]?.items || v[0]?.label)) {
-        // v is already Section[] OR it's Item[] – normalize to Section[]
-        return Array.isArray(v[0]?.items) ? (v as Section[]) : [{ items: v as Item[] }];
-      }
-    }
-  } catch {
-    // ignore and fall through
-  }
-  return [];
-}
-
-/* Try to import your real nav config (any export shape).
-   IMPORTANT: keep this import path; it’s where your expanded config lives. */
-import * as NavModule from "@/components/layout/navConfig";
-
-// Final, safe Sections array
-const SECTIONS: Section[] = (() => {
-  const fromModule = normalizeSections(NavModule);
-  return fromModule.length ? fromModule : DEFAULT_SECTIONS;
-})();
-
-/* ──────────────────────────────────────────────────────────────
-   SIDEBAR
-   ────────────────────────────────────────────────────────────── */
-
-export default function Sidebar() {
+const Sidebar: React.FC = () => {
   const [location] = useLocation();
-  const current = location || "/";
+  const [collapsed, setCollapsed] = useState(false);
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
 
-  // Persist collapsed (icon-only) state
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem("ecc:nav:collapsed") === "1";
-    } catch {
-      return false;
+  const toggleSection = (section: string) => {
+    const newOpenSections = new Set(openSections);
+    if (newOpenSections.has(section)) {
+      newOpenSections.delete(section);
+    } else {
+      newOpenSections.add(section);
     }
-  });
-  useEffect(() => {
-    try {
-      localStorage.setItem("ecc:nav:collapsed", collapsed ? "1" : "0");
-    } catch {}
-  }, [collapsed]);
+    setOpenSections(newOpenSections);
+  };
 
-  // Auto-open any group that contains the active child
-  const initialExpanded = useMemo(() => {
-    const map = new Map<string, boolean>();
-    SECTIONS.forEach((section, sIdx) => {
-      (section.items || []).forEach((item, iIdx) => {
-        if (isGroup(item)) {
-          const anyActive = (item.children || []).some((ch) =>
-            current.startsWith(ch.to)
-          );
-          map.set(`${sIdx}:${iIdx}`, !!anyActive);
-        }
-      });
+  const isActive = (path: string) => {
+    if (!location || !path) return false;
+    return location === path || location.startsWith(path + '/');
+  };
+
+  const renderNavItems = () => {
+    if (!navConfig || !Array.isArray(navConfig)) {
+      return <div className="text-red-500">Navigation config error</div>;
+    }
+
+    return navConfig.map((section, sectionIndex) => {
+      if (!section || typeof section !== 'object') {
+        return null;
+      }
+
+      const { label, items, path } = section;
+      
+      if (!label) {
+        return null;
+      }
+
+      // Handle leaf nodes (no children)
+      if (path && (!items || items.length === 0)) {
+        return (
+          <div key={`section-${sectionIndex}-${label}`} className="nav-item">
+            <Link href={path}>
+              <div className={`nav-link ${isActive(path) ? 'active' : ''}`}>
+                {!collapsed && <span className="nav-label">{label}</span>}
+              </div>
+            </Link>
+          </div>
+        );
+      }
+
+      // Handle sections with children
+      const isOpen = openSections.has(label);
+      
+      return (
+        <div key={`section-${sectionIndex}-${label}`} className="nav-section">
+          <div 
+            className="nav-section-header"
+            onClick={() => toggleSection(label)}
+          >
+            <div className="nav-section-title">
+              {!collapsed && <span>{label}</span>}
+            </div>
+            {!collapsed && (
+              <div className="nav-section-icon">
+                {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              </div>
+            )}
+          </div>
+          
+          {isOpen && !collapsed && items && Array.isArray(items) && (
+            <div className="nav-section-items">
+              {items.map((item, itemIndex) => {
+                if (!item || typeof item !== 'object' || !item.label || !item.path) {
+                  return null;
+                }
+                
+                return (
+                  <div key={`item-${sectionIndex}-${itemIndex}-${item.label}`} className="nav-item">
+                    <Link href={item.path}>
+                      <div className={`nav-link ${isActive(item.path) ? 'active' : ''}`}>
+                        <span className="nav-label">{item.label}</span>
+                      </div>
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
     });
-    return map;
-  }, [current]);
-
-  const [expanded, setExpanded] = useState<Map<string, boolean>>(initialExpanded);
-  useEffect(() => setExpanded(initialExpanded), [initialExpanded]);
-
-  const toggle = (key: string) =>
-    setExpanded((prev) => new Map(prev).set(key, !prev.get(key)));
+  };
 
   return (
-    <aside
-      className={`sidebar ${collapsed ? "collapsed" : ""}`}
-      data-role="sidebar"
-      aria-label="Primary"
-    >
-      {/* Brand / Pin */}
-      <div className="brand" style={{ padding: "16px 14px 8px" }}>
-        <img
-          src="/logo.png"
-          alt="Altus Realty Group"
-          style={{ height: "48px", width: "auto" }}
-          onError={(e) => {
-            (e.currentTarget.style.display = "none");
-          }}
-        />
-        <button
-          className="pinBtn"
-          style={{ float: "right", marginTop: "6px" }}
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+      <div className="sidebar-header">
+        <div className="sidebar-logo">
+          <Logo collapsed={collapsed} />
+        </div>
+        <button 
+          className="sidebar-toggle"
           onClick={() => setCollapsed(!collapsed)}
         >
-          {collapsed ? "Unpin" : "Pin"}
+          {collapsed ? <Menu size={20} /> : <X size={20} />}
         </button>
       </div>
-
-      {/* Scroll container – wheel works; scrollbar hidden by CSS */}
-      <div className="sidebar-scroll">
-        <nav role="navigation" data-nav aria-label="Main">
-          {SECTIONS.map((section, sIdx) => (
-            <div key={section.title || sIdx}>
-              {section.title && (
-                <div className="section-title">{section.title}</div>
-              )}
-
-              <div>
-                {(section.items || []).map((it, iIdx) => {
-                  const key = `${sIdx}:${iIdx}`;
-
-                  if (isGroup(it)) {
-                    const open = expanded.get(key) ?? false;
-                    return (
-                      <div key={key}>
-                        <button
-                          type="button"
-                          className="nav-row group-row"
-                          aria-expanded={open}
-                          onClick={() => toggle(key)}
-                        >
-                          <span className="icon">•</span>
-                          <span className="label">{it.label}</span>
-                          <span className="expand" aria-hidden>
-                            ▾
-                          </span>
-                        </button>
-
-                        <div className="leafList" hidden={!open}>
-                          {(it.children || []).map((ch) => {
-                            const active = current.startsWith(ch.to);
-                            return (
-                              <Link
-                                key={ch.to}
-                                href={ch.to}
-                                className={`nav-row leaf ${active ? "active" : ""}`}
-                                aria-current={active ? "page" : undefined}
-                              >
-                                <span className="icon">•</span>
-                                <span className="label">{ch.label}</span>
-                                <span className="expand" />
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  // Leaf
-                  const leaf = it as Leaf;
-                  const active = current.startsWith(leaf.to);
-                  return (
-                    <Link
-                      key={leaf.to}
-                      href={leaf.to}
-                      className={`nav-row leaf ${active ? "active" : ""}`}
-                      aria-current={active ? "page" : undefined}
-                    >
-                      <span className="icon">•</span>
-                      <span className="label">{leaf.label}</span>
-                      <span className="expand" />
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </nav>
-      </div>
+      
+      <nav className="sidebar-nav">
+        <div className="nav-content">
+          {renderNavItems()}
+        </div>
+      </nav>
     </aside>
   );
-}
+};
+
+export default Sidebar;
