@@ -278,9 +278,10 @@ p  { color: var(--muted-1); }
 }
 
 .sidebar .brand-logo img {
-  height: 36px;
+  height: 48px;
   width: auto;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease-in-out;
+  filter: brightness(1.2) contrast(1.1);
 }
 
 .sidebar.collapsed .brand-logo {
@@ -288,7 +289,7 @@ p  { color: var(--muted-1); }
 }
 
 .sidebar.collapsed .brand-logo img {
-  height: 28px;
+  height: 32px;
 }
 
 /* Footer with Pin/Expand Button */
@@ -357,12 +358,18 @@ p  { color: var(--muted-1); }
   background: var(--ecc-hover);
 }
 
+.sidebar .section-header:focus {
+  outline: 2px solid #ffd400;
+  outline-offset: 2px;
+  background: var(--ecc-hover);
+}
+
 .sidebar .section-title {
-  color: var(--ecc-text-dim);
+  color: #e5e7eb;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 1px;
 }
 
 .sidebar .section-chevron {
@@ -454,9 +461,15 @@ p  { color: var(--muted-1); }
 .sidebar .nav-item:hover {
   background: var(--ecc-hover);
 }
+
+.sidebar .nav-item:focus {
+  outline: 2px solid #ffd400;
+  outline-offset: 2px;
+}
 .sidebar .nav-item.active {
   background: var(--ecc-active);
   border: 1px solid var(--ecc-active-border);
+  border-left: 3px solid #ffd400;
   box-shadow: 0 0 0 1px var(--ecc-active-border);
 }
 
@@ -492,6 +505,7 @@ p  { color: var(--muted-1); }
   text-overflow: ellipsis;
   font-size: 14px;
   font-weight: 500;
+  color: #e5e7eb;
 }
 
 /* Collapsed Icon Navigation */
@@ -516,6 +530,12 @@ p  { color: var(--muted-1); }
 
 .sidebar .nav-item-icon:hover {
   background: var(--ecc-hover);
+  transform: scale(1.05);
+}
+
+.sidebar .nav-item-icon:focus {
+  outline: 2px solid #ffd400;
+  outline-offset: 2px;
 }
 
 .sidebar .nav-item-icon.active {
@@ -537,12 +557,13 @@ p  { color: var(--muted-1); }
   height: 24px;
 }
 
-/* Fly-out Menu */
+/* Fly-out Menu - Genesis Level Polish */
 .sidebar .flyout-menu {
   position: absolute;
   left: 100%;
   top: 0;
-  width: 240px;
+  width: 280px;
+  max-width: 280px;
   background: var(--ecc-bg-primary);
   border: 1px solid var(--ecc-border);
   border-radius: 12px;
@@ -550,15 +571,17 @@ p  { color: var(--muted-1); }
   z-index: 1000;
   margin-left: 8px;
   opacity: 0;
-  transform: translateX(-8px);
-  animation: flyoutIn 0.2s ease forwards;
+  transform: translateX(-12px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
-@keyframes flyoutIn {
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.sidebar .nav-section.hovered .flyout-menu {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
 }
 
 .sidebar .flyout-header {
@@ -575,9 +598,11 @@ p  { color: var(--muted-1); }
 }
 
 .sidebar .flyout-title {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
-  color: var(--ecc-text-primary);
+  color: #e5e7eb;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .sidebar .flyout-items {
@@ -591,9 +616,10 @@ p  { color: var(--muted-1); }
   padding: 10px 12px;
   border-radius: 8px;
   text-decoration: none;
-  color: var(--ecc-text-primary);
+  color: #e5e7eb;
   transition: all 0.2s ease;
   font-size: 14px;
+  font-weight: 500;
 }
 
 .sidebar .flyout-item:hover {
@@ -604,6 +630,7 @@ p  { color: var(--muted-1); }
   background: var(--ecc-active);
   color: #ffd400;
   border: 1px solid var(--ecc-active-border);
+  border-left: 3px solid #ffd400;
 }
 
 /* Flyout Groups */
@@ -618,7 +645,7 @@ p  { color: var(--muted-1); }
   padding: 10px 12px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--ecc-text-primary);
+  color: #e5e7eb;
   border-bottom: 1px solid var(--ecc-border);
   margin-bottom: 6px;
 }
@@ -649,6 +676,7 @@ p  { color: var(--muted-1); }
   background: var(--ecc-active);
   color: #ffd400;
   border: 1px solid var(--ecc-active-border);
+  border-left: 3px solid #ffd400;
 }
 
 .sidebar.collapsed .nav-items {
@@ -687,6 +715,9 @@ p  { color: var(--muted-1); }
 .layout-main {
   margin-left: var(--ecc-sidebar-w);
   transition: margin-left 0.3s ease;
+  min-width: 0;
+  padding: 20px;
+  background: var(--ecc-bg-primary);
 }
 
 .layout-main.sidebar-collapsed {

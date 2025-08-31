@@ -150,6 +150,8 @@ export default function Sidebar() {
         href={item.to}
         className={`nav-item ${active ? "active" : ""} ${isNested ? "nested" : ""}`}
         aria-current={active ? "page" : undefined}
+        tabIndex={0}
+        role="menuitem"
       >
         <div className="nav-icon">
           <DynamicIcon 
@@ -172,9 +174,16 @@ export default function Sidebar() {
         <div
           className={`group-header ${hasActiveChild ? "has-active" : ""}`}
           onClick={() => toggleGroup(group.label)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              toggleGroup(group.label);
+            }
+          }}
           role="button"
           tabIndex={0}
           aria-expanded={isExpanded}
+          aria-controls={`group-${group.label.replace(/\s+/g, '-').toLowerCase()}`}
         >
           <div className="group-icon">
             <DynamicIcon 
@@ -191,7 +200,12 @@ export default function Sidebar() {
           />
         </div>
         {isExpanded && (
-          <div className="group-items">
+          <div 
+            className="group-items"
+            id={`group-${group.label.replace(/\s+/g, '-').toLowerCase()}`}
+            role="region"
+            aria-labelledby={`group-header-${group.label.replace(/\s+/g, '-').toLowerCase()}`}
+          >
             {group.items.map(item => renderNavItem(item, true))}
           </div>
         )}
@@ -233,9 +247,16 @@ export default function Sidebar() {
                   <div
                     className="section-header"
                     onClick={() => toggleSection(section.title)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleSection(section.title);
+                      }
+                    }}
                     role="button"
                     tabIndex={0}
                     aria-expanded={isExpanded}
+                    aria-controls={`section-${section.title.replace(/\s+/g, '-').toLowerCase()}`}
                   >
                     <span className="section-title">{section.title}</span>
                     <DynamicIcon 
@@ -248,7 +269,12 @@ export default function Sidebar() {
 
                 {/* Navigation Items - Regular items and groups */}
                 {(!collapsed && isExpanded) && (
-                  <div className="nav-items">
+                  <div 
+                    className="nav-items"
+                    id={`section-${section.title.replace(/\s+/g, '-').toLowerCase()}`}
+                    role="region"
+                    aria-labelledby={`header-${section.title.replace(/\s+/g, '-').toLowerCase()}`}
+                  >
                     {section.items.map((item) => {
                       if ('to' in item) {
                         return renderNavItem(item);
@@ -385,8 +411,15 @@ export default function Sidebar() {
           <button
             className="pin-button"
             onClick={toggleCollapsed}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleCollapsed();
+              }
+            }}
             aria-label="Collapse sidebar"
             title="Collapse sidebar"
+            tabIndex={0}
           >
             <DynamicIcon name="Pin" size={14} />
             <span>Collapse</span>
@@ -395,8 +428,15 @@ export default function Sidebar() {
           <button
             className="expand-button"
             onClick={toggleCollapsed}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleCollapsed();
+              }
+            }}
             aria-label="Expand sidebar"
             title="Expand sidebar"
+            tabIndex={0}
           >
             <DynamicIcon name="ChevronRight" size={16} />
           </button>
