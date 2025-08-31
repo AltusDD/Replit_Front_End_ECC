@@ -502,4 +502,8 @@ html[data-sidebar-mounted="1"] body {
   .layout {
     margin-left: 0;
   }
+
+/* === ECC Kill-Switch: show only the canonical rail === */
+.sidebar:not([data-ecc="primary"]) { display: none !important; visibility: hidden !important; }
+
 }

@@ -86,6 +86,7 @@ export default function Sidebar() {
     <aside
       className={`sidebar ${collapsed ? "collapsed" : ""}`}
       aria-label="Primary Navigation"
+      data-ecc="primary"
       data-ecc="primary"            // 👈 add this
       onMouseEnter={() => collapsed && setHovering(true)}
       onMouseLeave={() => collapsed && setHovering(false)}
@@ -276,6 +277,18 @@ export default function Sidebar() {
       }}
     />
 
+    {/* ECC inline style overrides */}
+  <style>
+    {`
+      .sidebar[data-ecc="primary"] a,
+      .sidebar[data-ecc="primary"] a:link,
+      .sidebar[data-ecc="primary"] a:visited,
+      .sidebar[data-ecc="primary"] a:active {
+        color: var(--ecc-text) !important;
+        text-decoration: none !important;
+      }
+    `}
+  </style>
     </aside>
   );
 }
