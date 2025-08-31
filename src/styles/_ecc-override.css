@@ -72,6 +72,33 @@ scrollbar-width: none;
 
 .sidebar .section { margin: 10px 0 14px; }
 .sidebar .section-title { font-size: 12px; letter-spacing: .08em; color: #a3a7b3; margin: 8px 6px 8px; text-transform: uppercase; }
+
+/* --- Brand header with logo box --- */
+.ecc-sidebar__brand { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 4px 2px; }
+.ecc-logo-box {
+  width: 180px; max-width: 100%;
+  height: 44px; /* controls the visual height */
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.02);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.ecc-logo { width: 100%; height: 100%; object-fit: contain; }
+.ecc-logo-mini {
+  display: none;
+  width: 28px; height: 28px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.12);
+  display: none; align-items: center; justify-content: center;
+  font-weight: 700; color: #f0d9a6;
+  background: rgba(255,255,255,.03);
+}
+
+/* Show compact mark when collapsed */
+.ecc--collapsed .ecc-logo { display: none; }
+.ecc--collapsed .ecc-logo-mini { display: flex; }
+
 .sidebar .section-items { display: flex; flex-direction: column; gap: 4px; }
 
 .sidebar .row { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius: 12px; }
