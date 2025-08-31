@@ -1,121 +1,193 @@
-import React,{useEffect,useMemo,useState} from "react";
-import { Link, useLocation } from "wouter";
-import NAV,{Section,Group,Leaf} from "@/lib/navConfig";
-import {
-  Home, LayoutDashboard, Building2, Layers, KeyRound, Users, User,
-  FileText, Calculator, TrendingUp, Wrench, Database, PieChart, Bot, Gavel,
-  ClipboardList, FolderKanban, ListChecks, Repeat2, ClipboardCheck, Megaphone,
-  Store, ChevronDown, ChevronRight
-} from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 
-const mapIcon = (label:string) => {
-  const k = label.toLowerCase().replace(/\s+/g,"");
+/** Get current path safely, even if Sidebar is rendered outside <Router> */
+function useSafePath() {
+  try {
+    // Will throw if no Router context:
+    const loc = useLocation();
+    return loc.pathname;
+  } catch {
+    return typeof window !== "undefined" ? window.location.pathname : "/";
+  }
+}
+
+/** Simple helper to check "active" by prefix */
+function isActive(path: string, href: string) {
+  if (!href || href === "/") return path === "/";
+  return path === href || path.startsWith(href + "/");
+}
+
+/** Nav model (edit labels/paths here if you need to) */
+const NAV = [
+  {
+    title: "Dashboard",
+    items: [{ label: "Home", to: "/dashboard" }],
+  },
+  {
+    title: "Portfolio V3",
+    items: [
+      { label: "Properties", to: "/portfolio/properties" },
+      { label: "Units", to: "/portfolio/units" },
+      { label: "Leases", to: "/portfolio/leases" },
+      { label: "Tenants", to: "/portfolio/tenants" },
+      { label: "Owners", to: "/portfolio/owners" },
+    ],
+  },
+  {
+    title: "Cards",
+    items: [
+      { label: "Overview", to: "/cards/overview" },
+      { label: "Delinquencies", to: "/cards/delinquencies" },
+      { label: "Vacancy", to: "/cards/vacancy" },
+    ],
+  },
+  {
+    title: "Operations",
+    items: [
+      { label: "Accounting", to: "/ops/accounting" },
+      { label: "Leasing", to: "/ops/leasing" },
+      { label: "Maintenance", to: "/ops/maintenance" },
+      { label: "Marketing", to: "/ops/marketing" },
+    ],
+  },
+];
+
+export default function Sidebar() {
+  const path = useSafePath();
+
+  // collapsed state persisted
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("ecc:nav:collapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("ecc:nav:collapsed", collapsed ? "1" : "0");
+      // also flip app-shell grid
+      const shell = document.querySelector(".app-shell");
+      if (shell) shell.classList.toggle("collapsed", collapsed);
+    } catch {}
+  }, [collapsed]);
+
+  // which groups are expanded (persist, but default to true)
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    try {
+      const raw = localStorage.getItem("ecc:nav:open");
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("ecc:nav:open", JSON.stringify(openGroups));
+    } catch {}
+  }, [openGroups]);
+
+  // mark groups that contain current route (used to show child icons when collapsed)
+  const currentGroupIndex = useMemo(() => {
+    return NAV.findIndex((g) => g.items.some((it) => isActive(path, it.to)));
+  }, [path]);
+
+  const toggleGroup = (idx: number) =>
+    setOpenGroups((p) => ({ ...p, [idx]: !p[idx] }));
+
   return (
-    k==="home" || k==="dashboard" ? Home :
-    k==="portfolio" ? LayoutDashboard :
-    k==="properties" ? Building2 :
-    k==="units" ? Layers :
-    k==="leases" ? KeyRound :
-    k==="tenants" ? Users :
-    k==="owners" ? User :
-    k==="cards" || k==="documents" ? FileText :
-    k==="accounting" ? Calculator :
-    k==="marketing" ? TrendingUp :
-    k==="tools" || k==="probe" ? Wrench :
-    k==="data" ? Database :
-    k==="analytics" ? PieChart :
-    k==="ai" || k==="aiintelligence" || k==="insights" ? Bot :
-    k==="legal" || k==="compliance" ? Gavel :
-    k==="tasks" ? ClipboardList :
-    k==="projects" ? FolderKanban :
-    k==="sprints" ? Repeat2 :
-    k==="backlog" ? ListChecks :
-    k==="workorders" || k==="work-orders" ? ClipboardCheck :
-    k==="listings" || k==="leads" || k==="campaigns" ? Megaphone :
-    k==="vendors" || k==="banking" || k==="store" ? Store :
-    FileText
-  );
-};
-
-export default function Sidebar(){
-  const [loc] = useLocation();
-  const [collapsed,setCollapsed]=useState<boolean>(()=>{ try{return localStorage.getItem("nav:collapsed")==="1"}catch{return false}});
-  useEffect(()=>{ try{localStorage.setItem("nav:collapsed",collapsed?"1":"0")}catch{} },[collapsed]);
-
-  // figure out which group contains the active route so we can auto-open it
-  const activeGroupKey = useMemo(()=>{
-    for(const section of NAV){
-      for(const g of section.groups){
-        for(const leaf of (g.items||[])){
-          if (leaf.path === loc) return `${section.label}/${g.label}`;
-        }
-      }
-    }
-    return "";
-  },[loc]);
-
-  const [open,setOpen]=useState<Record<string,boolean>>(()=>{try{return JSON.parse(localStorage.getItem("nav:open")||"{}")}catch{return{}}});
-  useEffect(()=>{
-    if (activeGroupKey && !open[activeGroupKey]) {
-      setOpen(s=>({...s, [activeGroupKey]: true}));
-    }
-  },[activeGroupKey]); // auto-open once when route changes
-  useEffect(()=>{ try{localStorage.setItem("nav:open",JSON.stringify(open))}catch{} },[open]);
-
-  const toggle=(k:string)=>setOpen(s=>({...s,[k]:!s[k]}));
-
-  return(
-    <aside className={`sidebar ${collapsed?"collapsed":""}`} data-ecc="sidebar">
+    <aside
+      className={`sidebar ${collapsed ? "collapsed" : ""}`}
+      data-role="sidebar"
+      aria-label="Primary"
+    >
+      {/* Brand */}
       <div className="brand">
-        <div className="logo"><img src="/logo.png" alt="Altus" /></div>
-        {/* no title text */}
-        <button className="pinBtn" onClick={()=>setCollapsed(!collapsed)} aria-label={collapsed?"Unpin":"Pin"}>
-          {collapsed?"»":"«"}
+        {/* Put your logo asset in /public if needed; the class handles sizing */}
+        <img
+          className="brand-logo"
+          src="/brand/altus-logo.png"
+          alt="Altus Realty Group"
+        />
+        {/* Pin/Unpin lives here so it stays near the brand; hidden in collapsed */}
+        <button
+          className="pinBtn hide-when-collapsed"
+          onClick={() => setCollapsed((v) => !v)}
+          aria-pressed={collapsed ? "true" : "false"}
+        >
+          {collapsed ? "Unpin" : "Pin"}
         </button>
       </div>
 
-      <nav className="nav">
-        {NAV.map((section:Section)=>(
-          <div className="section" key={section.label}>
-            <div className="group-label">{section.label}</div>
-            {section.groups.map((g:Group)=>{
-              const key=`${section.label}/${g.label}`;
-              const has=g.items?.length>0; const isOpen=!!open[key] || !has;
-              const GroupIcon = mapIcon(g.label);
-              return (
-                <div className="group" key={key}>
-                  <button className="group-row" data-tip={g.label} onClick={()=> has && toggle(key)}>
-                    <GroupIcon size={16} className="icon" />
-                    <span className="lbl">{g.label}</span>
-                    {has ? <span className="expand">{isOpen?<ChevronDown size={14}/>:<ChevronRight size={14}/>}</span> : null}
-                  </button>
+      {/* Scroll container */}
+      <div className="sidebar-scroll" role="navigation" data-nav>
+        {NAV.map((group, idx) => {
+          const expanded = openGroups[idx] ?? true;
+          const hasCurrentChild = idx === currentGroupIndex;
 
-                  {/* In collapsed mode we still render the children as ICONS so users can see where they are */}
-                  {has && (
-                    <div className={`leafList ${isOpen?"open":""}`}>
-                      {g.items.map((leaf:Leaf)=>{
-                        const active=loc===leaf.path;
-                        const LeafIcon = mapIcon(leaf.label);
-                        return (
-                          <Link href={leaf.path} key={leaf.path}>
-                            <a className={`leaf ${active?"active":""}`} aria-current={active?"page":undefined} data-tip={leaf.label}>
-                              <LeafIcon size={14} className="icon" />
-                              <span className="lbl">{leaf.label}</span>
-                            </a>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
+          return (
+            <div key={group.title}>
+              <div
+                className="section-title"
+                aria-label={`${group.title} section`}
+              >
+                {group.title}
+              </div>
+
+              {/* Group header row (click to expand/collapse) */}
+              <div
+                className="nav-row group-row"
+                role="button"
+                aria-expanded={expanded ? "true" : "false"}
+                data-current-child={hasCurrentChild ? "true" : "false"}
+                onClick={() => toggleGroup(idx)}
+              >
+                <span className="icon">•</span>
+                <span className="label">{group.title}</span>
+                <span className="chev">›</span>
+              </div>
+
+              {/* Children */}
+              {expanded && (
+                <div className="leafList">
+                  {group.items.map((it) => {
+                    const active = isActive(path, it.to);
+                    const El: any = Link ?? "a"; // fallback if router absent
+                    const common = (
+                      <>
+                        <span className="icon bullet">•</span>
+                        <span className="label">{it.label}</span>
+                      </>
+                    );
+                    return (
+                      <El
+                        key={it.to}
+                        to={El === Link ? it.to : undefined}
+                        href={El !== Link ? it.to : undefined}
+                        className={`nav-row leaf ${active ? "active" : ""}`}
+                        aria-current={active ? "page" : undefined}
+                      >
+                        {common}
+                      </El>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
+      {/* Footer (kept simple) */}
       <div className="sidebar-footer">
-        <button className="pinBtn" onClick={()=>setCollapsed(!collapsed)}>{collapsed?"Unpin":"Pin"}</button>
+        <button
+          className="pinBtn"
+          onClick={() => setCollapsed((v) => !v)}
+          aria-pressed={collapsed ? "true" : "false"}
+        >
+          {collapsed ? "Unpin" : "Pin"}
+        </button>
       </div>
     </aside>
   );

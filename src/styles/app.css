@@ -1,2 +1,233 @@
-/* thin glue only (keep minimal) */
-.pageTitle{font-size:26px;font-weight:800;margin-bottom:16px}
+/* ================================
+   ECC — App Styles (FULL FILE)
+   ================================ */
+
+/* --------- Theme tokens --------- */
+:root {
+  /* Surfaces */
+  --bg: #0a0a0a;            /* page background (true black) */
+  --panel: #121212;         /* cards/tables/panels */
+  --panel-2: #171717;
+  --border-1: #2a2a2a;
+
+  /* Type */
+  --fg: #ffffff;
+  --muted-1: #c7c7c7;
+  --muted-2: #9fa3a7;
+
+  /* Brand */
+  --gold: #ffd700;
+  --success: #38a169;
+  --warn: #ecc94b;
+  --danger: #e53e3e;
+
+  /* Sidebar */
+  --nav-bg: #0a0a0a;        /* match page (no brown tint) */
+  --nav-fg: var(--fg);
+  --nav-muted: #b5b5b5;
+  --nav-ring: color-mix(in srgb, var(--gold) 36%, transparent);
+  --nav-item-bg: #141414;
+  --nav-item-bg-hover: #171717;
+
+  /* Layout sizes */
+  --sidebar-w: 280px;
+  --sidebar-w-collapsed: 76px;
+
+  /* Row layout */
+  --nav-icon: 18px;
+  --nav-gap: 10px;
+  --nav-pad-x: 12px;
+}
+
+/* --------- Base reset --------- */
+html, body, #root { height: 100%; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3 { margin: 0 0 12px; line-height: 1.15; }
+h1 { font-size: 40px; font-weight: 800; letter-spacing: .3px; }
+h2 { font-size: 24px; font-weight: 700; }
+p  { color: var(--muted-1); }
+
+/* --------- App shell --------- */
+.app-shell {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  overflow: hidden;
+}
+.app-shell.collapsed {
+  grid-template-columns: var(--sidebar-w-collapsed) 1fr;
+}
+
+/* === Sidebar === */
+.sidebar {
+  background: var(--nav-bg) !important;
+  border-right: 1px solid var(--border-1);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.sidebar.collapsed .hide-when-collapsed { display: none !important; }
+.sidebar.collapsed .only-collapsed { display: initial !important; }
+.only-collapsed { display: none; }
+
+.sidebar .brand {
+  padding: 18px 16px 12px 16px;
+  border-bottom: 1px solid var(--border-1);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+}
+.brand .brand-logo {
+  display: block;
+  max-width: 190px;
+  max-height: 64px;
+  width: auto; height: auto;
+  object-fit: contain;
+  filter: brightness(1.15) drop-shadow(0 0 8px rgba(255,215,0,.15));
+}
+.sidebar.collapsed .brand {
+  padding: 12px 0 10px;
+  justify-content: center;
+}
+.sidebar.collapsed .brand .brand-logo {
+  max-width: 48px; max-height: 48px;
+}
+
+/* independent scroll area (scrollbar hidden) */
+.sidebar-scroll {
+  height: calc(100vh - 86px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;          /* Firefox */
+}
+.sidebar-scroll::-webkit-scrollbar { display: none; } /* WebKit */
+
+/* Sections */
+.section-title {
+  color: var(--nav-muted);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .6px;
+  padding: 14px 16px 8px;
+  text-transform: uppercase;
+}
+
+/* Row grid: icon | label | chevron — prevents left scoot */
+.nav-row {
+  display: grid;
+  grid-template-columns: var(--nav-icon) minmax(0,1fr) auto;
+  align-items: center;
+  column-gap: var(--nav-gap);
+  padding: 10px var(--nav-pad-x);
+  margin: 4px 8px;
+  border-radius: 10px;
+  color: var(--nav-fg);
+  text-decoration: none;
+  user-select: none;
+}
+.nav-row .icon { width: var(--nav-icon); min-width: var(--nav-icon); height: 18px; display: inline-flex; align-items: center; justify-content: center; color: var(--gold); }
+.nav-row .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* hover/active */
+.nav-row:hover { background: var(--nav-item-bg-hover); }
+.nav-row.active {
+  background: var(--nav-item-bg);
+  outline: 2px solid var(--nav-ring);
+}
+
+/* Group header */
+.group-row { cursor: pointer; }
+.group-row .chev { opacity: .8; }
+.group-row[aria-expanded="true"] .chev { transform: rotate(90deg); }
+
+/* Children list */
+.leafList { padding-left: 34px; display: grid; gap: 2px; }
+.leaf { text-decoration: none; color: var(--nav-fg); }
+.leaf.active .icon { color: var(--gold); }
+.leaf .bullet { color: var(--gold); font-size: 14px; }
+
+/* Collapsed (icon-only) */
+.sidebar.collapsed .nav-row {
+  grid-template-columns: var(--nav-icon);
+  justify-items: center;
+  margin: 6px 6px;
+  padding: 10px;
+}
+.sidebar.collapsed .nav-row > :not(:first-child) { display: none; }
+.sidebar.collapsed .section-title { text-align: center; padding: 10px 0 4px; }
+
+/* Collapsed: show CURRENT group’s child icons beside parent */
+.sidebar.collapsed .leafList { display: none; }
+.sidebar.collapsed .group-row[data-current-child="true"] + .leafList,
+.sidebar.collapsed .group-row[aria-expanded="true"] + .leafList {
+  display: flex;
+  gap: 6px;
+  padding-left: 0;
+  flex-wrap: wrap;
+  margin: 0 6px 8px;
+}
+.sidebar.collapsed .leaf { display: inline-flex; }
+.sidebar.collapsed .leaf .label { display: none; } /* labels return on hover fly-out */
+
+/* Fly-out on hover when collapsed (restore full grid) */
+.sidebar.collapsed:hover .nav-row {
+  grid-template-columns: var(--nav-icon) minmax(0,1fr) auto;
+  justify-items: start;
+  padding: 10px var(--nav-pad-x);
+}
+.sidebar.collapsed:hover .nav-row > :not(:first-child) { display: initial; }
+.sidebar.collapsed:hover .leafList {
+  display: grid; gap: 2px; padding-left: 34px;
+}
+
+/* Footer / pin button */
+.sidebar-footer {
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--border-1);
+}
+.pinBtn {
+  width: 100%;
+  border: 1px solid var(--border-1);
+  background: #111;
+  color: var(--muted-1);
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.sidebar.collapsed .pinBtn { display: none; } /* hide pin in icon-only mode */
+
+/* --------- Panels & Tables (light touch) --------- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border-1);
+  border-radius: 14px;
+}
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+.table thead th {
+  text-align: left;
+  color: var(--muted-2);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-1);
+  padding: 12px 16px;
+  position: sticky; top: 0; background: var(--panel);
+}
+.table tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-1);
+}
+.table tr:hover td { background: var(--panel-2); }

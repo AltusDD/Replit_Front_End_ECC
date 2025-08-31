@@ -1,10 +1,13 @@
 import React from "react";
 import Sidebar from "@/components/Sidebar";
-export default function Layout({children}:{children:React.ReactNode}){
+
+type Props = { children: React.ReactNode };
+
+export default function Layout({ children }: Props) {
   return (
-    <div className="layout">
-      <Sidebar/>
-      <main className="main">{children}</main>
+    <div className="app-shell">
+      <Sidebar />
+      <main style={{ height: "100vh", overflow: "auto" }}>{children}</main>
     </div>
   );
 }

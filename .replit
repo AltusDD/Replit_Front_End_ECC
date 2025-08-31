@@ -17,4 +17,4 @@ externalPort = 5173
 
 [nix]
 channel = "stable-25_05"
-packages = ["unzip", "zip"]
+packages = ["unzip", "zip", "try"]
