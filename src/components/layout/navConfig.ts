@@ -6,7 +6,9 @@ export type Section = { title?: string; items: Item[] };
 const sections: Section[] = [
   {
     title: "Dashboard",
-    items: [{ label: "Home", to: "/dashboard", icon: "LayoutDashboard" }],
+    items: [
+      { label: "Home", to: "/dashboard", icon: "LayoutDashboard" }
+    ],
   },
   {
     title: "Portfolio V3",

@@ -221,78 +221,86 @@ p  { color: var(--muted-1); }
   margin: 0;
 }
 
-/* Modern Iconic Sidebar Styling */
+/* Sidebar Scoped Styling - Altus Design System */
 :root {
-  --ecc-sidebar-w: 260px;
-  --ecc-sidebar-w-collapsed: 64px;
-  --ecc-bg: #121417;
-  --ecc-panel: #1a1c1f;
-  --ecc-seam: #2b2d31;
-  --ecc-text: #e4e6eb;
-  --ecc-dim: #8a8d93;
+  --ecc-sidebar-w: 280px;
+  --ecc-sidebar-w-collapsed: 72px;
+  --ecc-bg-primary: #121417;
+  --ecc-bg-secondary: #1a1c1f;
+  --ecc-border: #2b2d31;
+  --ecc-text-primary: #e4e6eb;
+  --ecc-text-secondary: #8a8d93;
   --ecc-gold: #ffd400;
-  --ecc-child-icon: #94a3b8;
+  --ecc-light-blue: #94a3b8;
   --ecc-hover: #23262a;
   --ecc-active: #2d3036;
   --ecc-radius: 12px;
+  --ecc-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
+/* Sidebar Container */
 .sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
   width: var(--ecc-sidebar-w);
-  background: var(--ecc-panel);
-  color: var(--ecc-text);
+  height: 100vh;
+  background: var(--ecc-bg-primary);
+  color: var(--ecc-text-primary);
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--ecc-seam);
-  font-family: system-ui, sans-serif;
-  position: relative;
+  border-right: 1px solid var(--ecc-border);
+  font-family: system-ui, -apple-system, sans-serif;
+  z-index: 100;
   transition: width 0.3s ease;
+  overflow: hidden;
 }
-.sidebar.collapsed { 
+
+.sidebar.collapsed {
   width: var(--ecc-sidebar-w-collapsed);
 }
 
-/* Brand area */
-.sidebar .brand {
+/* Brand Section */
+.sidebar .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 16px 14px 12px;
-  border-bottom: 1px solid var(--ecc-seam);
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--ecc-border);
+  min-height: 64px;
 }
+
 .sidebar .brand-logo {
-  height: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar .brand-logo img {
+  height: 32px;
   width: auto;
   transition: all 0.3s ease;
 }
-.sidebar.collapsed .brand-logo {
-  height: 28px;
+
+.sidebar.collapsed .brand-logo img {
+  height: 24px;
 }
 
-/* Pin controls */
-.sidebar .pin-controls {
-  padding: 8px 14px;
-  border-bottom: 1px solid var(--ecc-seam);
-}
-.sidebar .pinBtn {
-  width: 100%;
+.sidebar .pin-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 500;
-  border: 1px solid var(--ecc-seam);
+  padding: 6px;
   background: transparent;
-  color: var(--ecc-dim);
-  border-radius: var(--ecc-radius);
-  padding: 6px 12px;
-  transition: all 0.2s;
+  border: 1px solid var(--ecc-border);
+  border-radius: 6px;
+  color: var(--ecc-text-secondary);
   cursor: pointer;
+  transition: all 0.2s ease;
 }
-.sidebar .pinBtn:hover {
+
+.sidebar .pin-button:hover {
   background: var(--ecc-hover);
-  color: var(--ecc-text);
+  color: var(--ecc-text-primary);
 }
 
 /* Scrollable area */

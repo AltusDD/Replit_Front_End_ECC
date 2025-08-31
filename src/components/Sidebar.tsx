@@ -3,38 +3,39 @@ import { Link, useLocation } from "wouter";
 import * as Icons from "lucide-react";
 import sections, { Section, Item, Leaf } from "./layout/navConfig";
 
-// Fallback sections logic
-const DEFAULT_SECTIONS: Section[] = [
-  { title: "Dashboard", items: [{ label: "Home", to: "/dashboard", icon: "LayoutDashboard" }] },
-];
-
-const SECTIONS: Section[] = Array.isArray(sections) && sections.length ? sections : DEFAULT_SECTIONS;
-
 // Dynamic icon component
 const DynamicIcon = ({ name, className = "", size = 18 }: { name: string; className?: string; size?: number }) => {
   const IconComponent = (Icons as any)[name];
   return IconComponent ? <IconComponent size={size} className={className} /> : <Icons.Circle size={size} className={className} />;
 };
 
+// Fallback sections if import fails
+const DEFAULT_SECTIONS: Section[] = [
+  { title: "Dashboard", items: [{ label: "Home", to: "/dashboard", icon: "LayoutDashboard" }] },
+];
+
+const SECTIONS: Section[] = Array.isArray(sections) && sections.length ? sections : DEFAULT_SECTIONS;
+
 export default function Sidebar() {
   const [location] = useLocation();
   
-  // Collapsed state persisted to localStorage
+  // Collapsed state with localStorage persistence
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
-      return localStorage.getItem("ecc:nav:collapsed") === "1";
+      return localStorage.getItem("ecc:sidebar:collapsed") === "true";
     } catch {
       return false;
     }
   });
 
+  // Persist collapsed state
   useEffect(() => {
     try {
-      localStorage.setItem("ecc:nav:collapsed", collapsed ? "1" : "0");
+      localStorage.setItem("ecc:sidebar:collapsed", collapsed.toString());
     } catch {}
   }, [collapsed]);
 
-  // Group expanded state - auto-expand if current location matches a child
+  // Expanded groups state - auto-expand when child is active
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
     const initialState: Record<string, boolean> = {};
     
@@ -52,7 +53,7 @@ export default function Sidebar() {
     });
 
     try {
-      const stored = localStorage.getItem("ecc:nav:expanded");
+      const stored = localStorage.getItem("ecc:sidebar:expanded");
       const storedState = stored ? JSON.parse(stored) : {};
       return { ...initialState, ...storedState };
     } catch {
@@ -60,9 +61,10 @@ export default function Sidebar() {
     }
   });
 
+  // Persist expanded state
   useEffect(() => {
     try {
-      localStorage.setItem("ecc:nav:expanded", JSON.stringify(expandedGroups));
+      localStorage.setItem("ecc:sidebar:expanded", JSON.stringify(expandedGroups));
     } catch {}
   }, [expandedGroups]);
 
@@ -92,11 +94,20 @@ export default function Sidebar() {
     }
   }, [location]);
 
+  // Hover state for fly-out
+  const [hoveredSection, setHoveredSection] = useState<string | null>(null);
+
+  const toggleCollapsed = () => {
+    setCollapsed(!collapsed);
+  };
+
   const toggleGroup = (sectionTitle: string) => {
-    setExpandedGroups(prev => ({
-      ...prev,
-      [sectionTitle]: !prev[sectionTitle]
-    }));
+    if (!collapsed) {
+      setExpandedGroups(prev => ({
+        ...prev,
+        [sectionTitle]: !prev[sectionTitle]
+      }));
+    }
   };
 
   const isActive = (path: string) => {
@@ -104,126 +115,116 @@ export default function Sidebar() {
     return location === path || location.startsWith(path + "/");
   };
 
-  const toggleCollapse = () => {
-    setCollapsed(!collapsed);
+  const renderNavItem = (item: Leaf, isChild = false) => {
+    const active = isActive(item.to);
+    
+    return (
+      <Link
+        key={item.to}
+        href={item.to}
+        className={`nav-item ${active ? "active" : ""} ${isChild ? "child" : ""}`}
+        aria-current={active ? "page" : undefined}
+      >
+        <div className="nav-icon">
+          <DynamicIcon 
+            name={item.icon} 
+            className={active ? "icon-active" : isChild ? "icon-child" : "icon-parent"}
+            size={18}
+          />
+        </div>
+        <span className="nav-label">{item.label}</span>
+      </Link>
+    );
   };
-
-  // Hover state for fly-out
-  const [hoverSection, setHoverSection] = useState<string | null>(null);
 
   return (
     <aside 
-      className={`sidebar ${collapsed ? "collapsed" : ""}`} 
-      data-role="sidebar"
-      onMouseLeave={() => setHoverSection(null)}
+      className={`sidebar ${collapsed ? "collapsed" : ""}`}
+      onMouseLeave={() => setHoveredSection(null)}
     >
-      <div className="brand">
-        <img
-          className="brand-logo"
-          src="/brand/altus-logo.png"
-          alt="Altus Realty Group"
-          onError={(e) => { e.currentTarget.style.display = "none"; }}
-        />
-      </div>
-
-      {/* Pin button next to nav */}
-      {!collapsed && (
-        <div className="pin-controls">
+      {/* Brand Section */}
+      <div className="sidebar-brand">
+        <div className="brand-logo">
+          <img
+            src="/brand/altus-logo.png"
+            alt="Altus Realty Group"
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
+          />
+        </div>
+        {!collapsed && (
           <button
-            className="pinBtn"
-            onClick={toggleCollapse}
-            aria-pressed={collapsed ? "true" : "false"}
+            className="pin-button"
+            onClick={toggleCollapsed}
             aria-label="Collapse sidebar"
+            title="Collapse sidebar"
           >
             <DynamicIcon name="Pin" size={14} />
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
-      <div className="sidebar-scroll">
-        <nav role="navigation" data-nav>
+      {/* Navigation Content */}
+      <div className="sidebar-content">
+        <nav className="sidebar-nav">
           {SECTIONS.map((section) => {
-            const isExpanded = expandedGroups[section.title || ""] ?? false;
-            const isHovered = hoverSection === section.title && collapsed;
+            if (!section.title) return null;
+            
+            const isExpanded = expandedGroups[section.title] ?? false;
+            const isHovered = hoveredSection === section.title && collapsed;
             
             return (
-              <div 
-                key={section.title} 
-                className={`nav-section ${isHovered ? 'hovered' : ''}`}
-                onMouseEnter={() => collapsed && setHoverSection(section.title || null)}
+              <div
+                key={section.title}
+                className={`nav-section ${isHovered ? "hovered" : ""}`}
+                onMouseEnter={() => collapsed && section.title && setHoveredSection(section.title)}
               >
-                {section.title && (
-                  <div
-                    className="section-header"
-                    onClick={() => !collapsed && toggleGroup(section.title || "")}
-                    role="button"
-                    aria-expanded={isExpanded}
-                    tabIndex={collapsed ? -1 : 0}
-                  >
-                    <span className="section-title">{section.title}</span>
-                    {!collapsed && (
-                      <DynamicIcon 
-                        name="ChevronRight" 
-                        className={`section-chevron ${isExpanded ? "expanded" : ""}`}
-                        size={16}
-                      />
-                    )}
-                  </div>
-                )}
-                
-                {/* Navigation items */}
-                <div className={`nav-items ${isExpanded || collapsed ? "visible" : "hidden"}`}>
-                  {section.items.map((item) => {
-                    // Type guard to ensure we only process leaf items
-                    if ('to' in item) {
-                      const active = isActive(item.to);
-                      
-                      return (
-                        <Link
-                          key={item.to}
-                          href={item.to}
-                          className={`nav-item ${active ? "active" : ""}`}
-                          aria-current={active ? "page" : undefined}
-                          onClick={() => collapsed && setHoverSection(null)}
-                        >
-                          <span className="nav-icon">
-                            <DynamicIcon 
-                              name={item.icon} 
-                              className={active ? "icon-active" : "icon-default"}
-                              size={18}
-                            />
-                          </span>
-                          <span className="nav-label">{item.label}</span>
-                        </Link>
-                      );
-                    }
-                    return null;
-                  })}
+                {/* Section Header */}
+                <div
+                  className="section-header"
+                  onClick={() => toggleGroup(section.title!)}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isExpanded}
+                >
+                  <span className="section-title">{section.title}</span>
+                  {!collapsed && (
+                    <DynamicIcon 
+                      name="ChevronRight" 
+                      className={`section-chevron ${isExpanded ? "expanded" : ""}`}
+                      size={16}
+                    />
+                  )}
                 </div>
 
-                {/* Fly-out menu for collapsed state */}
+                {/* Navigation Items */}
+                {(isExpanded || collapsed) && (
+                  <div className="nav-items">
+                    {section.items.map((item) => {
+                      if ('to' in item) {
+                        return renderNavItem(item);
+                      }
+                      return null;
+                    })}
+                  </div>
+                )}
+
+                {/* Fly-out Menu for Collapsed State */}
                 {collapsed && isHovered && (
                   <div className="flyout-menu">
-                    <div className="flyout-header">{section.title}</div>
+                    <div className="flyout-header">
+                      <div className="flyout-logo">
+                        <img
+                          src="/brand/altus-logo.png"
+                          alt="Altus"
+                          onError={(e) => { e.currentTarget.style.display = "none"; }}
+                        />
+                      </div>
+                      <span className="flyout-title">{section.title}</span>
+                    </div>
                     <div className="flyout-items">
                       {section.items.map((item) => {
                         if ('to' in item) {
-                          const active = isActive(item.to);
-                          return (
-                            <Link
-                              key={item.to}
-                              href={item.to}
-                              className={`flyout-item ${active ? "active" : ""}`}
-                              onClick={() => setHoverSection(null)}
-                            >
-                              <DynamicIcon 
-                                name={item.icon} 
-                                className={active ? "icon-active" : "icon-child"}
-                                size={16}
-                              />
-                              <span>{item.label}</span>
-                            </Link>
-                          );
+                          return renderNavItem(item, true);
                         }
                         return null;
                       })}
@@ -235,6 +236,20 @@ export default function Sidebar() {
           })}
         </nav>
       </div>
+
+      {/* Expand Button for Collapsed State */}
+      {collapsed && (
+        <div className="sidebar-footer">
+          <button
+            className="expand-button"
+            onClick={toggleCollapsed}
+            aria-label="Expand sidebar"
+            title="Expand sidebar"
+          >
+            <DynamicIcon name="ChevronRight" size={16} />
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
