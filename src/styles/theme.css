@@ -221,6 +221,41 @@ p  { color: var(--muted-1); }
   margin: 0;
 }
 
+/* ECC Override Enhancements */
+.sidebar nav, [data-role="sidebar"] nav,
+.sidebar [data-nav], [data-role="sidebar"] [data-nav] {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.sidebar nav ul, [data-role="sidebar"] nav ul,
+.sidebar ul, [data-role="sidebar"] ul,
+.sidebar li, [data-role="sidebar"] li {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.sidebar .pinBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--muted-1);
+  font-size: 12px;
+}
+
+.sidebar .pinBtn:hover {
+  background: var(--panel-2);
+  color: var(--fg);
+}
+
+.sidebar.collapsed .hide-when-collapsed {
+  display: none;
+}
+
 /* Small badge chip */
 .badge { display:inline-flex; align-items:center; gap:8px; padding:2px 8px; border-radius:999px; border:1px solid var(--border-1); font-size:12px; }
 .badge--accent { background: var(--gold); color:#111; }

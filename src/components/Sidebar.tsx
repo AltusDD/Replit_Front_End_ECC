@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import sections from "./layout/navConfig";
+import sections, { Section } from "./layout/navConfig";
+
+// Fallback sections logic
+const DEFAULT_SECTIONS: Section[] = [
+  { title: "Dashboard", items: [{ label: "Home", to: "/dashboard" }] },
+];
+
+const SECTIONS: Section[] = Array.isArray(sections) && sections.length ? sections : DEFAULT_SECTIONS;
 
 export default function Sidebar() {
   const [location] = useLocation();
   
-  // Collapsed state persisted to localStorage
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem("ecc:nav:collapsed") === "1";
-    } catch {
-      return false;
-    }
-  });
+  // Hardcode expanded sidebar temporarily
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     try {
@@ -59,6 +60,7 @@ export default function Sidebar() {
           className="brand-logo"
           src="/brand/altus-logo.png"
           alt="Altus Realty Group"
+          onError={(e) => { e.currentTarget.style.display = "none"; }}
         />
         <button
           className="pinBtn hide-when-collapsed"
@@ -71,7 +73,7 @@ export default function Sidebar() {
 
       <div className="sidebar-scroll">
         <nav role="navigation" data-nav>
-          {sections.map((section) => {
+          {SECTIONS.map((section) => {
             const isExpanded = expandedGroups[section.title || ""] ?? true;
             
             return (
