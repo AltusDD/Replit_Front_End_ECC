@@ -1,0 +1,102 @@
+Task: Screen/Layout Fix + Fly-out polish (single pass)
+
+Mode(s): UI-Nav Engineer, Consistency Enforcer
+Files to change:
+
+src/components/Sidebar.tsx
+
+src/styles/_ecc-override.css
+
+(confirm import order only) src/main.tsx
+
+Plan
+
+Make the sidebar fixed and set a global CSS var that tells the page how much left padding to reserve for the sidebar (expanded vs collapsed).
+
+Clamp fly-out width and z-index so it never goes full screen.
+
+Ensure logo size/brightness and label legibility.
+
+1) Patch src/components/Sidebar.tsx (add the effect below)
+
+Add this near other hooks:
+
+// Reserve space for the sidebar in the page layout
+useEffect(() => {
+  const root = document.documentElement;
+  // expanded vs collapsed padding value
+  const pad = collapsed ? "var(--ecc-sidebar-w-collapsed)" : "var(--ecc-sidebar-w)";
+  root.style.setProperty("--ecc-sidepad", pad);
+  root.setAttribute("data-sidebar-mounted", "1");
+  return () => {
+    root.style.removeProperty("--ecc-sidepad");
+    root.removeAttribute("data-sidebar-mounted");
+  };
+}, [collapsed]);
+
+
+(No other logic changes required.)
+
+2) Replace/add rules in src/styles/_ecc-override.css
+
+Add/adjust these rules (keep existing tokens). They’re safe and scoped:
+
+/* Sidebar should reserve space + stay above app content */
+.sidebar {
+  position: fixed;   /* NEW */
+  top: 0;            /* NEW */
+  left: 0;           /* NEW */
+  height: 100vh;     /* NEW */
+  z-index: 50;       /* NEW */
+}
+
+/* Tell the rest of the page to move over by sidebar width */
+html[data-sidebar-mounted="1"] body {
+  padding-left: var(--ecc-sidepad, var(--ecc-sidebar-w)); /* NEW */
+}
+
+/* Ensure the internal scroller is correct with fixed positioning */
+.sidebar .sidebar-scroll {
+  height: calc(100vh - 110px); /* already present; leave or set to this */
+}
+
+/* Fly-out: never full screen, sits just to the right of collapsed bar */
+.sidebar .flyout {
+  left: calc(var(--ecc-sidebar-w-collapsed) - 2px); /* existing or ensure set */
+  max-width: var(--ecc-flyout-w);                   /* clamp */
+  z-index: 60;                                      /* above content */
+}
+
+/* Legibility / logo polish */
+.sidebar .brand-logo {
+  height: 48px;
+  filter: brightness(1.15) drop-shadow(0 2px 6px rgba(255,212,0,.2));
+}
+.sidebar.collapsed .brand-logo { height: 32px; }
+
+/* Make parent labels readable and parent/child icon colors consistent */
+.sidebar .label { color: var(--ecc-text); }
+.sidebar .icon.parent { color: var(--ecc-gold); }
+.sidebar .icon.child  { color: var(--ecc-dim); }
+
+
+Result: the page body always has the correct left padding (280px expanded / 72px collapsed), the sidebar no longer overlaps or “orphan-columns” the table, the fly-out is bounded and layered correctly, and labels are readable.
+
+3) Confirm src/main.tsx import order
+import "@/styles/theme.css";
+import "@/styles/app.css";
+import "@/styles/_ecc-override.css"; // must be last
+
+Quick test checklist
+
+Sidebar visible; scrolling independent.
+
+Collapsed → page still padded 72px; hover shows bounded fly-out (≤280px).
+
+Expanded → page padded 280px; no clipped headers; tables fill width.
+
+Parent icons (gold) and child icons (alt-blue) visible in both states.
+
+Pin persists; logo brighter and larger.
+
+If anything still looks off after this patch, send me a fresh screenshot and I’ll tighten just that piece.
