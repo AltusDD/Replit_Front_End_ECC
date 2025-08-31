@@ -1,98 +1,220 @@
 
-/* src/styles/_ecc-override.css */
-/* Local tokens (scoped to sidebar defaults if theme tokens missing) */
-:root {
-  --ecc-sidebar-w: 280px;
-  --ecc-sidebar-w-collapsed: 76px;
-  --ecc-bg: #0e0f11;
-  --ecc-panel: #121316;
-  --ecc-seam: #222428;
-  --ecc-text: #d7d9dd;
-  --ecc-dim: #a6a8ac;
-  --ecc-gold: #ffd400;
-}
+/* ECC Sidebar Styles - Scoped to .sidebar */
 
 .sidebar {
-  width: var(--ecc-sidebar-w);
-  background: var(--ecc-panel);
-  color: var(--ecc-text);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background: var(--color-panel, #2A2A2A);
+  border-right: 1px solid var(--color-border, #404040);
+  transition: all 0.3s ease;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--ecc-seam);
 }
 
-.sidebar.collapsed { width: var(--ecc-sidebar-w-collapsed); }
+.sidebar.collapsed {
+  width: 64px;
+}
 
-/* Brand */
+/* Brand section */
 .sidebar .brand {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border, #404040);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 12px 8px;
+  gap: 12px;
+  min-height: 64px;
 }
-.sidebar .brand-logo { height: 42px; width: auto; }
+
+.sidebar .brand-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.sidebar.collapsed .brand-logo {
+  width: 24px;
+  height: 24px;
+}
+
 .sidebar .pinBtn {
   margin-left: auto;
-  font-size: 12px;
-  border: 1px solid var(--ecc-seam);
+  padding: 4px 8px;
   background: transparent;
-  color: var(--ecc-dim);
-  border-radius: 10px;
-  padding: 4px 10px;
-}
-.sidebar.collapsed .pinBtn { font-size: 10px; padding: 2px 8px; }
-
-/* Scroll (hidden bar) */
-.sidebar .sidebar-scroll {
-  height: calc(100vh - 70px);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
-}
-.sidebar .sidebar-scroll::-webkit-scrollbar { width: 0; height: 0; }
-
-/* Section */
-.sidebar .section { padding: 6px 8px; }
-.sidebar .section-title {
-  color: var(--ecc-dim);
+  border: 1px solid var(--color-border, #404040);
+  color: var(--color-text-secondary, #B0B0B0);
+  border-radius: 4px;
   font-size: 12px;
-  letter-spacing: .08em;
-  padding: 8px 10px 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-/* Rows: icon | label | chevron */
+.sidebar .pinBtn:hover {
+  background: var(--color-hover, #404040);
+  color: var(--color-text, #FFFFFF);
+}
+
+.sidebar.collapsed .pinBtn {
+  display: none;
+}
+
+/* Scrollable content */
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-border, #404040);
+  border-radius: 2px;
+}
+
+/* Navigation sections */
+.sidebar .section {
+  margin-bottom: 16px;
+}
+
+.sidebar .section-title {
+  padding: 8px 16px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-secondary, #B0B0B0);
+  opacity: 0.7;
+}
+
+.sidebar.collapsed .section-title {
+  display: none;
+}
+
+/* Navigation rows */
 .sidebar .nav-row {
-  display: grid;
-  grid-template-columns: 18px minmax(0,1fr) auto;
+  display: flex;
   align-items: center;
-  column-gap: 10px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  padding: 8px 16px;
+  margin: 0 8px;
+  border-radius: 6px;
   text-decoration: none;
-  color: inherit;
+  color: var(--color-text-secondary, #B0B0B0);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: calc(100% - 16px);
+  font-size: 14px;
 }
-.sidebar .nav-row:hover { background: #17181b; }
-.sidebar .leaf.active {
-  background: #17181b;
-  box-shadow: inset 0 0 0 2px var(--ecc-gold);
-}
-.sidebar .icon { width: 18px; min-width: 18px; text-align: center; color: var(--ecc-gold); }
-.sidebar .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sidebar .expand { opacity: .5; }
 
-/* Groups */
-.sidebar .group-row { width: 100%; text-align: left; background: transparent; border: 0; color: inherit; }
-.sidebar .leafList { padding-left: 20px; }
-
-/* Collapsed: icon-only (no shifting) */
-.sidebar.collapsed .nav-row {
-  grid-template-columns: 18px;
-  justify-items: center;
-  padding-left: calc((var(--ecc-sidebar-w-collapsed) - 18px) / 2 - 2px);
-  padding-right: 8px;
+.sidebar .nav-row:hover {
+  background: var(--color-hover, #404040);
+  color: var(--color-text, #FFFFFF);
 }
-.sidebar.collapsed .label,
-.sidebar.collapsed .expand,
-.sidebar.collapsed .section-title { display: none; }
-.sidebar.collapsed .leafList { display: none; }
+
+.sidebar .nav-row.active {
+  background: var(--color-primary, #F7C948);
+  color: var(--color-background, #1A1A1A);
+  font-weight: 500;
+}
+
+.sidebar .nav-row .icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar .nav-row .label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar.collapsed .nav-row .label {
+  display: none;
+}
+
+.sidebar .nav-row .expand {
+  width: 16px;
+  height: 16px;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sidebar.collapsed .nav-row .expand {
+  display: none;
+}
+
+/* Group specific styles */
+.sidebar .group-row[aria-expanded="true"] .expand {
+  transform: rotate(180deg);
+}
+
+.sidebar .group .leafList {
+  margin-left: 28px;
+  border-left: 1px solid var(--color-border, #404040);
+  padding-left: 8px;
+}
+
+.sidebar.collapsed .group .leafList {
+  display: none;
+}
+
+.sidebar .group .leafList .nav-row {
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.sidebar .group .leafList .nav-row .icon {
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+}
+
+/* Layout adjustments */
+.layout {
+  margin-left: 280px;
+  transition: margin-left 0.3s ease;
+}
+
+.layout.collapsed {
+  margin-left: 64px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.collapsed {
+    transform: translateX(0);
+    width: 64px;
+  }
+  
+  .layout {
+    margin-left: 0;
+  }
+}

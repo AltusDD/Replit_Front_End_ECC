@@ -27,8 +27,8 @@ const SECTIONS: Section[] = Array.isArray(RAW) && RAW.length ? RAW : DEFAULT_SEC
 
 /* ——— Component ——— */
 export default function Sidebar() {
-  const [location] = useLocation();
-  const current = location || "/";
+  const locationResult = useLocation();
+  const current = (Array.isArray(locationResult) ? locationResult[0] : locationResult) || "/";
 
   // Persist collapsed state
   const [collapsed, setCollapsed] = useState<boolean>(() => {
