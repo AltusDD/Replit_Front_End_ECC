@@ -1,10 +1,16 @@
 // src/components/Sidebar.tsx
 import React, { useEffect, useMemo, useState } from "react";
-import { NAV_SECTIONS } from "./layout/navConfig";
+import { NAV_SECTIONS, NavItem } from "./layout/navConfig";
 import { Pin, PinOff } from "lucide-react";
 import { useLocation } from "wouter"; // or react-router-dom if that's what you're using
 
 const STORAGE_KEY = "ecc.sidebar.collapsed";
+
+function ItemIcon({ item }: { item: NavItem }) {
+  if (!item.icon) return null;
+  const Ico = item.icon;
+  return <Ico className="ecc-link__icon" />;
+}
 
 export default function Sidebar() {
   // If you use react-router-dom, replace with: const location = useLocation();
