@@ -103,7 +103,7 @@ export default function Sidebar() {
       {/* Controls (pin) */}
       <div className="nav-controls">
         {!collapsed && (
-          <button className="pinBtn" onClick={() => setCollapsed((v) => !v)} title={collapsed ? "Unpin" : "Collapse"}>
+          <button className="pinBtn" onClick={() => setCollapsed((v) => !v)} title={collapsed ? "Unpin" : "Collapse"} aria-label={collapsed ? "Unpin navigation" : "Collapse navigation"}>
             <PinIcon size={16} />
             <span>{collapsed ? " Unpin" : " Collapse"}</span>
           </button>
@@ -180,21 +180,9 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      {/* Expand button for collapsed sidebar */}
-      {collapsed && (
-        <button
-          className="railExpand"
-          onClick={() => setCollapsed(false)}
-          title="Expand"
-          aria-label="Expand navigation"
-        >
-          <Lucide.ChevronRight size={18} />
-        </button>
-      )}
-
       {/* Collapsed hover flyout */}
-      {collapsed && (
-        <div className={`flyout ${hovering ? "show" : ""}`} aria-hidden={!hovering} ref={flyoutRef}>
+      {collapsed && hovering && (
+        <div className="flyout show" aria-hidden={!hovering} ref={flyoutRef}>
           <div className="flyout-header">
             <img src="/logo.png" alt="Altus" />
           </div>
@@ -241,6 +229,18 @@ export default function Sidebar() {
           </div>
         </div>
       )}
+
+      {collapsed && (
+        <button
+          className="railExpand"
+          onClick={() => setCollapsed(false)}
+          title="Expand navigation"
+          aria-label="Expand navigation"
+        >
+          <Lucide.ChevronRight size={18} />
+        </button>
+      )}
+
     {/* ——— Local, sidebar-scoped overrides to beat global/visited rules ——— */}
     <style
       // loads after global CSS; scoped to .sidebar; safe & surgical
