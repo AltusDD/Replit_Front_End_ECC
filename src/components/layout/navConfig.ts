@@ -1,3 +1,4 @@
+
 // src/components/layout/navConfig.ts
 // Canonical nav + icon names (Lucide); parents gold, children alt-blue (styled in CSS)
 

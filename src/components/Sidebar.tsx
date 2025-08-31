@@ -1,3 +1,4 @@
+
 // src/components/Sidebar.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
