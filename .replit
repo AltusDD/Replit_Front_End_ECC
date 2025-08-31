@@ -18,3 +18,15 @@ externalPort = 5173
 [nix]
 channel = "stable-25_05"
 packages = ["unzip", "zip", "try"]
+
+[workflows]
+runButton = "Run"
+
+[[workflows.workflow]]
+name = "Run"
+author = 41942539
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
