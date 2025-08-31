@@ -1,69 +1,66 @@
-// src/components/Sidebar.tsx
-import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "wouter";
 
-/* ——— Types (kept local so this file is self-contained) ——— */
-type Leaf = { label: string; to: string };
-type Group = { label: string; children: Leaf[] };
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation } from "wouter";
+import * as Lucide from "lucide-react";
+
+/* ——— Local types ——— */
+type Leaf = { label: string; to: string; icon: string };
+type Group = { label: string; icon: string; children: Leaf[] };
 type Item = Leaf | Group;
 type Section = { title?: string; items: Item[] };
 
 function isGroup(i: Item): i is Group {
-  return (i as Group)?.children !== undefined;
+  return i && (i as Group).children && Array.isArray((i as Group).children);
 }
 
-/* ——— Import nav config (robust to different export shapes) ——— */
-import * as Nav from "./layout/navConfig";
-const RAW: any =
-  (Nav as any).sections ??
-  (Nav as any).default ??
-  (Array.isArray(Nav) ? Nav : []);
+/* ——— Import nav config robustly (avoid .length on undefined) ——— */
+import * as Nav from "@/components/layout/navConfig";
+const RAW_SECTIONS: unknown =
+  (Nav as any)?.sections ?? (Nav as any)?.default ?? [];
 
 const DEFAULT_SECTIONS: Section[] = [
-  { title: "Dashboard", items: [{ label: "Home", to: "/dashboard" }] },
+  { title: "Primary", items: [{ label: "Dashboard", to: "/dashboard", icon: "LayoutDashboard" }] },
 ];
 
-const SECTIONS: Section[] = Array.isArray(RAW) && RAW.length ? RAW : DEFAULT_SECTIONS;
+const SECTIONS: Section[] = Array.isArray(RAW_SECTIONS) && RAW_SECTIONS.length
+  ? (RAW_SECTIONS as Section[])
+  : DEFAULT_SECTIONS;
 
-/* ——— Component ——— */
+/* ——— Icon resolver ——— */
+const getIcon = (name?: string) => {
+  const Comp = (Lucide as any)?.[name || ""] || Lucide.CircleDot;
+  return Comp as React.ComponentType<{ size?: number }>;
+};
+
 export default function Sidebar() {
-  const locationResult = useLocation();
-  const current = (Array.isArray(locationResult) ? locationResult[0] : locationResult) || "/";
+  const [location] = useLocation();
+  const current = location || "/";
 
-  // Persist collapsed state
+  /* Stable hook order: ALL hooks declared top-level, never inside conditions */
+
+  // collapsed state with persistence
   const [collapsed, setCollapsed] = useState<boolean>(() => {
-    
-  useEffect(() => {
-    document.documentElement.style.setProperty(
-      "--ecc-sidepad",
-      collapsed ? "var(--ecc-sidebar-w-collapsed)" : "var(--ecc-sidebar-w)"
-    );
-  }, []);
-    try {
-      return localStorage.getItem("ecc:nav:collapsed") === "1";
-    } catch {
-      return false;
-    }
+    try { return localStorage.getItem("ecc:nav:collapsed") === "1"; } catch { return false; }
   });
-  useEffect(() => {
-    try {
-      localStorage.setItem("ecc:nav:collapsed", collapsed ? "1" : "0");
-    } catch {}
-  }, [collapsed]);
 
-  // Add a hook to manage sidebar padding globally.
+  // persist collapsed + set global padding var + mount flag
   useEffect(() => {
+    try { localStorage.setItem("ecc:nav:collapsed", collapsed ? "1" : "0"); } catch {}
     const root = document.documentElement;
     const pad = collapsed ? "var(--ecc-sidebar-w-collapsed)" : "var(--ecc-sidebar-w)";
     root.style.setProperty("--ecc-sidepad", pad);
     root.setAttribute("data-sidebar-mounted", "1");
     return () => {
-      root.style.removeProperty("--ecc-sidepad");
-      root.removeAttribute("data-sidebar-mounted");
+      // keep the attribute; removed only when component unmounts
+      root.setAttribute("data-sidebar-mounted", "1");
     };
   }, [collapsed]);
 
-  // Auto-open groups that contain the active child
+  // hover/flyout state
+  const [hovering, setHovering] = useState(false);
+  const flyoutRef = useRef<HTMLDivElement | null>(null);
+
+  // compute which groups should be open based on active route
   const initialExpanded = useMemo(() => {
     const map = new Map<string, boolean>();
     SECTIONS.forEach((section, sIdx) => {
@@ -77,30 +74,45 @@ export default function Sidebar() {
     return map;
   }, [current]);
 
-  const [expanded, setExpanded] = useState(initialExpanded);
+  // expanded state synced to initialExpanded
+  const [expanded, setExpanded] = useState<Map<string, boolean>>(initialExpanded);
   useEffect(() => setExpanded(initialExpanded), [initialExpanded]);
 
   const toggle = (key: string) =>
     setExpanded((prev) => new Map(prev).set(key, !prev.get(key)));
 
+  const PinIcon = collapsed ? Lucide.PinOff : Lucide.Pin;
+
   return (
-    <aside className={`sidebar ${collapsed ? "collapsed" : ""}`} data-role="sidebar" aria-label="Primary">
-      {/* Brand + Pin */}
+    <aside
+      className={`sidebar ${collapsed ? "collapsed" : ""}`}
+      aria-label="Primary Navigation"
+      onMouseEnter={() => collapsed && setHovering(true)}
+      onMouseLeave={() => collapsed && setHovering(false)}
+    >
+      {/* Brand */}
       <div className="brand">
         <img
-          src="/brand/altus-logo.png"
+          src="/logo.png"
           alt="Altus Realty Group"
           className="brand-logo"
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
         />
-        <button className="pinBtn" onClick={() => setCollapsed(!collapsed)}>
-          {collapsed ? "Unpin" : "Pin"}
-        </button>
       </div>
 
-      {/* Independent scroll (scrollbar hidden by CSS) */}
+      {/* Controls (pin) */}
+      <div className="nav-controls">
+        {!collapsed && (
+          <button className="pinBtn" onClick={() => setCollapsed((v) => !v)} title={collapsed ? "Unpin" : "Collapse"}>
+            <PinIcon size={16} />
+            <span>{collapsed ? " Unpin" : " Collapse"}</span>
+          </button>
+        )}
+      </div>
+
+      {/* Scrollable nav */}
       <div className="sidebar-scroll">
-        <nav role="navigation" data-nav aria-label="Main">
+        <nav role="navigation" aria-label="Main">
           {SECTIONS.map((section, sIdx) => (
             <div className="section" key={section.title || sIdx}>
               {section.title && <div className="section-title">{section.title}</div>}
@@ -110,22 +122,24 @@ export default function Sidebar() {
 
                 if (isGroup(it)) {
                   const open = expanded.get(key) ?? false;
+                  const ParentIcon = getIcon(it.icon);
                   return (
                     <div className="group" key={key}>
                       <button
                         type="button"
-                        className="nav-row group-row"
+                        className={`nav-row group-row ${open ? "open" : ""}`}
                         aria-expanded={open}
                         onClick={() => toggle(key)}
                       >
-                        <span className="icon">•</span>
+                        <span className="icon parent"><ParentIcon size={18} /></span>
                         <span className="label">{it.label}</span>
-                        <span className="expand" aria-hidden>▾</span>
+                        <Lucide.ChevronDown className="expand" size={16} />
                       </button>
 
                       <div className="leafList" hidden={!open}>
                         {(it.children || []).map((ch) => {
                           const active = current.startsWith(ch.to);
+                          const ChildIcon = getIcon(ch.icon);
                           return (
                             <Link
                               key={ch.to}
@@ -133,7 +147,7 @@ export default function Sidebar() {
                               className={`nav-row leaf ${active ? "active" : ""}`}
                               aria-current={active ? "page" : undefined}
                             >
-                              <span className="icon">•</span>
+                              <span className="icon child"><ChildIcon size={18} /></span>
                               <span className="label">{ch.label}</span>
                               <span className="expand" />
                             </Link>
@@ -144,9 +158,10 @@ export default function Sidebar() {
                   );
                 }
 
-                // Leaf
+                // plain leaf
                 const leaf = it as Leaf;
                 const active = current.startsWith(leaf.to);
+                const LeafIcon = getIcon(leaf.icon);
                 return (
                   <Link
                     key={leaf.to}
@@ -154,7 +169,7 @@ export default function Sidebar() {
                     className={`nav-row leaf ${active ? "active" : ""}`}
                     aria-current={active ? "page" : undefined}
                   >
-                    <span className="icon">•</span>
+                    <span className="icon child"><LeafIcon size={18} /></span>
                     <span className="label">{leaf.label}</span>
                     <span className="expand" />
                   </Link>
@@ -164,6 +179,56 @@ export default function Sidebar() {
           ))}
         </nav>
       </div>
+
+      {/* Collapsed hover flyout */}
+      {collapsed && (
+        <div className={`flyout ${hovering ? "show" : ""}`} aria-hidden={!hovering} ref={flyoutRef}>
+          <div className="flyout-header">
+            <img src="/logo.png" alt="Altus" />
+          </div>
+          <div className="flyout-body">
+            {SECTIONS.map((section, sIdx) => (
+              <div className="flyout-section" key={section.title || sIdx}>
+                {section.title && <div className="flyout-title">{section.title}</div>}
+                {(section.items || []).map((it, iIdx) => {
+                  if (isGroup(it)) {
+                    const ParentIcon = getIcon(it.icon);
+                    return (
+                      <div className="flyout-group" key={`${sIdx}:${iIdx}`}>
+                        <div className="flyout-parent">
+                          <span className="icon parent"><ParentIcon size={18} /></span>
+                          <span className="label">{it.label}</span>
+                        </div>
+                        <div className="flyout-children">
+                          {(it.children || []).map((ch) => {
+                            const ChildIcon = getIcon(ch.icon);
+                            const active = current.startsWith(ch.to);
+                            return (
+                              <Link key={ch.to} href={ch.to} className={`flyout-leaf ${active ? "active" : ""}`}>
+                                <span className="icon child"><ChildIcon size={16} /></span>
+                                <span className="label">{ch.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  }
+                  const leaf = it as Leaf;
+                  const LeafIcon = getIcon(leaf.icon);
+                  const active = current.startsWith(leaf.to);
+                  return (
+                    <Link key={leaf.to} href={leaf.to} className={`flyout-leaf ${active ? "active" : ""}`}>
+                      <span className="icon child"><LeafIcon size={16} /></span>
+                      <span className="label">{leaf.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
