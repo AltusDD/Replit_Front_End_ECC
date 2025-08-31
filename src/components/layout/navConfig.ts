@@ -1,4 +1,3 @@
-
 // ECC Navigation Configuration - Canonical Structure
 export interface NavItem {
   label: string;

@@ -1,247 +1,123 @@
 
-// src/components/Sidebar.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation } from "wouter";
+import React, { useState } from 'react';
+import { Link, useLocation } from 'wouter';
+import { ChevronDown, ChevronRight, Menu, X } from 'lucide-react';
+import navConfig from './layout/navConfig';
+import Logo from './layout/Logo';
 
-// icons
-import * as Lucide from "lucide-react";
-
-/* Local types (keep file self-contained) */
-type Leaf = { label: string; to: string; icon: string };
-type Group = { label: string; icon: string; children: Leaf[] };
-type Item = Leaf | Group;
-type Section = { title?: string; items: Item[] };
-function isGroup(i: Item): i is Group {
-  // @ts-ignore
-  return i && (i as Group).children && Array.isArray((i as Group).children);
-}
-
-/* Import nav config (robust) */
-import * as Nav from "@/components/layout/navConfig";
-const RAW: any =
-  (Nav as any).sections ??
-  (Nav as any).default ??
-  (Array.isArray(Nav) ? Nav : []);
-
-const SECTIONS: Section[] = Array.isArray(RAW) && RAW.length ? RAW : [
-  { title: "Primary", items: [{ label: "Dashboard", to: "/dashboard", icon: "LayoutDashboard" }] },
-];
-
-/* Util: map icon string -> component */
-const getIcon = (name?: string) => {
-  const key = (name || "").trim();
-  const Comp = (Lucide as any)[key] || Lucide.CircleDot;
-  return Comp as React.ComponentType<any>;
-};
-
-export default function Sidebar() {
+const Sidebar: React.FC = () => {
   const [location] = useLocation();
-  const current = location || "/";
+  const [collapsed, setCollapsed] = useState(false);
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
 
-  // collapsed & hover flyout state
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    try { return localStorage.getItem("ecc:nav:collapsed") === "1"; } catch { return false; }
-  });
-  useEffect(() => {
-    try { localStorage.setItem("ecc:nav:collapsed", collapsed ? "1" : "0"); } catch {}
-  }, [collapsed]);
+  const toggleSection = (section: string) => {
+    const newOpenSections = new Set(openSections);
+    if (newOpenSections.has(section)) {
+      newOpenSections.delete(section);
+    } else {
+      newOpenSections.add(section);
+    }
+    setOpenSections(newOpenSections);
+  };
 
-  const [hovering, setHovering] = useState(false);
-  const flyoutRef = useRef<HTMLDivElement | null>(null);
+  const isActive = (path: string) => {
+    if (!location || !path) return false;
+    return location === path || location.startsWith(path + '/');
+  };
 
-  // auto-open groups containing the active child
-  const initialExpanded = useMemo(() => {
-    const map = new Map<string, boolean>();
-    SECTIONS.forEach((section, sIdx) => {
-      (section.items || []).forEach((it, iIdx) => {
-        if (isGroup(it)) {
-          const open = (it.children || []).some((c) => current.startsWith(c.to));
-          map.set(`${sIdx}:${iIdx}`, open);
-        }
-      });
-    });
-    return map;
-  }, [current]);
+  const renderNavItems = () => {
+    if (!navConfig || !Array.isArray(navConfig)) {
+      return <div className="text-red-500">Navigation config error</div>;
+    }
 
-  const [expanded, setExpanded] = useState(initialExpanded);
-  useEffect(() => setExpanded(initialExpanded), [initialExpanded]);
-
-  const toggle = (key: string) =>
-    setExpanded((prev) => new Map(prev).set(key, !prev.get(key)));
-
-  // sticky pin button: hide when collapsed
-  const PinIcon = collapsed ? Lucide.PinOff : Lucide.Pin;
-
-  // close flyout if we leave sidebar area entirely
-  useEffect(() => {
-    const onDocMove = (e: MouseEvent) => {
-      if (!flyoutRef.current) return;
-      if (!flyoutRef.current.contains(e.target as Node)) {
-        // let hovering be driven by sidebar container's mouseenter/leave
+    return navConfig.map((section, sectionIndex) => {
+      if (!section || typeof section !== 'object') {
+        return null;
       }
-    };
-    document.addEventListener("mousemove", onDocMove);
-    return () => document.removeEventListener("mousemove", onDocMove);
-  }, []);
 
-  return (
-    <aside
-      className={`sidebar ${collapsed ? "collapsed" : ""}`}
-      data-role="sidebar"
-      aria-label="Primary Navigation"
-      onMouseEnter={() => collapsed && setHovering(true)}
-      onMouseLeave={() => collapsed && setHovering(false)}
-    >
-      {/* Brand */}
-      <div className="brand">
-        <img
-          src="/logo.png"
-          alt="Altus Realty Group"
-          className="brand-logo"
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-        />
-      </div>
+      const { label, items, path } = section;
+      
+      if (!label) {
+        return null;
+      }
 
-      {/* Nav controls (pin) */}
-      <div className="nav-controls">
-        {!collapsed && (
-          <button className="pinBtn" onClick={() => setCollapsed(!collapsed)} title={collapsed ? "Unpin" : "Pin"}>
-            <PinIcon size={16} />
-            <span> {collapsed ? "Unpin" : "Collapse"}</span>
-          </button>
-        )}
-      </div>
+      // Handle leaf nodes (no children)
+      if (path && (!items || items.length === 0)) {
+        return (
+          <div key={`section-${sectionIndex}-${label}`} className="nav-item">
+            <Link href={path}>
+              <div className={`nav-link ${isActive(path) ? 'active' : ''}`}>
+                {!collapsed && <span className="nav-label">{label}</span>}
+              </div>
+            </Link>
+          </div>
+        );
+      }
 
-      {/* Scrollable nav */}
-      <div className="sidebar-scroll">
-        <nav role="navigation" aria-label="Main">
-          {SECTIONS.map((section, sIdx) => (
-            <div className="section" key={section.title || sIdx}>
-              {section.title && <div className="section-title">{section.title}</div>}
-
-              {(section.items || []).map((it, iIdx) => {
-                const key = `${sIdx}:${iIdx}`;
-
-                if (isGroup(it)) {
-                  const open = expanded.get(key) ?? false;
-                  const ParentIcon = getIcon(it.icon);
-                  return (
-                    <div className="group" key={key}>
-                      <button
-                        type="button"
-                        className={`nav-row group-row ${open ? "open" : ""}`}
-                        aria-expanded={open}
-                        onClick={() => toggle(key)}
-                      >
-                        <span className="icon parent"><ParentIcon size={18} /></span>
-                        <span className="label">{it.label}</span>
-                        <Lucide.ChevronDown className="expand" size={16} />
-                      </button>
-
-                      <div className="leafList" hidden={!open}>
-                        {(it.children || []).map((ch) => {
-                          const active = current.startsWith(ch.to);
-                          const ChildIcon = getIcon(ch.icon);
-                          return (
-                            <Link
-                              key={ch.to}
-                              href={ch.to}
-                              className={`nav-row leaf ${active ? "active" : ""}`}
-                              aria-current={active ? "page" : undefined}
-                            >
-                              <span className="icon child"><ChildIcon size={18} /></span>
-                              <span className="label">{ch.label}</span>
-                              <span className="expand" />
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
+      // Handle sections with children
+      const isOpen = openSections.has(label);
+      
+      return (
+        <div key={`section-${sectionIndex}-${label}`} className="nav-section">
+          <div 
+            className="nav-section-header"
+            onClick={() => toggleSection(label)}
+          >
+            <div className="nav-section-title">
+              {!collapsed && <span>{label}</span>}
+            </div>
+            {!collapsed && (
+              <div className="nav-section-icon">
+                {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              </div>
+            )}
+          </div>
+          
+          {isOpen && !collapsed && items && Array.isArray(items) && (
+            <div className="nav-section-items">
+              {items.map((item, itemIndex) => {
+                if (!item || typeof item !== 'object' || !item.label || !item.path) {
+                  return null;
                 }
-
-                // leaf
-                const leaf = it as Leaf;
-                const active = current.startsWith(leaf.to);
-                const LeafIcon = getIcon(leaf.icon);
+                
                 return (
-                  <Link
-                    key={leaf.to}
-                    href={leaf.to}
-                    className={`nav-row leaf ${active ? "active" : ""}`}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    <span className="icon child"><LeafIcon size={18} /></span>
-                    <span className="label">{leaf.label}</span>
-                    <span className="expand" />
-                  </Link>
+                  <div key={`item-${sectionIndex}-${itemIndex}-${item.label}`} className="nav-item">
+                    <Link href={item.path}>
+                      <div className={`nav-link ${isActive(item.path) ? 'active' : ''}`}>
+                        <span className="nav-label">{item.label}</span>
+                      </div>
+                    </Link>
+                  </div>
                 );
               })}
             </div>
-          ))}
-        </nav>
-      </div>
-
-      {/* Collapsed hover flyout */}
-      {collapsed && (
-        <div
-          ref={flyoutRef}
-          className={`flyout ${hovering ? "show" : ""}`}
-          aria-hidden={!hovering}
-        >
-          <div className="flyout-header">
-            <img src="/logo.png" alt="Altus" />
-          </div>
-
-          <div className="flyout-body">
-            {SECTIONS.map((section, sIdx) => (
-              <div className="flyout-section" key={section.title || sIdx}>
-                {section.title && <div className="flyout-title">{section.title}</div>}
-
-                {(section.items || []).map((it, iIdx) => {
-                  if (isGroup(it)) {
-                    const ParentIcon = getIcon(it.icon);
-                    return (
-                      <div className="flyout-group" key={`${sIdx}:${iIdx}`}>
-                        <div className="flyout-parent">
-                          <span className="icon parent"><ParentIcon size={18} /></span>
-                          <span className="label">{it.label}</span>
-                        </div>
-                        <div className="flyout-children">
-                          {(it.children || []).map((ch) => {
-                            const ChildIcon = getIcon(ch.icon);
-                            const active = current.startsWith(ch.to);
-                            return (
-                              <Link
-                                key={ch.to}
-                                href={ch.to}
-                                className={`flyout-leaf ${active ? "active" : ""}`}
-                              >
-                                <span className="icon child"><ChildIcon size={16} /></span>
-                                <span className="label">{ch.label}</span>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  }
-                  // single leaf in flyout
-                  const leaf = it as Leaf;
-                  const LeafIcon = getIcon(leaf.icon);
-                  const active = current.startsWith(leaf.to);
-                  return (
-                    <Link key={leaf.to} href={leaf.to} className={`flyout-leaf ${active ? "active" : ""}`}>
-                      <span className="icon child"><LeafIcon size={16} /></span>
-                      <span className="label">{leaf.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+          )}
         </div>
-      )}
+      );
+    });
+  };
+
+  return (
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+      <div className="sidebar-header">
+        <div className="sidebar-logo">
+          <Logo collapsed={collapsed} />
+        </div>
+        <button 
+          className="sidebar-toggle"
+          onClick={() => setCollapsed(!collapsed)}
+        >
+          {collapsed ? <Menu size={20} /> : <X size={20} />}
+        </button>
+      </div>
+      
+      <nav className="sidebar-nav">
+        <div className="nav-content">
+          {renderNavItems()}
+        </div>
+      </nav>
     </aside>
   );
-}
+};
+
+export default Sidebar;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 type Props = {
   children?: React.ReactNode;
@@ -26,7 +27,7 @@ export default function Layout({ children }: Props) {
 
     // Listen for storage changes
     window.addEventListener("storage", handleStorageChange);
-    
+
     // Also listen for direct localStorage changes in same tab
     const interval = setInterval(handleStorageChange, 100);
 
@@ -39,7 +40,9 @@ export default function Layout({ children }: Props) {
   return (
     <div className="app-shell">
       {/* Sidebar renders its own <aside> container */}
-      <Sidebar />
+      <ErrorBoundary>
+        <Sidebar />
+      </ErrorBoundary>
 
       {/* Main content column adjusts based on sidebar state */}
       <div className={`content layout-main ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
