@@ -1,0 +1,98 @@
+let’s do a safe nuke-and-pave so there’s only one clean sidebar, no ghost CSS, and nothing unexpected lurking.
+
+Below are two parts:
+
+a one-shot prompt for your Replit Super Assistant (it writes a cleanup script + tightens package.json),
+
+the console commands you’ll run once to execute the cleanup.
+
+1) Paste this to your Replit Super Assistant — Genesis Build
+
+Title: Genesis Nuke & Pave (safe cleanup)
+
+Prompt to paste:
+
+Mode(s): Consistency Enforcer, Debugging Specialist
+Goal: Remove legacy nav/CSS, temp artifacts, and dead files WITHOUT breaking the app. Keep the current working Sidebar and navConfig. Do not touch routes/data/theme tokens.
+
+Files I allow you to create/modify:
+- package.json (scripts only)
+- scripts/genesis-clean.sh (new)
+- .gitignore (append patterns)
+- README.md (append “Recovery & Cleanup” notes)
+
+Plan:
+1) Add cleanup script at scripts/genesis-clean.sh:
+   - set -euo pipefail
+   - create backup dir .archive/YYYYMMDD-HHMMSS and move any *.bak, *_backup_*, temp_extract, .repl-backups, attached_assets there
+   - zip a full project snapshot to .archive/estatecommand-snapshot-<stamp>.zip (exclude node_modules/.git)
+   - remove known junk: dist build .cache .vite coverage
+   - remove legacy nav/css by pattern (only if the original exists): 
+     src/components/**/Sidebar*.old*, src/components/**/sidebar-old*, src/components/**/Sidebar__*, src/styles/nav.css__*, src/styles/*old*.css
+   - keep canonical files:
+     src/components/Sidebar.tsx
+     src/components/layout/navConfig.ts
+     src/styles/_ecc-override.css
+     src/main.tsx
+2) Add npm scripts to package.json:
+   - "clean:genesis": "bash scripts/genesis-clean.sh"
+   - "analyze:imports": "npx ts-prune -p tsconfig.json || true" (only add if tsconfig.json exists)
+3) Append to .gitignore:
+   .archive/
+   dist/
+   build/
+   .cache/
+   .vite/
+4) Append a short section to README.md (“Recovery & Cleanup”) explaining the backup zip and how to roll back.
+5) DO NOT edit routes/pages/tables. DO NOT touch theme files. Keep our Sidebar tagged data-ecc="primary".
+
+Deliverables:
+- The new script with the behaviors described.
+- Updated package.json scripts.
+- .gitignore and README additions.
+
+Test plan (write it in the report):
+- Run `npm run clean:genesis` in the console; confirm the app still compiles.
+- Verify only one sidebar renders (the one with data-ecc="primary").
+- Confirm no duplicate nav CSS files remain and that _ecc-override.css is loaded last.
+
+Risks & Rollback:
+- Zero data loss: a full project snapshot zip is created in .archive/ with timestamp.
+
+2) Run these in the Console (after the Assistant finishes)
+# install a tiny helper (only used if tsconfig exists; harmless otherwise)
+npm i -D ts-prune
+
+# run the cleanup
+npm run clean:genesis
+
+# restart dev server (if not auto)
+npm run dev  # or click Run
+
+What this does (and doesn’t)
+
+Does:
+
+Archives everything (including old *.bak and temp folders) into .archive/<timestamp> + a zip snapshot you can restore from.
+
+Deletes common junk + any legacy sidebar/CSS by pattern.
+
+Leaves a single, canonical src/components/Sidebar.tsx (tagged data-ecc="primary"), navConfig.ts, _ecc-override.css, and correct import order in main.tsx.
+
+Does NOT:
+
+Touch routes/pages/data/theme tokens.
+
+Change our working Sidebar logic or styling tokens.
+
+Quick verify (after it runs)
+
+Only one sidebar visible; expand/collapse works; hover fly-out bounded; parent icons gold / children alt blue.
+
+No extra nav list in the page content area.
+
+No purple link states inside sidebar.
+
+Everything still compiles from a fresh start.
+
+Want me to add a “Restore from snapshot” script too (so you can instantly roll back to any .archive/*.zip with one command)?
