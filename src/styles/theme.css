@@ -230,11 +230,13 @@ p  { color: var(--muted-1); }
   --ecc-border: #2b2d31;
   --ecc-text-primary: #e4e6eb;
   --ecc-text-secondary: #8a8d93;
+  --ecc-text-dim: #6b7280;
   --ecc-gold: #ffd400;
-  --ecc-light-blue: #94a3b8;
+  --ecc-altus-blue: #94a3b8;
   --ecc-hover: #23262a;
-  --ecc-active: #2d3036;
-  --ecc-radius: 12px;
+  --ecc-active: rgba(255, 212, 0, 0.1);
+  --ecc-active-border: #ffd400;
+  --ecc-radius: 8px;
   --ecc-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
@@ -276,28 +278,34 @@ p  { color: var(--muted-1); }
 }
 
 .sidebar .brand-logo img {
-  height: 32px;
+  height: 36px;
   width: auto;
   transition: all 0.3s ease;
 }
 
+.sidebar.collapsed .brand-logo {
+  justify-content: center;
+}
+
 .sidebar.collapsed .brand-logo img {
-  height: 24px;
+  height: 28px;
 }
 
-/* Pin Section */
-.sidebar .pin-section {
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--ecc-border);
+/* Footer with Pin/Expand Button */
+.sidebar .sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid var(--ecc-border);
+  margin-top: auto;
 }
 
-.sidebar .pin-button {
+.sidebar .pin-button,
+.sidebar .expand-button {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   background: transparent;
   border: 1px solid var(--ecc-border);
   border-radius: 8px;
@@ -308,9 +316,11 @@ p  { color: var(--muted-1); }
   font-weight: 500;
 }
 
-.sidebar .pin-button:hover {
+.sidebar .pin-button:hover,
+.sidebar .expand-button:hover {
   background: var(--ecc-hover);
   color: var(--ecc-text-primary);
+  border-color: var(--ecc-gold);
 }
 
 /* Content Area */
@@ -348,16 +358,16 @@ p  { color: var(--muted-1); }
 }
 
 .sidebar .section-title {
-  color: var(--ecc-dim);
+  color: var(--ecc-text-dim);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 .sidebar .section-chevron {
-  color: var(--ecc-dim);
-  transition: transform 0.2s;
+  color: var(--ecc-text-secondary);
+  transition: transform 0.2s ease;
 }
 .sidebar .section-chevron.expanded {
   transform: rotate(90deg);
@@ -446,7 +456,8 @@ p  { color: var(--muted-1); }
 }
 .sidebar .nav-item.active {
   background: var(--ecc-active);
-  box-shadow: inset 0 0 0 2px var(--ecc-gold);
+  border: 1px solid var(--ecc-active-border);
+  box-shadow: 0 0 0 1px var(--ecc-active-border);
 }
 
 .sidebar .nav-icon {
@@ -456,14 +467,22 @@ p  { color: var(--muted-1); }
   width: 20px;
   min-width: 20px;
 }
+/* Icon Colors - Exact Altus Specification */
 .sidebar .nav-icon .icon-parent {
-  color: var(--ecc-gold);
+  color: #ffd400;
 }
 .sidebar .nav-icon .icon-active {
-  color: var(--ecc-gold);
+  color: #ffd400;
 }
 .sidebar .nav-icon .icon-child {
   color: #94a3b8;
+}
+
+.sidebar .group-icon .icon-parent {
+  color: #ffd400;
+}
+.sidebar .group-icon .icon-active {
+  color: #ffd400;
 }
 
 .sidebar .nav-label {
@@ -501,7 +520,8 @@ p  { color: var(--muted-1); }
 
 .sidebar .nav-item-icon.active {
   background: var(--ecc-active);
-  box-shadow: inset 0 0 0 2px var(--ecc-gold);
+  border: 1px solid var(--ecc-active-border);
+  box-shadow: 0 0 0 1px var(--ecc-active-border);
 }
 
 /* Collapsed state */
@@ -582,41 +602,42 @@ p  { color: var(--muted-1); }
 
 .sidebar .flyout-item.active {
   background: var(--ecc-active);
-  color: var(--ecc-gold);
+  color: #ffd400;
+  border: 1px solid var(--ecc-active-border);
 }
 
 /* Flyout Groups */
 .sidebar .flyout-group {
-  margin: 4px 0;
+  margin: 6px 0;
 }
 
 .sidebar .flyout-group-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 10px;
+  padding: 10px 12px;
   font-size: 13px;
   font-weight: 600;
   color: var(--ecc-text-primary);
   border-bottom: 1px solid var(--ecc-border);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .sidebar .flyout-group-items {
-  padding-left: 8px;
+  padding-left: 12px;
 }
 
 .sidebar .flyout-subitem {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
+  gap: 10px;
+  padding: 8px 10px;
   border-radius: 6px;
   text-decoration: none;
   color: var(--ecc-text-secondary);
   transition: all 0.2s ease;
-  font-size: 12px;
-  margin: 1px 0;
+  font-size: 13px;
+  margin: 2px 0;
 }
 
 .sidebar .flyout-subitem:hover {
@@ -626,7 +647,8 @@ p  { color: var(--muted-1); }
 
 .sidebar .flyout-subitem.active {
   background: var(--ecc-active);
-  color: var(--ecc-gold);
+  color: #ffd400;
+  border: 1px solid var(--ecc-active-border);
 }
 
 .sidebar.collapsed .nav-items {

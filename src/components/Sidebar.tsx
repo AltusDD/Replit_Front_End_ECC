@@ -28,12 +28,10 @@ export default function Sidebar() {
     } catch {}
   }, [collapsed]);
 
-  // Expanded sections state - auto-expand when child is active
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
-    const initialState: Record<string, boolean> = {};
-    
-    // Auto-expand sections that have an active child (including nested groups)
-    navigationConfig.forEach((section) => {
+  // ACCORDION BEHAVIOR: Only one section open at a time
+  const [activeSection, setActiveSection] = useState<string | null>(() => {
+    // Find which section has an active child on load
+    for (const section of navigationConfig) {
       const hasActiveChild = section.items.some((item) => {
         if ('to' in item) {
           return location === item.to || location?.startsWith(item.to + "/");
@@ -44,16 +42,9 @@ export default function Sidebar() {
         }
         return false;
       });
-      initialState[section.title] = hasActiveChild;
-    });
-
-    try {
-      const stored = localStorage.getItem("ecc:sidebar:sections");
-      const storedState = stored ? JSON.parse(stored) : {};
-      return { ...initialState, ...storedState };
-    } catch {
-      return initialState;
+      if (hasActiveChild) return section.title;
     }
+    return "Primary"; // Default to Primary section
   });
 
   // Expanded groups state - for nested groups within sections
@@ -81,22 +72,16 @@ export default function Sidebar() {
     }
   });
 
-  // Persist expanded states
-  useEffect(() => {
-    try {
-      localStorage.setItem("ecc:sidebar:sections", JSON.stringify(expandedSections));
-    } catch {}
-  }, [expandedSections]);
-
+  // Persist expanded groups state
   useEffect(() => {
     try {
       localStorage.setItem("ecc:sidebar:groups", JSON.stringify(expandedGroups));
     } catch {}
   }, [expandedGroups]);
 
-  // Auto-expand when location changes
+  // Auto-expand section and groups when location changes
   useEffect(() => {
-    const newSections = { ...expandedSections };
+    let newActiveSection = activeSection;
     const newGroups = { ...expandedGroups };
     let hasChanges = false;
 
@@ -117,14 +102,14 @@ export default function Sidebar() {
         return false;
       });
       
-      if (hasActiveChild && !newSections[section.title]) {
-        newSections[section.title] = true;
+      if (hasActiveChild && newActiveSection !== section.title) {
+        newActiveSection = section.title;
         hasChanges = true;
       }
     });
 
     if (hasChanges) {
-      setExpandedSections(newSections);
+      setActiveSection(newActiveSection);
       setExpandedGroups(newGroups);
     }
   }, [location]);
@@ -137,10 +122,11 @@ export default function Sidebar() {
   };
 
   const toggleSection = (sectionTitle: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [sectionTitle]: !prev[sectionTitle]
-    }));
+    // Accordion behavior: if clicking the active section, don't close it
+    // If clicking a different section, open only that one
+    if (activeSection !== sectionTitle) {
+      setActiveSection(sectionTitle);
+    }
   };
 
   const toggleGroup = (groupLabel: string) => {
@@ -193,7 +179,7 @@ export default function Sidebar() {
           <div className="group-icon">
             <DynamicIcon 
               name={group.icon} 
-              className="icon-parent"
+              className={hasActiveChild ? "icon-active" : "icon-parent"}
               size={16}
             />
           </div>
@@ -229,26 +215,11 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Pin Button Section */}
-      {!collapsed && (
-        <div className="pin-section">
-          <button
-            className="pin-button"
-            onClick={toggleCollapsed}
-            aria-label="Collapse sidebar"
-            title="Collapse sidebar"
-          >
-            <DynamicIcon name="Pin" size={14} />
-            <span>Collapse</span>
-          </button>
-        </div>
-      )}
-
       {/* Navigation Content */}
       <div className="sidebar-content">
         <nav className="sidebar-nav">
           {navigationConfig.map((section) => {
-            const isExpanded = expandedSections[section.title] ?? true;
+            const isExpanded = activeSection === section.title;
             const isHovered = hoveredSection === section.title && collapsed;
             
             return (
@@ -367,7 +338,11 @@ export default function Sidebar() {
                           return (
                             <div key={item.label} className="flyout-group">
                               <div className="flyout-group-header">
-                                <DynamicIcon name={item.icon} size={16} className="icon-parent" />
+                                <DynamicIcon 
+                                  name={item.icon} 
+                                  size={16} 
+                                  className={item.items.some(subItem => isActive(subItem.to)) ? "icon-active" : "icon-parent"} 
+                                />
                                 <span>{item.label}</span>
                               </div>
                               <div className="flyout-group-items">
@@ -404,9 +379,19 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      {/* Expand Button for Collapsed State */}
-      {collapsed && (
-        <div className="sidebar-footer">
+      {/* Pin/Unpin Button at Bottom */}
+      <div className="sidebar-footer">
+        {!collapsed ? (
+          <button
+            className="pin-button"
+            onClick={toggleCollapsed}
+            aria-label="Collapse sidebar"
+            title="Collapse sidebar"
+          >
+            <DynamicIcon name="Pin" size={14} />
+            <span>Collapse</span>
+          </button>
+        ) : (
           <button
             className="expand-button"
             onClick={toggleCollapsed}
@@ -415,8 +400,8 @@ export default function Sidebar() {
           >
             <DynamicIcon name="ChevronRight" size={16} />
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </aside>
   );
 }
