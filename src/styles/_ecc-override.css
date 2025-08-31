@@ -23,34 +23,86 @@ html[data-sidebar-mounted="1"] #root > div:not(.sidebar) {
   margin-left: 0 !important;
 }
 
-.sidebar .sidebar-scroll {
-  height: calc(100vh - 110px);
+/* ——— Ensure tokens have fallbacks ——— */
+.sidebar { width: var(--ecc-sidebar-w, 280px); }
+.sidebar.collapsed { width: var(--ecc-sidebar-w-collapsed, 72px); }
+
+/* ——— Sidebar must be fixed & above content ——— */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 50;
+  background: var(--ecc-panel);
 }
 
+/* ——— Reserve space for sidebar across common wrappers (high specificity) ——— */
+html[data-sidebar-mounted="1"] body,
+html[data-sidebar-mounted="1"] body[data-theme],
+html[data-sidebar-mounted="1"] #root,
+html[data-sidebar-mounted="1"] #root > :not(.sidebar),
+html[data-sidebar-mounted="1"] main,
+html[data-sidebar-mounted="1"] .app,
+html[data-sidebar-mounted="1"] .page,
+html[data-sidebar-mounted="1"] .container,
+html[data-sidebar-mounted="1"] .content {
+  padding-left: var(--ecc-sidepad, var(--ecc-sidebar-w)) !important;
+  box-sizing: border-box;
+}
+
+/* Hide horizontal scrollbars */
+html[data-sidebar-mounted="1"],
+html[data-sidebar-mounted="1"] body {
+  overflow-x: hidden;
+}
+
+.sidebar .sidebar-scroll {
+  height: calc(100vh - 110px) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.sidebar .sidebar-scroll::-webkit-scrollbar { width: 0; height: 0; }
+
+/* Fly-out must never span full screen */
 .sidebar .flyout {
-  left: calc(var(--ecc-sidebar-w-collapsed) - 2px);
-  max-width: var(--ecc-flyout-w);
+  left: calc(var(--ecc-sidebar-w-collapsed, 72px) - 2px);
+  max-width: var(--ecc-flyout-w, 280px);
   z-index: 60;
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+.sidebar .flyout.show {
+  opacity: 1;
+  transform: translateX(0);
   pointer-events: auto;
 }
 
-.sidebar .label {
-  color: var(--ecc-text);
-}
-.sidebar .icon.parent {
-  color: var(--ecc-gold);
-}
-.sidebar .icon.child {
-  color: var(--ecc-dim);
-}
+/* Readability + icon color discipline */
+.sidebar .label { color: var(--ecc-text) !important; }
+.sidebar .icon.parent { color: var(--ecc-gold) !important; }
+.sidebar .icon.child { color: var(--ecc-dim) !important; }
 
+/* Logo prominence */
 .sidebar .brand-logo {
   height: 48px;
   filter: brightness(1.15) drop-shadow(0 2px 6px rgba(255,212,0,.2));
   transition: transform .3s ease, opacity .3s ease, height .3s ease;
 }
-.sidebar.collapsed .brand-logo {
-  height: 32px;
+.sidebar.collapsed .brand-logo { height: 32px; }
+
+/* Tiny seam so content never looks "caught" on the left */
+.sidebar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -1px;
+  width: 1px;
+  height: 100%;
+  background: var(--ecc-seam);
 }
 
 .sidebar.collapsed {

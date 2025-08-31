@@ -32,6 +32,13 @@ export default function Sidebar() {
 
   // Persist collapsed state
   const [collapsed, setCollapsed] = useState<boolean>(() => {
+    
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--ecc-sidepad",
+      collapsed ? "var(--ecc-sidebar-w-collapsed)" : "var(--ecc-sidebar-w)"
+    );
+  }, []);
     try {
       return localStorage.getItem("ecc:nav:collapsed") === "1";
     } catch {
