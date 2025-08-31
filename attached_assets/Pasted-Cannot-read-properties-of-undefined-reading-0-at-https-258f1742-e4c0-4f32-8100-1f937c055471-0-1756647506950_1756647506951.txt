@@ -1,0 +1,79 @@
+Cannot read properties of undefined (reading '0')
+at https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/wouter.js?v=9d08664b:280:15
+at renderWithHooks (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:11546:26)
+at updateForwardRef (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:14323:28)
+at beginWork (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:15944:22)
+at HTMLUnknownElement.callCallback2 (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:3672:22)
+at Object.invokeGuardedCallbackDev (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:3697:24)
+at invokeGuardedCallback (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:3731:39)
+at beginWork$1 (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19763:15)
+at performUnitOfWork (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19196:20)
+at workLoopSync (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19135:13)
+Cannot read properties of undefined (reading '0')
+at https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/wouter.js?v=9d08664b:280:15
+at renderWithHooks (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:11546:26)
+at updateForwardRef (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:14323:28)
+at beginWork (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:15944:22)
+at HTMLUnknownElement.callCallback2 (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:3672:22)
+at Object.invokeGuardedCallbackDev (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:3697:24)
+at invokeGuardedCallback (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:3731:39)
+at beginWork$1 (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19763:15)
+at performUnitOfWork (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19196:20)
+at workLoopSync (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19135:13)
+Cannot read properties of undefined (reading '0')
+at https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/wouter.js?v=9d08664b:280:15
+at renderWithHooks (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:11546:26)
+at updateForwardRef (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:14323:28)
+at beginWork (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:15944:22)
+at HTMLUnknownElement.callCallback2 (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:3672:22)
+at Object.invokeGuardedCallbackDev (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:3697:24)
+at invokeGuardedCallback (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:3731:39)
+at beginWork$1 (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19763:15)
+at performUnitOfWork (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19196:20)
+at workLoopSync (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19135:13)
+Cannot read properties of undefined (reading '0')
+at https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/wouter.js?v=9d08664b:280:15
+at renderWithHooks (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:11546:26)
+at updateForwardRef (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:14323:28)
+at beginWork (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:15944:22)
+at HTMLUnknownElement.callCallback2 (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:3672:22)
+at Object.invokeGuardedCallbackDev (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:3697:24)
+at invokeGuardedCallback (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:3731:39)
+at beginWork$1 (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19763:15)
+at performUnitOfWork (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19196:20)
+at workLoopSync (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19135:13)
+Cannot read properties of undefined (reading '0')
+Cannot read properties of undefined (reading '0')
+Cannot read properties of undefined (reading '0')
+Cannot read properties of undefined (reading '0')
+Cannot read properties of undefined (reading '0')
+Cannot read properties of undefined (reading '0')
+Cannot read properties of undefined (reading '0')
+Cannot read properties of undefined (reading '0')
+Cannot read properties of undefined (reading '0')
+Cannot read properties of undefined (reading '0')
+The above error occurred in the <ForwardRef> component:
+
+    at https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/wouter.js?v=9d08664b:266:18
+    at div
+    at nav
+    at div
+    at aside
+    at Sidebar (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/src/components/Sidebar.tsx:36:22)
+    at div
+    at Layout (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/src/components/layout/Layout.tsx:20:34)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+Cannot read properties of undefined (reading '0')
+at https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/wouter.js?v=9d08664b:280:15
+at renderWithHooks (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:11546:26)
+at updateForwardRef (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:14323:28)
+at beginWork (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:15944:22)
+at beginWork$1 (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19751:22)
+at performUnitOfWork (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19196:20)
+at workLoopSync (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19135:13)
+at renderRootSync (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:19114:15)
+at recoverFromConcurrentError (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:18734:28)
+at performConcurrentWorkOnRoot (https://258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev:5000/node_modules/.vite/deps/chunk-BCXODTBQ.js?v=9d08664b:18682:30)
