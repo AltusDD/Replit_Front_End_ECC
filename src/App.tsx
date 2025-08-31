@@ -1,6 +1,6 @@
 /* eslint-disable */
 import React from "react";
-import { Route, Switch, Redirect } from "wouter";
+import { Route, Switch, Redirect, Router } from "wouter";
 import Layout from "@/components/layout/Layout";
 
 // Dashboard
@@ -94,8 +94,9 @@ import ApiProbe from "@/pages/tools/probe";
 
 export default function App() {
   return (
-    <Layout>
-      <Switch>
+    <Router>
+      <Layout>
+        <Switch>
         {/* Primary */}
         <Route path="/" component={() => <Redirect to="/dashboard" />} />
         <Route path="/dashboard" component={Dashboard} />
@@ -195,5 +196,6 @@ export default function App() {
         <Route>404 Not Found</Route>
       </Switch>
     </Layout>
+    </Router>
   );
 }
