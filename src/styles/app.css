@@ -1,129 +1,79 @@
-/* ================================
-   ECC — App Styles (FULL FILE)
-   ================================ */
+/* =========================================================
+   ECC APP LAYOUT + SIDEBAR — FULL DROP-IN REPLACEMENT
+   ========================================================= */
 
-/* --------- Theme tokens --------- */
-:root {
-  /* Surfaces */
-  --bg: #0a0a0a;            /* page background (true black) */
-  --panel: #121212;         /* cards/tables/panels */
-  --panel-2: #171717;
-  --border-1: #2a2a2a;
-
-  /* Type */
-  --fg: #ffffff;
-  --muted-1: #c7c7c7;
-  --muted-2: #9fa3a7;
-
-  /* Brand */
-  --gold: #ffd700;
-  --success: #38a169;
-  --warn: #ecc94b;
-  --danger: #e53e3e;
-
-  /* Sidebar */
-  --nav-bg: #0a0a0a;        /* match page (no brown tint) */
-  --nav-fg: var(--fg);
-  --nav-muted: #b5b5b5;
-  --nav-ring: color-mix(in srgb, var(--gold) 36%, transparent);
-  --nav-item-bg: #141414;
-  --nav-item-bg-hover: #171717;
-
-  /* Layout sizes */
-  --sidebar-w: 280px;
-  --sidebar-w-collapsed: 76px;
-
-  /* Row layout */
-  --nav-icon: 18px;
-  --nav-gap: 10px;
-  --nav-pad-x: 12px;
-}
-
-/* --------- Base reset --------- */
-html, body, #root { height: 100%; }
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans";
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-h1, h2, h3 { margin: 0 0 12px; line-height: 1.15; }
-h1 { font-size: 40px; font-weight: 800; letter-spacing: .3px; }
-h2 { font-size: 24px; font-weight: 700; }
-p  { color: var(--muted-1); }
-
-/* --------- App shell --------- */
-.app-shell {
-  height: 100vh;
+/* ---------- Layout shell: independent scrolling ---------- */
+.app-shell,
+.layout {                /* your outer wrapper likely has one of these */
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
-  overflow: hidden;
+  height: 100vh;
+  overflow: hidden;      /* rail & content scroll independently */
+  background: var(--bg);
 }
-.app-shell.collapsed {
+
+.app-shell.collapsed,
+.layout.collapsed {
   grid-template-columns: var(--sidebar-w-collapsed) 1fr;
 }
 
-/* === Sidebar === */
+/* ------------------------ Sidebar ------------------------ */
 .sidebar {
   background: var(--nav-bg) !important;
+  color: var(--nav-fg);
   border-right: 1px solid var(--border-1);
-  position: relative;
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  min-width: 0; /* prevent layout push */
 }
-.sidebar.collapsed .hide-when-collapsed { display: none !important; }
-.sidebar.collapsed .only-collapsed { display: initial !important; }
-.only-collapsed { display: none; }
 
+/* Brand block */
 .sidebar .brand {
-  padding: 18px 16px 12px 16px;
+  padding: 16px 18px 12px;
   border-bottom: 1px solid var(--border-1);
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 8px;
 }
-.brand .brand-logo {
+.sidebar .brand .brand-logo {
   display: block;
-  max-width: 190px;
+  width: 100%;
+  max-width: 192px;      /* nice and proud */
   max-height: 64px;
-  width: auto; height: auto;
   object-fit: contain;
-  filter: brightness(1.15) drop-shadow(0 0 8px rgba(255,215,0,.15));
+  filter: brightness(1.15) drop-shadow(0 0 8px rgba(255,215,0,.14));
 }
+
 .sidebar.collapsed .brand {
-  padding: 12px 0 10px;
-  justify-content: center;
+  padding: 12px 0 10px; text-align: center;
 }
 .sidebar.collapsed .brand .brand-logo {
-  max-width: 48px; max-height: 48px;
+  max-width: 48px; max-height: 48px; margin: 0 auto;
 }
 
-/* independent scroll area (scrollbar hidden) */
+/* Scroll area: wheel works; bar hidden */
 .sidebar-scroll {
-  height: calc(100vh - 86px);
+  flex: 1 1 auto;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  scrollbar-width: none;          /* Firefox */
+  scrollbar-width: none;               /* Firefox hide */
 }
-.sidebar-scroll::-webkit-scrollbar { display: none; } /* WebKit */
+.sidebar-scroll::-webkit-scrollbar { display: none; }
 
-/* Sections */
-.section-title {
+/* Section titles */
+.sidebar .section-title {
   color: var(--nav-muted);
   font-weight: 700;
   font-size: 12px;
   letter-spacing: .6px;
-  padding: 14px 16px 8px;
+  padding: 14px 16px 6px;
   text-transform: uppercase;
 }
 
-/* Row grid: icon | label | chevron — prevents left scoot */
-.nav-row {
+/* --------- Uniform row grid (icon | label | chevron) --------- */
+:root { --nav-icon: 18px; --nav-gap: 10px; --nav-pad-x: 12px; }
+
+.sidebar .nav-item,
+.sidebar .group-row,
+.sidebar .leaf {
   display: grid;
   grid-template-columns: var(--nav-icon) minmax(0,1fr) auto;
   align-items: center;
@@ -135,99 +85,123 @@ p  { color: var(--muted-1); }
   text-decoration: none;
   user-select: none;
 }
-.nav-row .icon { width: var(--nav-icon); min-width: var(--nav-icon); height: 18px; display: inline-flex; align-items: center; justify-content: center; color: var(--gold); }
-.nav-row .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* hover/active */
-.nav-row:hover { background: var(--nav-item-bg-hover); }
-.nav-row.active {
-  background: var(--nav-item-bg);
-  outline: 2px solid var(--nav-ring);
+.sidebar .nav-item .icon,
+.sidebar .group-row .icon,
+.sidebar .leaf .icon {
+  width: var(--nav-icon);
+  min-width: var(--nav-icon);
+  height: var(--nav-icon);
+  color: var(--gold);
 }
 
-/* Group header */
-.group-row { cursor: pointer; }
-.group-row .chev { opacity: .8; }
-.group-row[aria-expanded="true"] .chev { transform: rotate(90deg); }
+/* Remove any bullet-like pseudo content introduced elsewhere */
+.sidebar .leaf::marker,
+.sidebar li::marker { content: none; }
+.sidebar .leaf::before { content: none !important; }
 
-/* Children list */
-.leafList { padding-left: 34px; display: grid; gap: 2px; }
-.leaf { text-decoration: none; color: var(--nav-fg); }
-.leaf.active .icon { color: var(--gold); }
-.leaf .bullet { color: var(--gold); font-size: 14px; }
+/* Hover + active visuals */
+.sidebar .nav-item:hover,
+.sidebar .group-row:hover,
+.sidebar .leaf:hover { background: var(--panel-2); }
 
-/* Collapsed (icon-only) */
-.sidebar.collapsed .nav-row {
+.sidebar .nav-item.active,
+.sidebar .leaf.active,
+.sidebar .leaf[aria-current="page"] {
+  background: var(--nav-active-bg);
+  box-shadow: inset 0 0 0 2px var(--nav-active-ring);
+}
+
+/* Label block never “scoots” left */
+.sidebar .nav-item > :nth-child(2),
+.sidebar .group-row > :nth-child(2),
+.sidebar .leaf     > :nth-child(2) {
+  margin: 0 !important;
+  text-indent: 0 !important;
+  min-width: 0;
+}
+
+/* Children list (expanded groups) */
+.leafList {
+  margin: 4px 0 8px 0;
+  padding-left: 38px;
+  display: grid;
+  gap: 4px;
+}
+
+/* ------------- Collapsed rail: icon-only, no drift ------------- */
+.sidebar.collapsed .nav-item,
+.sidebar.collapsed .group-row,
+.sidebar.collapsed .leaf {
   grid-template-columns: var(--nav-icon);
   justify-items: center;
-  margin: 6px 6px;
   padding: 10px;
+  margin: 6px 6px;
 }
-.sidebar.collapsed .nav-row > :not(:first-child) { display: none; }
-.sidebar.collapsed .section-title { text-align: center; padding: 10px 0 4px; }
 
-/* Collapsed: show CURRENT group’s child icons beside parent */
+.sidebar.collapsed .nav-item > :not(:first-child),
+.sidebar.collapsed .group-row > :not(:first-child),
+.sidebar.collapsed .leaf     > :not(:first-child) {
+  visibility: hidden;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Show the current child position while collapsed:
+   If your markup toggles aria-expanded on the parent, or you add
+   data-current-child="true" on the parent when a child is active,
+   the icons for children will be shown inline under the parent icon. */
 .sidebar.collapsed .leafList { display: none; }
-.sidebar.collapsed .group-row[data-current-child="true"] + .leafList,
-.sidebar.collapsed .group-row[aria-expanded="true"] + .leafList {
+
+.sidebar.collapsed .group-row[aria-expanded="true"] + .leafList,
+.sidebar.collapsed .group-row[data-current-child="true"] + .leafList {
   display: flex;
   gap: 6px;
   padding-left: 0;
-  flex-wrap: wrap;
-  margin: 0 6px 8px;
+  align-items: center;
 }
-.sidebar.collapsed .leaf { display: inline-flex; }
-.sidebar.collapsed .leaf .label { display: none; } /* labels return on hover fly-out */
 
-/* Fly-out on hover when collapsed (restore full grid) */
-.sidebar.collapsed:hover .nav-row {
+.sidebar.collapsed .leaf .lbl { display: none; }
+
+/* Fly-out (collapsed + hover) shows full content with correct padding */
+.sidebar.collapsed:hover .nav-item,
+.sidebar.collapsed:hover .group-row,
+.sidebar.collapsed:hover .leaf {
   grid-template-columns: var(--nav-icon) minmax(0,1fr) auto;
   justify-items: start;
   padding: 10px var(--nav-pad-x);
 }
-.sidebar.collapsed:hover .nav-row > :not(:first-child) { display: initial; }
-.sidebar.collapsed:hover .leafList {
-  display: grid; gap: 2px; padding-left: 34px;
+
+.sidebar.collapsed:hover .nav-item > :not(:first-child),
+.sidebar.collapsed:hover .group-row > :not(:first-child),
+.sidebar.collapsed:hover .leaf     > :not(:first-child) {
+  visibility: visible; width: auto; overflow: visible;
 }
 
-/* Footer / pin button */
-.sidebar-footer {
-  padding: 12px 16px 16px;
+/* Footer (pin/unpin) */
+.sidebar .sidebar-footer {
+  padding: 14px 16px;
   border-top: 1px solid var(--border-1);
 }
-.pinBtn {
+.sidebar .pinBtn {
   width: 100%;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-1);
-  background: #111;
+  background: #121314;
   color: var(--muted-1);
-  border-radius: 12px;
   padding: 10px 12px;
   cursor: pointer;
 }
-.sidebar.collapsed .pinBtn { display: none; } /* hide pin in icon-only mode */
+.sidebar .pinBtn:hover { background: var(--panel-2); }
 
-/* --------- Panels & Tables (light touch) --------- */
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--border-1);
-  border-radius: 14px;
+/* When the rail is collapsed, hide the big footer button */
+.sidebar.collapsed .sidebar-footer { display: none; }
+
+/* ------------- Content seam (don’t capture wheel) ------------- */
+.content-seam, .splitter, .resize-handle {
+  pointer-events: none !important;
 }
-.table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 14px;
-}
-.table thead th {
-  text-align: left;
-  color: var(--muted-2);
-  font-weight: 600;
-  border-bottom: 1px solid var(--border-1);
-  padding: 12px 16px;
-  position: sticky; top: 0; background: var(--panel);
-}
-.table tbody td {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border-1);
-}
-.table tr:hover td { background: var(--panel-2); }
+
+/* Optional: keep table containers from bleeding behind the rail */
+main, .content, .page { background: var(--bg); }
