@@ -1,13 +1,20 @@
 import React from "react";
 import Sidebar from "@/components/Sidebar";
 
-type Props = { children: React.ReactNode };
+type Props = {
+  children?: React.ReactNode;
+};
 
 export default function Layout({ children }: Props) {
   return (
     <div className="app-shell">
+      {/* Sidebar renders its own <aside> container */}
       <Sidebar />
-      <main style={{ height: "100vh", overflow: "auto" }}>{children}</main>
+
+      {/* Main content column scrolls independently */}
+      <div className="content">
+        {children}
+      </div>
     </div>
   );
 }

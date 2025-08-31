@@ -1,0 +1,109 @@
+Prompt for Replit Agent
+# Project: EstateCommand
+## Goal
+Restore the left sidebar using only `wouter` with a clean layout, collapse behavior, active link highlighting, and scoped CSS. Ensure no regressions in the rest of the application.
+
+## Technical Constraints
+- Only modify the following files:
+  - `src/components/layout/navConfig.ts`
+  - `src/components/Sidebar.tsx`
+  - `src/styles/_ecc-override.css`
+  - `src/main.tsx`
+- Use `wouter` only. Do not add `react-router-dom`.
+- Backup any existing files as `*.bak` before replacement.
+- Import `_ecc-override.css` *after* `theme.css` and `app.css` in `main.tsx`.
+- Do not touch routes, pages, tables, data fetching, or theme tokens.
+- All styles must remain scoped under `.sidebar`.
+
+## Implementation Instructions
+
+1. **Install Dependency**
+   ```bash
+   npm install wouter
+
+
+Create/Replace src/components/layout/navConfig.ts
+Use the following content:
+
+export type Leaf = { label: string; to: string };
+export type Group = { label: string; children: Leaf[] };
+export type Item = Leaf | Group;
+export type Section = { title?: string; items: Item[] };
+
+const sections: Section[] = [
+  { title: "Dashboard", items: [{ label: "Home", to: "/dashboard" }] },
+  {
+    title: "Portfolio V3",
+    items: [
+      { label: "Properties", to: "/portfolio/properties" },
+      { label: "Units", to: "/portfolio/units" },
+      { label: "Leases", to: "/portfolio/leases" },
+      { label: "Tenants", to: "/portfolio/tenants" },
+      { label: "Owners", to: "/portfolio/owners" },
+    ],
+  },
+  {
+    title: "Cards",
+    items: [
+      { label: "Overview", to: "/cards/overview" },
+      { label: "Delinquencies", to: "/cards/delinquencies" },
+      { label: "Vacancy", to: "/cards/vacancy" },
+    ],
+  },
+  {
+    title: "Operations",
+    items: [
+      { label: "Accounting", to: "/operations/accounting" },
+      { label: "Leasing", to: "/operations/leasing" },
+      { label: "Maintenance", to: "/operations/maintenance" },
+      { label: "Marketing", to: "/operations/marketing" },
+    ],
+  },
+];
+
+export { sections };
+export default sections;
+
+
+Create/Replace src/components/Sidebar.tsx
+Use the complete sidebar implementation as described in the ECC Playbook. Ensure:
+
+Collapse state is persisted
+
+Active state highlighting
+
+Parent/child nesting with group toggle
+
+Independent scroll
+
+Create/Replace src/styles/_ecc-override.css
+Use the scoped CSS provided under .sidebar only.
+
+Update src/main.tsx
+
+Ensure no usage of BrowserRouter
+
+Import styles in this order:
+
+import "@/styles/theme.css";
+import "@/styles/app.css";
+import "@/styles/_ecc-override.css";
+
+Verification Checklist
+
+ Sidebar compiles without routing or library errors.
+
+ Sidebar renders all sections (Dashboard, Portfolio V3, Cards, Operations).
+
+ Links navigate and highlight correctly.
+
+ Collapse/expand pin behavior persists on reload.
+
+ Sidebar scrolls independently; scrollbar hidden.
+
+ No CSS visual regressions outside the sidebar.
+
+
+---
+
+Would you like me to generate a `.md` or `.txt` file of this prompt so you can upload it directly to Replit? ​:contentReference[oaicite:0]{index=0}​
