@@ -1,14 +1,17 @@
-/* ECC BOOTSTRAP */
-import "@/styles/theme.css";
-import "@/styles/app.css";
 
+import "./styles/theme.css";
+import "./styles/app.css";
+import "./styles/_ecc-override.css";
+
+if (import.meta.env.DEV) {
+  import("./debug/crash-overlay"); // keep dev overlay if present
+}
 
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "@/App";
+import App from "./App";
 
 document.documentElement.setAttribute("data-theme", "altus");
-document.body.setAttribute("data-ecc", "1");
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

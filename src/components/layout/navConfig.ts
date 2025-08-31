@@ -1,169 +1,74 @@
 // ECC Navigation Configuration - Canonical Structure
-export interface NavItem {
-  label: string;
-  path?: string;
-  items?: NavItem[];
-}
+export type Leaf = { label: string; to: string };
+export type Group = { label: string; children: Leaf[] };
+export type Item = Leaf | Group;
+export type Section = { title?: string; items: Item[] };
 
-export interface NavSection {
-  label: string;
-  items: NavItem[];
-}
-
-export const navConfig: NavSection[] = [
+const sections: Section[] = [
   {
-    label: "Primary",
-    items: [
-      { label: "Dashboard", path: "/dashboard" }
-    ]
+    title: "Primary",
+    items: [{ label: "Dashboard", to: "/dashboard" }],
   },
   {
-    label: "Portfolio V3",
+    title: "Portfolio V3",
     items: [
-      {
-        label: "Portfolio V3",
-        items: [
-          { label: "Properties", path: "/portfolio/properties" },
-          { label: "Units", path: "/portfolio/units" },
-          { label: "Leases", path: "/portfolio/leases" },
-          { label: "Tenants", path: "/portfolio/tenants" },
-          { label: "Owners", path: "/portfolio/owners" }
-        ]
-      }
-    ]
+      { label: "Properties", to: "/portfolio/properties" },
+      { label: "Units", to: "/portfolio/units" },
+      { label: "Leases", to: "/portfolio/leases" },
+      { label: "Tenants", to: "/portfolio/tenants" },
+      { label: "Owners", to: "/portfolio/owners" },
+    ],
   },
   {
-    label: "Cards",
+    title: "Cards (Entity Hubs)",
     items: [
-      {
-        label: "Cards",
-        items: [
-          { label: "Property Card", path: "/card/property/:id" },
-          { label: "Unit Card", path: "/card/unit/:id" },
-          { label: "Lease Card", path: "/card/lease/:id" },
-          { label: "Tenant Card", path: "/card/tenant/:id" },
-          { label: "Owner Card", path: "/card/owner/:id" }
-        ]
-      }
-    ]
+      { label: "Property Card", to: "/card/property" },
+      { label: "Unit Card", to: "/card/unit" },
+      { label: "Lease Card", to: "/card/lease" },
+      { label: "Tenant Card", to: "/card/tenant" },
+      { label: "Owner Card", to: "/card/owner" },
+    ],
   },
   {
-    label: "Operations",
+    title: "Operations",
     items: [
       {
         label: "Accounting",
-        items: [
-          { label: "Overview", path: "/ops/accounting/overview" },
-          { label: "Rent Collection", path: "/ops/accounting/rent-collection" },
-          { label: "Expenses", path: "/ops/accounting/expenses" },
-          { label: "Financial Reports", path: "/ops/accounting/financial-reports" },
-          { label: "Tenant Ledgers", path: "/ops/accounting/tenant-ledgers" },
-          { label: "Collections Dashboard", path: "/ops/accounting/collections-dashboard" },
-          { label: "Collections Log", path: "/ops/accounting/collections-log" },
-          { label: "Payment Plans", path: "/ops/accounting/payment-plans" },
-          { label: "Deposits", path: "/ops/accounting/deposits" },
-          { label: "Transfers", path: "/ops/accounting/transfers" },
-          { label: "Subsidized Housing", path: "/ops/accounting/subsidized-housing" },
-          { label: "Assistance Programs", path: "/ops/accounting/assistance-programs" }
-        ]
+        children: [
+          { label: "Overview", to: "/ops/accounting/overview" },
+          { label: "Rent Collection", to: "/ops/accounting/rent-collection" },
+          { label: "Expenses", to: "/ops/accounting/expenses" },
+          { label: "Financial Reports", to: "/ops/accounting/financial-reports" },
+          { label: "Tenant Ledgers", to: "/ops/accounting/tenant-ledgers" },
+          { label: "Collections Dashboard", to: "/ops/accounting/collections-dashboard" },
+          { label: "Collections Log", to: "/ops/accounting/collections-log" },
+          { label: "Payment Plans", to: "/ops/accounting/payment-plans" },
+          { label: "Deposits", to: "/ops/accounting/deposits" },
+          { label: "Transfers", to: "/ops/accounting/transfers" },
+          { label: "Subsidized Housing", to: "/ops/accounting/subsidized-housing" },
+          { label: "Assistance Programs", to: "/ops/accounting/assistance-programs" },
+        ],
       },
       {
         label: "AI Analytics",
-        items: [
-          { label: "Risk Summary", path: "/ops/ai/risk-summary" },
-          { label: "Renewal Forecasting", path: "/ops/ai/renewal-forecasting" },
-          { label: "Vacancy Analytics", path: "/ops/ai/vacancy-analytics" },
-          { label: "ML Leasing Logs", path: "/ops/ai/ml-leasing-logs" }
-        ]
+        children: [
+          { label: "Risk Summary", to: "/ops/ai/risk-summary" },
+          { label: "Renewal Forecasting", to: "/ops/ai/renewal-forecasting" },
+          { label: "Vacancy Analytics", to: "/ops/ai/vacancy-analytics" },
+          { label: "ML Leasing Logs", to: "/ops/ai/ml-leasing-logs" },
+        ],
       },
       {
         label: "Legal Tracker",
-        items: [
-          { label: "Case Manager", path: "/ops/legal/case-manager" },
-          { label: "Advanced Legal Ops", path: "/ops/legal/advanced" },
-          { label: "Legal Docs", path: "/ops/legal/docs" },
-          { label: "Attorney Reports", path: "/ops/legal/attorney-reports" }
-        ]
+        children: [
+          { label: "Case Manager", to: "/ops/legal/case-manager" },
+          { label: "Advanced Legal Ops", to: "/ops/legal/advanced" },
+          { label: "Legal Docs", to: "/ops/legal/docs" },
+        ],
       },
-      {
-        label: "Communication",
-        items: [
-          { label: "Queue", path: "/ops/comms/queue" },
-          { label: "Templates", path: "/ops/comms/templates" },
-          { label: "Logs", path: "/ops/comms/logs" }
-        ]
-      },
-      {
-        label: "Work Orders",
-        items: [
-          { label: "Work Orders", path: "/ops/work/work-orders" },
-          { label: "Vendors", path: "/ops/work/vendors" },
-          { label: "Materials & Inventory", path: "/ops/work/materials-inventory" },
-          { label: "Smart Routing", path: "/ops/work/smart-routing" },
-          { label: "AI Intelligence", path: "/ops/work/ai-intelligence" },
-          { label: "Build/Repair Projects", path: "/ops/work/build-repair-projects" },
-          { label: "Capital Projects", path: "/ops/work/capital-projects" }
-        ]
-      },
-      { label: "Reports", path: "/ops/reports" }
-    ]
+    ],
   },
-  {
-    label: "Growth",
-    items: [
-      { label: "Inventory", path: "/growth/inventory" },
-      { label: "Marketing", path: "/growth/marketing" }
-    ]
-  },
-  {
-    label: "System",
-    items: [
-      { label: "Automation", path: "/system/automation" },
-      { label: "Settings", path: "/system/settings" }
-    ]
-  },
-  {
-    label: "Data Management",
-    items: [
-      {
-        label: "Data Management",
-        items: [
-          { label: "Sync Audit", path: "/data/sync-audit" },
-          { label: "Sync Management", path: "/data/sync-management" },
-          { label: "Raw Data", path: "/data/raw" },
-          { label: "Sync Logs", path: "/data/sync-logs" },
-          { label: "System Settings", path: "/data/system-settings" }
-        ]
-      }
-    ]
-  },
-  {
-    label: "Investor Portal",
-    items: [
-      {
-        label: "Investor Portal",
-        items: [
-          { label: "Dashboard", path: "/investor/dashboard" },
-          { label: "Portfolio Analytics", path: "/investor/portfolio-analytics" },
-          { label: "Financial Reports", path: "/investor/financial-reports" }
-        ]
-      }
-    ]
-  },
-  {
-    label: "Integrations",
-    items: [
-      {
-        label: "Integrations",
-        items: [
-          { label: "Dropbox Files", path: "/integrations/dropbox" },
-          { label: "CoreLogic / MLS Grid", path: "/integrations/corelogic" },
-          { label: "Field App Link", path: "/integrations/field-app" },
-          { label: "Deal Room Link", path: "/integrations/deal-room" }
-        ]
-      }
-    ]
-  }
 ];
 
-export default navConfig;
+export { sections };
+export default sections;
