@@ -1,16 +1,16 @@
-
 /* ECC Sidebar Styles - Scoped to .sidebar */
 
+/* Sidebar should reserve space + stay above app content */
 .sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
+  position: fixed;   /* NEW */
+  top: 0;            /* NEW */
+  left: 0;           /* NEW */
+  height: 100vh;     /* NEW */
+  z-index: 50;       /* NEW */
   width: 280px;
-  height: 100vh;
   background: var(--color-panel, #2A2A2A);
   border-right: 1px solid var(--color-border, #404040);
   transition: all 0.3s ease;
-  z-index: 1000;
   display: flex;
   flex-direction: column;
 }
@@ -30,15 +30,13 @@
 }
 
 .sidebar .brand-logo {
+  height: 48px;
+  filter: brightness(1.15) drop-shadow(0 2px 6px rgba(255,212,0,.2));
   width: 32px;
-  height: 32px;
   object-fit: contain;
 }
 
-.sidebar.collapsed .brand-logo {
-  width: 24px;
-  height: 24px;
-}
+.sidebar.collapsed .brand-logo { height: 32px; width: 24px; }
 
 .sidebar .pinBtn {
   margin-left: auto;
@@ -67,6 +65,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 8px 0;
+  height: calc(100vh - 110px); /* already present; leave or set to this */
 }
 
 .sidebar-scroll::-webkit-scrollbar {
@@ -144,6 +143,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--ecc-text);
 }
 
 .sidebar.collapsed .nav-row .label {
@@ -194,6 +194,22 @@
 }
 
 /* Layout adjustments */
+/* Tell the rest of the page to move over by sidebar width */
+html[data-sidebar-mounted="1"] body {
+  padding-left: var(--ecc-sidepad, var(--ecc-sidebar-w)); /* NEW */
+}
+
+/* Fly-out: never full screen, sits just to the right of collapsed bar */
+.sidebar .flyout {
+  left: calc(var(--ecc-sidebar-w-collapsed) - 2px); /* existing or ensure set */
+  max-width: var(--ecc-flyout-w);                   /* clamp */
+  z-index: 60;                                      /* above content */
+}
+
+/* Make parent labels readable and parent/child icon colors consistent */
+.sidebar .icon.parent { color: var(--ecc-gold); }
+.sidebar .icon.child  { color: var(--ecc-dim); }
+
 .layout {
   margin-left: 280px;
   transition: margin-left 0.3s ease;
@@ -208,12 +224,12 @@
   .sidebar {
     transform: translateX(-100%);
   }
-  
+
   .sidebar.collapsed {
     transform: translateX(0);
     width: 64px;
   }
-  
+
   .layout {
     margin-left: 0;
   }

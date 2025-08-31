@@ -44,6 +44,18 @@ export default function Sidebar() {
     } catch {}
   }, [collapsed]);
 
+  // Add a hook to manage sidebar padding globally.
+  useEffect(() => {
+    const root = document.documentElement;
+    const pad = collapsed ? "var(--ecc-sidebar-w-collapsed)" : "var(--ecc-sidebar-w)";
+    root.style.setProperty("--ecc-sidepad", pad);
+    root.setAttribute("data-sidebar-mounted", "1");
+    return () => {
+      root.style.removeProperty("--ecc-sidepad");
+      root.removeAttribute("data-sidebar-mounted");
+    };
+  }, [collapsed]);
+
   // Auto-open groups that contain the active child
   const initialExpanded = useMemo(() => {
     const map = new Map<string, boolean>();
