@@ -1,16 +1,29 @@
 :root{
-  --bg:#0b0d10;
-  --text:#e7eaee;
-  --muted:#a7b0bb;
-  --panel:#12161b;
-  --border:#26303b;
-  --info:#3b82f6; --success:#16a34a; --warn:#f59e0b; --danger:#ef4444;
+  --ecc-bg:#0b0f14;
+  --ecc-panel:#111822;
+  --ecc-ink:#e6edf3;
+  --ecc-muted:#9fb0c0;
+  --ecc-border:#1e2a39;
+
+  --ecc-accent:#3a66ff;
+  --ecc-accent-ink:#fff;
+
+  --ecc-radius:12px;
+
+  --ecc-sidebar: 272px;
+  --ecc-sidebar-collapsed: 72px;
+
+  --ecc-gap-sm:8px;
+  --ecc-gap-md:12px;
+  --ecc-gap-lg:16px;
 }
+
 *{box-sizing:border-box}
 html,body,#root{height:100%}
-body{margin:0;font:14px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,"Apple Color Emoji","Segoe UI Emoji";color:var(--text);background:var(--bg)}
-h1,h2,h3{margin:0 0 12px}
-a{color:var(--info);text-decoration:none} a:hover{text-decoration:underline}
-button{font:inherit;background:var(--info);color:#fff;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}
-.code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}
+body{
+  margin:0;
+  background:var(--ecc-bg);
+  color:var(--ecc-ink);
+  font:14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+a{color:inherit;text-decoration:none}

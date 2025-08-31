@@ -1,14 +1,11 @@
-
 import React from "react";
 import Sidebar from "../Sidebar";
 
-const Layout: React.FC<React.PropsWithChildren> = ({ children }) => {
-return (
-<>
-<Sidebar />
-<main style={{ padding: "24px" }}>{children}</main>
-</>
-);
-};
-
-export default Layout;
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="ecc-layout">
+      <Sidebar />
+      <main className="app-main">{children}</main>
+    </div>
+  );
+}

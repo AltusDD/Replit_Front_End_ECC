@@ -1,67 +1,96 @@
-/* --- Layout -------------------------------------------------------------- */
-html,body,#root{height:100%}
-#root > .app,                 /* if App renders a single wrapper */
-body > #root > div{           /* fallback: generic top-level app wrapper */
-  display:grid;
-  grid-template-columns: 240px 1fr;
+/* App shell: grid so content starts at the top and never “slides down” */
+.ecc-app{
   min-height:100vh;
+  display:grid;
+  grid-template-columns: var(--ecc-sidebar) 1fr;
+  column-gap:0;
+}
+body.ecc--sidebar-collapsed .ecc-app{
+  grid-template-columns: var(--ecc-sidebar-collapsed) 1fr;
 }
 
-/* --- Sidebar ------------------------------------------------------------- */
-aside{
-  background:var(--panel);
-  border-right:1px solid var(--border);
-  padding:16px 14px;
-  position:sticky; top:0; height:100vh; overflow:auto;
-}
-aside .brand{font-weight:700; margin-bottom:8px}
-aside nav{display:flex; flex-direction:column; gap:6px; margin-top:8px}
-aside nav a{
-  display:block;
-  color:var(--text);
-  opacity:.85;
-  padding:8px 10px;
-  border-radius:8px;
-}
-aside nav a:hover{background:#0e1318; opacity:1}
-aside .section-title{
-  font-size:11px; letter-spacing:.08em; color:var(--muted);
-  margin:18px 0 6px; text-transform:uppercase;
+.ecc-main{
+  padding:24px;
 }
 
-/* --- Main content -------------------------------------------------------- */
-main{padding:24px 28px}
-
-/* --- Headings ------------------------------------------------------------ */
-h1{font-size:28px; font-weight:800; margin:0 0 16px}
-
-/* --- KPI cards ----------------------------------------------------------- */
-.kpis{display:grid; grid-template-columns: repeat(5,minmax(180px,1fr)); gap:16px}
-@media (max-width:1200px){.kpis{grid-template-columns: repeat(3,1fr)}}
-@media (max-width:800px){.kpis{grid-template-columns: repeat(2,1fr)}}
-.card,.panel{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:16px;
+/* Sidebar */
+.ecc-sidebar{
+  position:sticky; top:0; align-self:start;
+  height:100vh;
+  background:var(--ecc-panel);
+  border-right:1px solid var(--ecc-border);
+  display:flex; flex-direction:column;
 }
-.card .title, .panel .title{
-  color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px
-}
-.card .value, .panel .value{font-weight:800; font-size:28px}
+.ecc-sidebar__inner{flex:1; overflow:auto; padding:12px}
 
-/* --- Badges / helpers ---------------------------------------------------- */
-.badge{
-  display:inline-block; font-size:12px; padding:4px 8px; border-radius:999px;
-  background:rgba(59,130,246,.15); color:var(--info); border:1px solid rgba(59,130,246,.45)
+/* Collapse control pinned so it doesn't shift layout */
+.ecc-collapse-ctl{
+  position:absolute;
+  right:-10px; bottom:16px;
+  width:24px; height:24px;
+  display:grid;place-items:center;
+  border-radius:999px;
+  border:1px solid var(--ecc-border);
+  background:var(--ecc-panel); color:var(--ecc-muted);
 }
-.section{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-top:16px}
-.row{display:flex; align-items:center; gap:10px}
-/* --- Tables --------------------------------------------------------------- */
-.table{width:100%; border-collapse:separate; border-spacing:0; background:var(--panel); border:1px solid var(--border); border-radius:12px; overflow:hidden}
-.table th, .table td{padding:12px 14px; text-align:left; border-bottom:1px solid var(--border)}
-.table th{font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); background:#0e1318}
-.table tr:last-child td{border-bottom:none}
-.table tr:hover td{background:#0e1318}
-.table .num{text-align:right; font-variant-numeric:tabular-nums}
-.badge-muted{display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted)}
+.ecc-sidebar.is-collapsed .ecc-link__label{display:none}
+.ecc-sidebar.is-collapsed .ecc-section__label{display:none}
+
+/* Brand: bound the logo so it never explodes */
+.ecc-brand{padding:8px 8px 4px}
+.ecc-brand__img{
+  width:100%; max-width:200px; height:40px;
+  object-fit:contain; object-position:left center;
+  display:block; image-rendering:auto;
+}
+.ecc-sidebar.is-collapsed .ecc-brand__img{
+  width:40px; height:40px; max-width:none;
+}
+
+/* Sections */
+.ecc-section{margin:14px 6px}
+.ecc-section__label{
+  margin:8px 8px 6px; color:var(--ecc-muted);
+  font-size:12px; text-transform:uppercase; letter-spacing:.06em;
+}
+
+/* Links */
+.ecc-list{list-style:none; margin:0; padding:0}
+.ecc-list__item{margin:4px 0}
+
+.ecc-link{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px;
+  border-radius:10px;
+  color:var(--ecc-ink);
+  border:1px solid transparent;
+}
+.ecc-link:hover{background:rgba(255,255,255,.04)}
+.ecc-link.is-active{background:rgba(58,102,255,.15); border-color:rgba(58,102,255,.35)}
+.ecc-link__icon{flex:0 0 auto}
+.ecc-link__chev{margin-left:auto; color:var(--ecc-muted)}
+
+/* Accordion (expanded mode) */
+.ecc-parent .ecc-children{
+  max-height:0; overflow:hidden;
+  transition:max-height .25s ease;
+  margin-left:32px;
+}
+.ecc-parent.is-open .ecc-children{max-height:600px}
+.ecc-parent.is-open .ecc-link{background:rgba(255,255,255,.03)}
+
+/* Flyout (collapsed mode) */
+.ecc-flyout{
+  display:none; position:absolute; z-index:50;
+  left: calc(var(--ecc-sidebar-collapsed) - 6px);
+  top:0; min-width:240px; padding:10px;
+  background:var(--ecc-panel); border:1px solid var(--ecc-border);
+  border-radius:var(--ecc-radius); box-shadow:0 12px 32px rgba(0,0,0,.45);
+}
+.ecc-flyout__title{display:flex; gap:10px; align-items:center; color:var(--ecc-muted); padding:6px 8px}
+.ecc-children li .ecc-link{padding:8px 10px}
+
+.ecc-sidebar.is-collapsed .ecc-parent:hover .ecc-flyout{display:block}
+
+/* Page title (demo) */
+.pageTitle{margin:0 0 16px 0; font-size:28px; font-weight:700}

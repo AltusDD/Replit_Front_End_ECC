@@ -1,103 +1,191 @@
-// src/components/Sidebar.tsx
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { useEffect, useState } from "react";
-import { NAV_SECTIONS, type NavItem } from "./layout/navConfig";
-import { Pin, PinOff } from "lucide-react";
+import * as Icons from "lucide-react";
+import type { NavItem, NavSection } from "./layout/navConfig";
+import { NAV_SECTIONS } from "./layout/navConfig";
 
-const LS = {
-  get<T>(k: string, d: T): T {
-    try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; }
-  },
-  set<T>(k: string, v: T) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
-};
+const STORAGE_KEY = "ecc.sidebar.collapsed";
 
-function ItemIcon({ item }: { item: NavItem }) {
-  const Ico = item.icon;
-  return Ico ? <Ico className="ecc-link__icon" /> : null;
+/** Get a lucide icon component by string name (safe fallback). */
+function useIcon(name?: string) {
+  return useMemo(() => {
+    if (!name) return Icons.Circle;
+    const lib: Record<string, React.ComponentType<any>> = Icons as any;
+    return lib[name] ?? Icons.Circle;
+  }, [name]);
 }
 
-function NavLinkItem({ item }: { item: NavItem }) {
+function ItemIcon({ item }: { item: NavItem }) {
+  const Ico = useIcon(item.icon);
+  return <Ico className="ecc-link__icon" size={18} strokeWidth={1.75} />;
+}
+
+export default function Sidebar() {
   const [location] = useLocation();
-  const active = location === item.href;
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
+    } catch {}
+    document.body.classList.toggle("ecc--sidebar-collapsed", collapsed);
+  }, [collapsed]);
+
   return (
-    <Link href={item.href}>
-      <a className={`ecc-link ${active ? "is-active" : ""}`}>
-        <ItemIcon item={item} />
-        <span className="ecc-link__label">{item.label}</span>
-      </a>
+    <aside className={`ecc-sidebar ${collapsed ? "is-collapsed" : ""}`} data-collapsed={collapsed}>
+      <div className="ecc-sidebar__inner">
+        <Brand collapsed={collapsed} />
+        <nav className="ecc-nav">
+          {NAV_SECTIONS.map((section) => (
+            <Section
+              key={section.label}
+              section={section}
+              collapsed={collapsed}
+              activePath={location}
+            />
+          ))}
+        </nav>
+      </div>
+
+      <button
+        className="ecc-collapse-ctl"
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        onClick={() => setCollapsed((v) => !v)}
+      >
+        {collapsed ? <Icons.ChevronsRight size={18} /> : <Icons.ChevronsLeft size={18} />}
+      </button>
+    </aside>
+  );
+}
+
+function Brand({ collapsed }: { collapsed: boolean }) {
+  // Vite serves files under /public at the web root.
+  const altusLogo = "/brand/altus-logo.png";
+  const altusMark = "/brand/altus-mark.png";
+
+  return (
+    <div className="ecc-brand">
+      <img
+        className="ecc-brand__img"
+        src={collapsed ? altusMark : altusLogo}
+        alt="Altus"
+        draggable={false}
+      />
+    </div>
+  );
+}
+
+function Section({
+  section,
+  collapsed,
+  activePath,
+}: {
+  section: NavSection;
+  collapsed: boolean;
+  activePath: string;
+}) {
+  return (
+    <div className="ecc-section">
+      <div className="ecc-section__label">{section.label}</div>
+      <ul className="ecc-list">
+        {section.items.map((it) => (
+          <li key={it.label} className="ecc-list__item">
+            {it.children && it.children.length ? (
+              <ParentLink item={it} collapsed={collapsed} activePath={activePath} />
+            ) : (
+              <LeafLink item={it} activePath={activePath} />
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function isActive(path: string | undefined, activePath: string) {
+  if (!path) return false;
+  if (path === "/") return activePath === "/" || activePath === "/dashboard";
+  // Keep highlight for route and its descendants, but avoid "/" always matching.
+  return activePath === path || activePath.startsWith(path + "/");
+}
+
+function LeafLink({ item, activePath }: { item: NavItem; activePath: string }) {
+  const active = isActive(item.path, activePath);
+  return (
+    <Link href={item.path || "#"} className={`ecc-link ${active ? "is-active" : ""}`}>
+      <ItemIcon item={item} />
+      <span className="ecc-link__label">{item.label}</span>
     </Link>
   );
 }
 
-export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState<boolean>(LS.get("ecc:nav:collapsed", false));
-  const [pinned, setPinned] = useState<boolean>(LS.get("ecc:nav:pinned", true));
+function ParentLink({
+  item,
+  collapsed,
+  activePath,
+}: {
+  item: NavItem;
+  collapsed: boolean;
+  activePath: string;
+}) {
+  const [open, setOpen] = useState<boolean>(false);
 
-  useEffect(() => LS.set("ecc:nav:collapsed", collapsed), [collapsed]);
-  useEffect(() => LS.set("ecc:nav:pinned", pinned), [pinned]);
+  useEffect(() => {
+    const anyActive = (item.children ?? []).some((c) => isActive(c.path, activePath));
+    setOpen(anyActive);
+  }, [activePath, item.children]);
 
-  return (
-    <aside className={`ecc-sidebar ${collapsed ? "ecc--collapsed" : ""}`}>
-      <div className="ecc-sidebar__inner">
-        {/* Brand */}
-        <div className="ecc-sidebar__brand">
-          <div className="ecc-logo-box">
-            {/* full logo when expanded */}
-            <img
-              src="/brand/altus-logo.png"
-              alt="Altus Realty Group"
-              className="ecc-logo"
-              loading="eager"
-            />
-            {/* compact shield when collapsed */}
-            <img
-              src="/brand/altus-mark.png"
-              alt=""
-              className="ecc-logo-mini-img"
-              aria-hidden="true"
-            />
+  if (collapsed) {
+    // Collapsed → show icon only; hover reveals flyout with children.
+    return (
+      <div className="ecc-parent group">
+        <button className="ecc-link is-parent" aria-haspopup="true" aria-expanded="false">
+          <ItemIcon item={item} />
+          <span className="ecc-link__label">{item.label}</span>
+          <Icons.ChevronRight className="ecc-link__chev" size={16} />
+        </button>
+        <div className="ecc-flyout" role="menu">
+          <div className="ecc-flyout__title">
+            <ItemIcon item={item} />
+            <span>{item.label}</span>
           </div>
-
-          <button className="ecc-pin" title={pinned ? "Unpin" : "Pin"} onClick={() => setPinned(v => !v)}>
-            {pinned ? <Pin className="w-4 h-4" /> : <PinOff className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {/* Groups */}
-        <nav className="ecc-groups" aria-label="Primary">
-          {NAV_SECTIONS.map((section) => (
-            <div key={section.id} className="ecc-group">
-              <div className="ecc-group__title">
-                {section.icon ? <section.icon className="ecc-group__icon" /> : null}
-                <span>{section.title}</span>
-              </div>
-
-              <div className="ecc-group__list">
-                {section.items.map((it) => (
-                  <NavLinkItem key={it.href} item={it} />
-                ))}
-              </div>
-
-              {/* Flyout visible only when collapsed */}
-              <div className="ecc-flyout">
-                <div className="ecc-flyout__header">{section.title}</div>
-                <div className="ecc-flyout__list">
-                  {section.items.map((it) => (
-                    <NavLinkItem key={`${section.id}:${it.href}`} item={it} />
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        {/* Collapse control */}
-        <div className="ecc-collapse">
-          <button onClick={() => setCollapsed(v => !v)} aria-pressed={collapsed}>
-            {collapsed ? "Expand" : "Collapse"}
-          </button>
+          <ul className="ecc-children">
+            {(item.children ?? []).map((c) => (
+              <li key={c.label}>
+                <LeafLink item={c} activePath={activePath} />
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
-    </aside>
+    );
+  }
+
+  // Expanded → accordion.
+  return (
+    <div className={`ecc-parent ${open ? "is-open" : ""}`}>
+      <button
+        className="ecc-link is-parent"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <ItemIcon item={item} />
+        <span className="ecc-link__label">{item.label}</span>
+        <Icons.ChevronDown className="ecc-link__chev" size={16} />
+      </button>
+      <ul className={`ecc-children ${open ? "is-open" : ""}`}>
+        {(item.children ?? []).map((c) => (
+          <li key={c.label}>
+            <LeafLink item={c} activePath={activePath} />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

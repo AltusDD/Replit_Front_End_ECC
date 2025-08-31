@@ -2,25 +2,22 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
+const PORT = Number(process.env.PORT) || 5000;
+
 export default defineConfig({
   plugins: [react()],
   server: {
     host: true,
-    port: 5000,
+    port: PORT,
     strictPort: true,
-    allowedHosts: [
-        "258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev"
-    ], // ✅ key line
-    hmr: {
-      protocol: "wss",
-      clientPort: 443,
-    },
+    // Allow Replit preview hosts (future ephemeral subdomains) + local
+    allowedHosts: true,
+    hmr: { protocol: "wss", clientPort: 443 },
   },
   preview: {
     host: true,
-    port: 5000,
+    port: PORT,
     strictPort: true,
-    allowedHosts: true,
   },
   resolve: {
     alias: {
