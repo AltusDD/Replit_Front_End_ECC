@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import * as Icons from "lucide-react";
-import sections, { Section, Item, Leaf } from "./layout/navConfig";
+import navigationConfig, { NavSection, NavItem, NavGroup } from "./layout/navConfig";
 
 // Dynamic icon component
 const DynamicIcon = ({ name, className = "", size = 18 }: { name: string; className?: string; size?: number }) => {
   const IconComponent = (Icons as any)[name];
   return IconComponent ? <IconComponent size={size} className={className} /> : <Icons.Circle size={size} className={className} />;
 };
-
-// Fallback sections if import fails
-const DEFAULT_SECTIONS: Section[] = [
-  { title: "Dashboard", items: [{ label: "Home", to: "/dashboard", icon: "LayoutDashboard" }] },
-];
-
-const SECTIONS: Section[] = Array.isArray(sections) && sections.length ? sections : DEFAULT_SECTIONS;
 
 export default function Sidebar() {
   const [location] = useLocation();
@@ -35,69 +28,104 @@ export default function Sidebar() {
     } catch {}
   }, [collapsed]);
 
-  // Expanded groups state - auto-expand when child is active, default to expanded
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
+  // Expanded sections state - auto-expand when child is active
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
     const initialState: Record<string, boolean> = {};
     
-    // Default all sections to expanded, then check for active children
-    SECTIONS.forEach((section) => {
-      if (section.title) {
-        const hasActiveChild = section.items.some((item) => {
-          if ('to' in item) {
-            return location === item.to || location?.startsWith(item.to + "/");
-          }
-          return false;
-        });
-        // Default to expanded, or stay expanded if has active child
-        initialState[section.title] = true;
-      }
+    // Auto-expand sections that have an active child (including nested groups)
+    navigationConfig.forEach((section) => {
+      const hasActiveChild = section.items.some((item) => {
+        if ('to' in item) {
+          return location === item.to || location?.startsWith(item.to + "/");
+        } else if ('items' in item) {
+          return item.items.some(subItem => 
+            location === subItem.to || location?.startsWith(subItem.to + "/")
+          );
+        }
+        return false;
+      });
+      initialState[section.title] = hasActiveChild;
     });
 
     try {
-      const stored = localStorage.getItem("ecc:sidebar:expanded");
+      const stored = localStorage.getItem("ecc:sidebar:sections");
       const storedState = stored ? JSON.parse(stored) : {};
-      // Merge stored state but keep active sections expanded
-      Object.keys(initialState).forEach(key => {
-        if (initialState[key]) {
-          storedState[key] = true; // Force active sections to stay expanded
-        }
-      });
       return { ...initialState, ...storedState };
     } catch {
       return initialState;
     }
   });
 
-  // Persist expanded state
+  // Expanded groups state - for nested groups within sections
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
+    const initialState: Record<string, boolean> = {};
+    
+    // Auto-expand groups that have an active child
+    navigationConfig.forEach((section) => {
+      section.items.forEach((item) => {
+        if ('items' in item) {
+          const hasActiveChild = item.items.some(subItem => 
+            location === subItem.to || location?.startsWith(subItem.to + "/")
+          );
+          initialState[item.label] = hasActiveChild;
+        }
+      });
+    });
+
+    try {
+      const stored = localStorage.getItem("ecc:sidebar:groups");
+      const storedState = stored ? JSON.parse(stored) : {};
+      return { ...initialState, ...storedState };
+    } catch {
+      return initialState;
+    }
+  });
+
+  // Persist expanded states
   useEffect(() => {
     try {
-      localStorage.setItem("ecc:sidebar:expanded", JSON.stringify(expandedGroups));
+      localStorage.setItem("ecc:sidebar:sections", JSON.stringify(expandedSections));
+    } catch {}
+  }, [expandedSections]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("ecc:sidebar:groups", JSON.stringify(expandedGroups));
     } catch {}
   }, [expandedGroups]);
 
-  // Auto-expand groups when location changes if they have active children
+  // Auto-expand when location changes
   useEffect(() => {
-    const newExpandedState = { ...expandedGroups };
+    const newSections = { ...expandedSections };
+    const newGroups = { ...expandedGroups };
     let hasChanges = false;
 
-    SECTIONS.forEach((section) => {
-      if (section.title) {
-        const hasActiveChild = section.items.some((item) => {
-          if ('to' in item) {
-            return location === item.to || location?.startsWith(item.to + "/");
+    navigationConfig.forEach((section) => {
+      const hasActiveChild = section.items.some((item) => {
+        if ('to' in item) {
+          return location === item.to || location?.startsWith(item.to + "/");
+        } else if ('items' in item) {
+          const groupHasActive = item.items.some(subItem => 
+            location === subItem.to || location?.startsWith(subItem.to + "/")
+          );
+          if (groupHasActive && !newGroups[item.label]) {
+            newGroups[item.label] = true;
+            hasChanges = true;
           }
-          return false;
-        });
-        
-        if (hasActiveChild && !newExpandedState[section.title]) {
-          newExpandedState[section.title] = true;
-          hasChanges = true;
+          return groupHasActive;
         }
+        return false;
+      });
+      
+      if (hasActiveChild && !newSections[section.title]) {
+        newSections[section.title] = true;
+        hasChanges = true;
       }
     });
 
     if (hasChanges) {
-      setExpandedGroups(newExpandedState);
+      setExpandedSections(newSections);
+      setExpandedGroups(newGroups);
     }
   }, [location]);
 
@@ -108,16 +136,81 @@ export default function Sidebar() {
     setCollapsed(!collapsed);
   };
 
-  const toggleGroup = (sectionTitle: string) => {
-    setExpandedGroups(prev => ({
+  const toggleSection = (sectionTitle: string) => {
+    setExpandedSections(prev => ({
       ...prev,
       [sectionTitle]: !prev[sectionTitle]
+    }));
+  };
+
+  const toggleGroup = (groupLabel: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupLabel]: !prev[groupLabel]
     }));
   };
 
   const isActive = (path: string) => {
     if (!location || !path) return false;
     return location === path || location.startsWith(path + "/");
+  };
+
+  const renderNavItem = (item: NavItem, isNested = false) => {
+    const active = isActive(item.to);
+    
+    return (
+      <Link
+        key={item.to}
+        href={item.to}
+        className={`nav-item ${active ? "active" : ""} ${isNested ? "nested" : ""}`}
+        aria-current={active ? "page" : undefined}
+      >
+        <div className="nav-icon">
+          <DynamicIcon 
+            name={item.icon} 
+            className={active ? "icon-active" : isNested ? "icon-child" : "icon-parent"}
+            size={16}
+          />
+        </div>
+        <span className="nav-label">{item.label}</span>
+      </Link>
+    );
+  };
+
+  const renderNavGroup = (group: NavGroup) => {
+    const isExpanded = expandedGroups[group.label] ?? false;
+    const hasActiveChild = group.items.some(item => isActive(item.to));
+
+    return (
+      <div key={group.label} className="nav-group">
+        <div
+          className={`group-header ${hasActiveChild ? "has-active" : ""}`}
+          onClick={() => toggleGroup(group.label)}
+          role="button"
+          tabIndex={0}
+          aria-expanded={isExpanded}
+        >
+          <div className="group-icon">
+            <DynamicIcon 
+              name={group.icon} 
+              className="icon-parent"
+              size={16}
+            />
+          </div>
+          <span className="group-label">{group.label}</span>
+          <DynamicIcon 
+            name="ChevronRight" 
+            className={`group-chevron ${isExpanded ? "expanded" : ""}`}
+            size={14}
+          />
+        </div>
+        {isExpanded && (
+          <div className="group-items">
+            {group.items.map(item => renderNavItem(item, true))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -154,23 +247,21 @@ export default function Sidebar() {
       {/* Navigation Content */}
       <div className="sidebar-content">
         <nav className="sidebar-nav">
-          {SECTIONS.map((section) => {
-            if (!section.title) return null;
-            
-            const isExpanded = expandedGroups[section.title] ?? true;
+          {navigationConfig.map((section) => {
+            const isExpanded = expandedSections[section.title] ?? true;
             const isHovered = hoveredSection === section.title && collapsed;
             
             return (
               <div
                 key={section.title}
                 className={`nav-section ${isHovered ? "hovered" : ""}`}
-                onMouseEnter={() => collapsed && section.title && setHoveredSection(section.title)}
+                onMouseEnter={() => collapsed && setHoveredSection(section.title)}
               >
-                {/* Section Header - Only show in expanded mode or if no children */}
+                {/* Section Header - Only show in expanded mode */}
                 {!collapsed && (
                   <div
                     className="section-header"
-                    onClick={() => toggleGroup(section.title!)}
+                    onClick={() => toggleSection(section.title)}
                     role="button"
                     tabIndex={0}
                     aria-expanded={isExpanded}
@@ -179,34 +270,19 @@ export default function Sidebar() {
                     <DynamicIcon 
                       name="ChevronRight" 
                       className={`section-chevron ${isExpanded ? "expanded" : ""}`}
-                      size={16}
+                      size={14}
                     />
                   </div>
                 )}
 
-                {/* Navigation Items - Children below parent */}
+                {/* Navigation Items - Regular items and groups */}
                 {(!collapsed && isExpanded) && (
                   <div className="nav-items">
                     {section.items.map((item) => {
                       if ('to' in item) {
-                        const active = isActive(item.to);
-                        return (
-                          <Link
-                            key={item.to}
-                            href={item.to}
-                            className={`nav-item ${active ? "active" : ""}`}
-                            aria-current={active ? "page" : undefined}
-                          >
-                            <div className="nav-icon">
-                              <DynamicIcon 
-                                name={item.icon} 
-                                className={active ? "icon-active" : "icon-child"}
-                                size={18}
-                              />
-                            </div>
-                            <span className="nav-label">{item.label}</span>
-                          </Link>
-                        );
+                        return renderNavItem(item);
+                      } else if ('items' in item) {
+                        return renderNavGroup(item);
                       }
                       return null;
                     })}
@@ -233,6 +309,21 @@ export default function Sidebar() {
                               size={18}
                             />
                           </Link>
+                        );
+                      } else if ('items' in item) {
+                        const hasActive = item.items.some(subItem => isActive(subItem.to));
+                        return (
+                          <div
+                            key={item.label}
+                            className={`nav-item-icon ${hasActive ? "active" : ""}`}
+                            title={item.label}
+                          >
+                            <DynamicIcon 
+                              name={item.icon} 
+                              className={hasActive ? "icon-active" : "icon-parent"}
+                              size={18}
+                            />
+                          </div>
                         );
                       }
                       return null;
@@ -271,6 +362,35 @@ export default function Sidebar() {
                               />
                               <span>{item.label}</span>
                             </Link>
+                          );
+                        } else if ('items' in item) {
+                          return (
+                            <div key={item.label} className="flyout-group">
+                              <div className="flyout-group-header">
+                                <DynamicIcon name={item.icon} size={16} className="icon-parent" />
+                                <span>{item.label}</span>
+                              </div>
+                              <div className="flyout-group-items">
+                                {item.items.map(subItem => {
+                                  const active = isActive(subItem.to);
+                                  return (
+                                    <Link
+                                      key={subItem.to}
+                                      href={subItem.to}
+                                      className={`flyout-subitem ${active ? "active" : ""}`}
+                                      onClick={() => setHoveredSection(null)}
+                                    >
+                                      <DynamicIcon 
+                                        name={subItem.icon} 
+                                        className={active ? "icon-active" : "icon-child"}
+                                        size={14}
+                                      />
+                                      <span>{subItem.label}</span>
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           );
                         }
                         return null;

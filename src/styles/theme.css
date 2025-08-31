@@ -365,14 +365,68 @@ p  { color: var(--muted-1); }
 
 /* Navigation items */
 .sidebar .nav-items {
+  padding: 0 8px;
+}
+
+/* Navigation Groups */
+.sidebar .nav-group {
+  margin: 2px 0;
+}
+
+.sidebar .group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 2px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.sidebar .group-header:hover {
+  background: var(--ecc-hover);
+}
+
+.sidebar .group-header.has-active {
+  background: var(--ecc-active);
+}
+
+.sidebar .group-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  min-width: 16px;
+}
+
+.sidebar .group-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ecc-text-primary);
+}
+
+.sidebar .group-chevron {
+  color: var(--ecc-text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.sidebar .group-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.sidebar .group-items {
+  margin-left: 24px;
+  border-left: 1px solid var(--ecc-border);
   padding-left: 8px;
-  padding-right: 8px;
 }
-.sidebar .nav-items.hidden {
-  display: none;
-}
-.sidebar .nav-items.visible {
-  display: block;
+
+.sidebar .nav-item.nested {
+  padding: 6px 8px;
+  margin: 1px 0;
+  font-size: 13px;
 }
 
 .sidebar .nav-item {
@@ -527,6 +581,50 @@ p  { color: var(--muted-1); }
 }
 
 .sidebar .flyout-item.active {
+  background: var(--ecc-active);
+  color: var(--ecc-gold);
+}
+
+/* Flyout Groups */
+.sidebar .flyout-group {
+  margin: 4px 0;
+}
+
+.sidebar .flyout-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ecc-text-primary);
+  border-bottom: 1px solid var(--ecc-border);
+  margin-bottom: 4px;
+}
+
+.sidebar .flyout-group-items {
+  padding-left: 8px;
+}
+
+.sidebar .flyout-subitem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--ecc-text-secondary);
+  transition: all 0.2s ease;
+  font-size: 12px;
+  margin: 1px 0;
+}
+
+.sidebar .flyout-subitem:hover {
+  background: var(--ecc-hover);
+  color: var(--ecc-text-primary);
+}
+
+.sidebar .flyout-subitem.active {
   background: var(--ecc-active);
   color: var(--ecc-gold);
 }
