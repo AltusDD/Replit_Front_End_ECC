@@ -180,6 +180,18 @@ export default function Sidebar() {
         </nav>
       </div>
 
+      {/* Expand button for collapsed sidebar */}
+      {collapsed && (
+        <button
+          className="railExpand"
+          onClick={() => setCollapsed(false)}
+          title="Expand"
+          aria-label="Expand navigation"
+        >
+          <Lucide.ChevronRight size={18} />
+        </button>
+      )}
+      
       {/* Collapsed hover flyout */}
       {collapsed && (
         <div className={`flyout ${hovering ? "show" : ""}`} aria-hidden={!hovering} ref={flyoutRef}>

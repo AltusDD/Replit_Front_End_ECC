@@ -81,6 +81,41 @@ html[data-sidebar-mounted="1"] body {
   pointer-events: auto;
 }
 
+/* Ensure anchors inside sidebar never use browser purple/blue */
+.sidebar a,
+.sidebar a:link,
+.sidebar a:visited,
+.sidebar .nav-row,
+.sidebar .nav-row:visited {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+/* Make the rail expand button visible when collapsed */
+.sidebar .railExpand{
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--ecc-seam);
+  background: var(--ecc-hover);
+  color: var(--ecc-text);
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.25);
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease;
+  z-index: 70;
+}
+.sidebar .railExpand:hover{ transform: translateX(-50%) scale(1.05); }
+.sidebar:not(.collapsed) .railExpand{ display:none; } /* only show on collapsed */
+
+/* Collapsed: hide titles/labels cleanly */
+.sidebar.collapsed .section-title,
+.sidebar.collapsed .label,
+.sidebar.collapsed .expand { display: none !important; }
+
 /* Readability + icon color discipline */
 .sidebar .label { color: var(--ecc-text) !important; }
 .sidebar .icon.parent { color: var(--ecc-gold) !important; }
