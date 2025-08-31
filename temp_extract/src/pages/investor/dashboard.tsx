@@ -1,1 +1,0 @@
-export default function InvestorDashboard(){ return <div className="panel" style={{padding:16}}><h1>Investor Dashboard</h1><p className="badge">Stub • /investor/dashboard</p></div>; }

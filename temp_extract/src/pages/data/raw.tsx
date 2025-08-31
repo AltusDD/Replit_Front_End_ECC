@@ -1,1 +1,0 @@
-export default function RawData(){ return <div className="panel" style={{padding:16}}><h1>Raw Data</h1><p className="badge">Stub • /data/raw</p></div>; }

@@ -1,1 +1,0 @@
-export default function FinancialReports(){ return <div className="panel" style={{padding:16}}><h1>Financial Reports</h1><p className="badge">Stub • /ops/accounting/financial-reports</p></div>; }
