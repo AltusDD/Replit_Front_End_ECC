@@ -1,3 +1,10 @@
+
+.archive/
+dist/
+build/
+.cache/
+.vite/
+
 node_modules
 dist
 .DS_Store
