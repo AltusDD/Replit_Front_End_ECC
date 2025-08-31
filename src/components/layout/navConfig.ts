@@ -1,3 +1,4 @@
+
 export type Leaf = { label: string; to: string };
 export type Group = { label: string; children: Leaf[] };
 export type Item = Leaf | Group;
