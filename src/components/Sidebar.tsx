@@ -4,9 +4,9 @@ import { Link, useLocation } from "wouter";
 /** Get current path safely, even if Sidebar is rendered outside <Router> */
 function useSafePath() {
   try {
-    // Will throw if no Router context:
-    const loc = useLocation();
-    return loc.pathname;
+    // wouter useLocation returns [location, setLocation] not {pathname}
+    const [location] = useLocation();
+    return location || "/";
   } catch {
     return typeof window !== "undefined" ? window.location.pathname : "/";
   }
@@ -14,7 +14,7 @@ function useSafePath() {
 
 /** Simple helper to check "active" by prefix */
 function isActive(path: string, href: string) {
-  if (!href || href === "/") return path === "/";
+  if (!path || !href || href === "/") return path === "/";
   return path === href || path.startsWith(href + "/");
 }
 
