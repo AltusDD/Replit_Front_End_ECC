@@ -4,7 +4,10 @@ export type Item = Leaf | Group;
 export type Section = { title?: string; items: Item[] };
 
 const sections: Section[] = [
-  { title: "Dashboard", items: [{ label: "Home", to: "/dashboard" }] },
+  {
+    title: "Dashboard",
+    items: [{ label: "Home", to: "/dashboard" }],
+  },
   {
     title: "Portfolio V3",
     items: [
