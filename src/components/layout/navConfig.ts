@@ -1,78 +1,49 @@
-// src/components/layout/navConfig.ts
 import type { LucideIcon } from "lucide-react";
 import {
-  LayoutDashboard,
-  Home,
-  Building2,
-  Layers,
-  FileText,
-  Users,
-  UserCircle,
-  SquareStack,
-  LayoutGrid,
-  AlertTriangle,
-  Calculator,
-  Key,
-  Wrench,
-  Megaphone,
+  Home, LayoutDashboard, FolderTree, Building2, DoorOpen, FileText,
+  Users, Crown, LayoutGrid, AlertCircle, HomeOff,
+  Calculator, FileSignature, Wrench, Megaphone
 } from "lucide-react";
 
-export type NavItem = {
-  label: string;
-  href: string;
-  icon?: LucideIcon;
-};
+export type NavItem = { label: string; href: string; icon?: LucideIcon };
+export type NavSection = { id: string; title: string; icon?: LucideIcon; items: NavItem[] };
 
-export type NavSection = {
-  id: string;
-  title: string;
-  icon?: LucideIcon;
-  items: NavItem[];
-};
-
-/**
- * Canonical sidebar model
- * - Parents: Dashboard, Portfolio V3, Cards, Operations
- * - Children: as requested
- */
 export const NAV_SECTIONS: NavSection[] = [
   {
     id: "dashboard",
     title: "Dashboard",
     icon: LayoutDashboard,
-    items: [
-      { label: "Home", href: "/dashboard", icon: Home },
-    ],
+    items: [{ label: "Home", href: "/dashboard", icon: Home }],
   },
   {
-    id: "portfolio-v3",
-    title: "Portfolio V3",
-    icon: Building2,
+    id: "portfolio",
+    title: "Portfolio v3",
+    icon: FolderTree,
     items: [
       { label: "Properties", href: "/properties", icon: Building2 },
-      { label: "Units", href: "/units", icon: Layers },
+      { label: "Units", href: "/units", icon: DoorOpen },
       { label: "Leases", href: "/leases", icon: FileText },
       { label: "Tenants", href: "/tenants", icon: Users },
-      { label: "Owners", href: "/owners", icon: UserCircle },
+      { label: "Owners", href: "/owners", icon: Crown },
     ],
   },
   {
     id: "cards",
     title: "Cards",
-    icon: SquareStack,
+    icon: LayoutGrid,
     items: [
       { label: "Overview", href: "/cards/overview", icon: LayoutGrid },
-      { label: "Delinquencies", href: "/cards/delinquencies", icon: AlertTriangle },
-      { label: "Vacancy", href: "/cards/vacancy", icon: Home },
+      { label: "Delinquencies", href: "/cards/delinquencies", icon: AlertCircle },
+      { label: "Vacancy", href: "/cards/vacancy", icon: HomeOff },
     ],
   },
   {
-    id: "operations",
+    id: "ops",
     title: "Operations",
-    icon: Wrench,
+    icon: FolderTree,
     items: [
       { label: "Accounting", href: "/ops/accounting", icon: Calculator },
-      { label: "Leasing", href: "/ops/leasing", icon: Key },
+      { label: "Leasing", href: "/ops/leasing", icon: FileSignature },
       { label: "Maintenance", href: "/ops/maintenance", icon: Wrench },
       { label: "Marketing", href: "/ops/marketing", icon: Megaphone },
     ],
