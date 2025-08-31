@@ -1,133 +1,112 @@
+// src/components/Sidebar.tsx
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "wouter";
-import { Circle, FileText, Home, LayoutDashboard, Building2, Boxes, Users } from "lucide-react";
-import sections, { Section, Item, Group, Leaf } from "./layout/navConfig";
+import { NAV_SECTIONS } from "./layout/navConfig";
+import { Pin, PinOff } from "lucide-react";
+import { useLocation } from "wouter"; // or react-router-dom if that's what you're using
 
-const LS_KEY = "ecc:nav:collapsed";
-const SIDEBAR_W = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--ecc-sidebar-w") || "280", 10) || 280;
-const SIDEBAR_W_COLLAPSED = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--ecc-sidebar-w-collapsed") || "72", 10) || 72;
-
-function useCollapsed() {
-const [collapsed, setCollapsed] = useState<boolean>(() => {
-try { return localStorage.getItem(LS_KEY) === "1"; } catch { return false; }
-});
-useEffect(() => {
-try { localStorage.setItem(LS_KEY, collapsed ? "1" : "0"); } catch {}
-const px = collapsed ? SIDEBAR_W_COLLAPSED : SIDEBAR_W;
-document.documentElement.style.setProperty("--ecc-sidepad", `${px}px`);
-}, [collapsed]);
-return { collapsed, setCollapsed };
-}
-
-function useActivePath() {
-const [loc] = useLocation();
-return loc;
-}
-
-function Icon({ name, className }: { name?: string; className?: string }) {
-// Ensure icon component import and use correct mapping.
-const Cmp = name ? Icons[name] : Circle;
-return <Cmp size={18} className={className} aria-hidden="true" />;
-}
+const STORAGE_KEY = "ecc.sidebar.collapsed";
 
 export default function Sidebar() {
-const { collapsed, setCollapsed } = useCollapsed();
-const activePath = useActivePath();
-const [hovering, setHovering] = useState(false);
+  // If you use react-router-dom, replace with: const location = useLocation();
+  const [location] = useLocation();
+  const activePath = location;
 
-// One-time mount shim: mark primary & reserve space even before first paint
-useEffect(() => {
-document.documentElement.dataset.sidebarMounted = "1";
-const pad = (localStorage.getItem(LS_KEY) === "1") ? SIDEBAR_W_COLLAPSED : SIDEBAR_W;
-document.documentElement.style.setProperty("--ecc-sidepad", `${pad}px`);
-}, []);
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
 
-// Inline visited-link override to beat global theme
-useEffect(() => {
-const style = document.createElement("style");
-style.setAttribute("data-ecc-inline", "sidebar");
-style.innerHTML = `.sidebar a, .sidebar a:link, .sidebar a:visited, .sidebar a:active { color: var(--ecc-text) !important; text-decoration:none!important; }`;
-document.head.appendChild(style);
-return () => { style.remove(); };
-}, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
+    } catch {}
+  }, [collapsed]);
 
-const content = (
-<nav className="nav">
-{sections.map((section, i) => (
-<div className="section" key={i}>
-{section.title && <div className="section-title">{section.title}</div>}
-<div className="section-items">
-{section.items.map((item, j) => {
-const isGroup = (item as Group).children !== undefined;
-if (isGroup) {
-const g = item as Group;
-return (
-<div className="group" key={`${i}-${j}`}>
-<div className="row parent">
-<Icon name={g.icon} className="icon parent" />
-<span className="label">{g.label}</span>
-</div>
-<div className="children">
-{g.children.map((leaf, k) => {
-const active = activePath.startsWith(leaf.to);
-return (
-<Link href={leaf.to} key={`${i}-${j}-${k}`}>
-<a className={`row child ${active ? "active" : ""}`} data-to={leaf.to}>
-<Icon name={leaf.icon} className="icon child" />
-<span className="label">{leaf.label}</span>
-</a>
-</Link>
-);
-})}
-</div>
-</div>
-);
-} else {
-const leaf = item as Leaf;
-const active = activePath.startsWith(leaf.to);
-return (
-<Link href={leaf.to} key={`${i}-${j}`}>
-<a className={`row leaf ${active ? "active" : ""}`} data-to={leaf.to}>
-<Icon name={leaf.icon} className="icon child" />
-<span className="label">{leaf.label}</span>
-</a>
-</Link>
-);
-}
-})}
-</div>
-</div>
-))}
-</nav>
-);
+  const sections = useMemo(() => NAV_SECTIONS, []);
 
-return (
-<aside
-className={`sidebar ${collapsed ? "collapsed" : ""}`}
-data-ecc="primary"
-onMouseEnter={() => setHovering(true)}
-onMouseLeave={() => setHovering(false)}
->
-<div className="topbar">
-<button className="pin" onClick={() => setCollapsed(c => !c)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
-{collapsed ? "›" : "Pin"}
-</button>
-</div>
+  return (
+    <aside
+      className={`ecc-sidebar ${collapsed ? "ecc--collapsed" : ""}`}
+      data-ecc="primary"
+      aria-label="Primary navigation"
+    >
+      <div className="ecc-brand">
+        <a href="/" className="ecc-brand__link" aria-label="Altus home">
+          <img className="ecc-brand__logo" src="/brand/altus-logo.png" alt="Altus" />
+          {!collapsed && <span className="ecc-brand__text">Altus</span>}
+        </a>
+      </div>
 
-  <div className="sidebar-scroll">
-    {content}
-  </div>
+      <nav className="ecc-nav" role="navigation">
+        {sections.map((section) => (
+          <div key={section.id} className="ecc-group" data-group={section.id}>
+            <div className="ecc-group__header" title={section.title}>
+              {section.icon && React.createElement(section.icon, { className: "ecc-group__icon" })}
+              {!collapsed && <span className="ecc-group__title">{section.title}</span>}
+            </div>
 
-  <button className="expand" onClick={() => setCollapsed(false)} aria-hidden={!collapsed}>
-    ‹
-  </button>
+            <ul className="ecc-group__list">
+              {section.items.map((item) => {
+                const isActive =
+                  activePath === item.href ||
+                  (item.href !== "/" && activePath?.startsWith(item.href));
+                return (
+                  <li key={item.href} className="ecc-item">
+                    <a
+                      href={item.href}
+                      className={`ecc-link ${isActive ? "is-active" : ""}`}
+                      aria-current={isActive ? "page" : undefined}
+                      title={collapsed ? item.label : undefined}
+                    >
+                      {item.icon &&
+                        React.createElement(item.icon, { className: "ecc-link__icon" })}
+                      {!collapsed && <span className="ecc-link__label">{item.label}</span>}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
 
-  {/* Hover fly-out (overlay) */}
-  <div className={`flyout ${collapsed && hovering ? "show" : ""}`}>
-    <div className="sidebar-scroll">{content}</div>
-  </div>
-</aside>
+            {/* Flyout for collapsed state */}
+            <div className="ecc-flyout" role="menu" aria-label={section.title}>
+              <div className="ecc-flyout__title">{section.title}</div>
+              <ul>
+                {section.items.map((item) => {
+                  const isActive =
+                    activePath === item.href ||
+                    (item.href !== "/" && activePath?.startsWith(item.href));
+                  return (
+                    <li key={item.href}>
+                      <a
+                        href={item.href}
+                        className={`ecc-flyout__link ${isActive ? "is-active" : ""}`}
+                        role="menuitem"
+                      >
+                        {item.icon &&
+                          React.createElement(item.icon, { className: "ecc-flyout__icon" })}
+                        <span>{item.label}</span>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+        ))}
+      </nav>
 
-
-);
+      <button
+        className="ecc-pin"
+        onClick={() => setCollapsed((v) => !v)}
+        aria-pressed={collapsed}
+        aria-label={collapsed ? "Pin sidebar (expand)" : "Unpin sidebar (collapse)"}
+      >
+        {collapsed ? <Pin className="ecc-pin__icon" /> : <PinOff className="ecc-pin__icon" />}
+        {!collapsed && <span className="ecc-pin__text">{collapsed ? "Pin" : "Unpin"}</span>}
+      </button>
+    </aside>
+  );
 }
