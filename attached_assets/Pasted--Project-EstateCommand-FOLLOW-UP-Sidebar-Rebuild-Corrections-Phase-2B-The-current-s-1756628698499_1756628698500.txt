@@ -1,0 +1,74 @@
+# Project: EstateCommand
+
+## 🔁 FOLLOW-UP: Sidebar Rebuild Corrections (Phase 2B)
+
+The current sidebar build does *not* reflect the full design or behavior described in the last prompt. Here’s what needs to be corrected ASAP:
+
+---
+
+### 🔧 FUNCTIONAL FIXES
+
+#### 1. Render Child Links:
+- Children for all sections (e.g., Portfolio V3, Cards, Operations) must **render below each parent**.
+- They must appear **expanded by default**, or collapse via **accordion-style click** on parent.
+
+#### 2. Accordion Behavior:
+- Clicking a parent toggles its children.
+- If any child is active (via route), parent should auto-expand on load.
+
+#### 3. Active Highlight:
+- Highlight the **currently selected child** clearly (use Altus gold box or glow).
+- Parent should remain expanded when a child is active.
+
+#### 4. Fly-out Behavior:
+- On hover (while collapsed), sidebar should expand and show:
+  - Parent **label text**
+  - **Icons** for parents and children
+  - Show **Altus logo** (collapsed version) at top of fly-out
+  - Smooth animation
+
+#### 5. Pin Button:
+- Move **pin/unpin toggle** into the navigation section (below logo or above Home).
+- Hide it when sidebar is collapsed.
+- Ensure its **state is remembered** (localStorage).
+
+#### 6. Missing Pages:
+- Ensure all routes exist (stubs OK):
+  - `/properties`, `/units`, `/leases`, `/tenants`, `/owners`
+  - `/overview`, `/delinquencies`, `/vacancy`
+  - `/accounting`, `/leasing`, `/maintenance`, `/marketing`
+
+---
+
+### 🎨 VISUAL + STYLING FIXES
+
+#### 1. Icons:
+Use **Lucide icons**, and make sure they appear:
+- Parent icons = **Altus Gold** (`#ffd400`)
+- Child icons = **Altus Light Blue** or white
+
+Use the icon mappings from prior instructions (e.g., Dashboard = LayoutDashboard, Properties = Building, etc.)
+
+#### 2. Collapsed Mode:
+- **Only show icons** by default
+- On hover: fly-out shows text + full navigation
+
+#### 3. Logo Display:
+- **Altus logo must be larger** in expanded mode
+- When collapsed, logo should shrink and **center vertically**
+- In fly-out, it should show at top with slight padding
+
+---
+
+### ✅ FILE CHECKLIST
+
+Please check the following files are correctly updated:
+
+- `Sidebar.tsx` → Build accordion, icon handling, fly-out
+- `navConfig.ts` → Must have correct icon + label + routes for each item
+- `theme.css` or `_ecc-override.css` → Modern animations, color tokens, scoped styles
+
+---
+
+Once this is in place, we’ll sign off on the final sidebar polish.
+

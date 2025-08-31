@@ -1,0 +1,100 @@
+Replit Agent Prompt — Navigation Rebuild and Final Styling Polish
+
+📌 Objective:
+Rebuild and complete the sidebar navigation UI and routing based strictly on the Canonical Navigation (Markdown) document I’ve provided.
+
+🎯 Functional Requirements:
+
+💡 Sidebar Structure (from Canonical Navigation):
+
+Implement every parent and child item listed in the canonical document.
+
+Ensure all paths work (stub where no page exists).
+
+Support nested groups like Operations > Accounting > Rent Collection.
+
+🧭 Interaction Behavior:
+
+Expandable Sections: Accordion-style collapse/expand for children.
+
+Auto-Expand: If a child page is active, its parent opens automatically.
+
+Pin Behavior:
+
+Persistent state via localStorage.
+
+Pin/unpin control should move to the navigation control section (not by logo).
+
+Pin control should disappear in collapsed view.
+
+Flyout Hover:
+
+When sidebar is collapsed, hovering shows a full menu flyout.
+
+Text hidden on collapsed sidebar.
+
+Logo should remain visible and shrink proportionally.
+
+Flyout supports full navigation tree.
+
+🎨 Styling (Altus Design System):
+
+Parent Icons: Altus Gold #FFD400.
+
+Child Icons: Cool Altus-accented blue #94A3B8.
+
+Sidebar Backgrounds:
+
+Primary: #121417
+
+Secondary: #1A1C1F
+
+Typography: Modern system font stack with clean hierarchy.
+
+Section Titles: Uppercase, 11px, letter-spacing for clarity.
+
+Interactive Elements: Smooth hover transitions, subtle outlines.
+
+Smooth Transitions:
+
+Width: 280px ↔ 72px with animation
+
+Accordion animations for open/close
+
+Flyout fade/slide effects
+
+🔗 Routing Implementation:
+
+Use Wouter only (not React Router).
+
+Routes like /ops/accounting/rent-collection must be handled and render stub content if real content doesn't exist yet.
+
+Every leaf in the Markdown doc must correspond to a defined route.
+
+📦 Content Scaffolding:
+
+Stub pages: Where page doesn't yet exist, return basic headers like:
+
+<h1>Rent Collection</h1>
+<p>This page is under construction.</p>
+
+
+Use clean, minimal layout consistent with the rest of the app.
+
+🛠️ Developer Tips:
+
+Use Lucide-react for icons (e.g., LayoutDashboard, Building, Users, Hammer, Wallet, etc.)
+
+Match icons visually to section purpose — be creative but consistent.
+
+Build using clean React + TypeScript component structure.
+
+CSS should be scoped and reusable — keep styling lean and Altus-aligned.
+
+Final output should match modern, enterprise-level polish and be visually consistent.
+
+🔚 Completion Criteria:
+✅ Every canonical route renders.
+✅ Sidebar works as expected: collapses, expands, flyouts, pin state.
+✅ Visuals match Altus design spec.
+✅ Final product is tested and bug-free.

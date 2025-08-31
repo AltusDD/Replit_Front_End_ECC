@@ -35,11 +35,11 @@ export default function Sidebar() {
     } catch {}
   }, [collapsed]);
 
-  // Expanded groups state - auto-expand when child is active
+  // Expanded groups state - auto-expand when child is active, default to expanded
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
     const initialState: Record<string, boolean> = {};
     
-    // Auto-expand sections that have an active child
+    // Default all sections to expanded, then check for active children
     SECTIONS.forEach((section) => {
       if (section.title) {
         const hasActiveChild = section.items.some((item) => {
@@ -48,13 +48,20 @@ export default function Sidebar() {
           }
           return false;
         });
-        initialState[section.title] = hasActiveChild;
+        // Default to expanded, or stay expanded if has active child
+        initialState[section.title] = true;
       }
     });
 
     try {
       const stored = localStorage.getItem("ecc:sidebar:expanded");
       const storedState = stored ? JSON.parse(stored) : {};
+      // Merge stored state but keep active sections expanded
+      Object.keys(initialState).forEach(key => {
+        if (initialState[key]) {
+          storedState[key] = true; // Force active sections to stay expanded
+        }
+      });
       return { ...initialState, ...storedState };
     } catch {
       return initialState;
@@ -102,39 +109,15 @@ export default function Sidebar() {
   };
 
   const toggleGroup = (sectionTitle: string) => {
-    if (!collapsed) {
-      setExpandedGroups(prev => ({
-        ...prev,
-        [sectionTitle]: !prev[sectionTitle]
-      }));
-    }
+    setExpandedGroups(prev => ({
+      ...prev,
+      [sectionTitle]: !prev[sectionTitle]
+    }));
   };
 
   const isActive = (path: string) => {
     if (!location || !path) return false;
     return location === path || location.startsWith(path + "/");
-  };
-
-  const renderNavItem = (item: Leaf, isChild = false) => {
-    const active = isActive(item.to);
-    
-    return (
-      <Link
-        key={item.to}
-        href={item.to}
-        className={`nav-item ${active ? "active" : ""} ${isChild ? "child" : ""}`}
-        aria-current={active ? "page" : undefined}
-      >
-        <div className="nav-icon">
-          <DynamicIcon 
-            name={item.icon} 
-            className={active ? "icon-active" : isChild ? "icon-child" : "icon-parent"}
-            size={18}
-          />
-        </div>
-        <span className="nav-label">{item.label}</span>
-      </Link>
-    );
   };
 
   return (
@@ -151,7 +134,11 @@ export default function Sidebar() {
             onError={(e) => { e.currentTarget.style.display = "none"; }}
           />
         </div>
-        {!collapsed && (
+      </div>
+
+      {/* Pin Button Section */}
+      {!collapsed && (
+        <div className="pin-section">
           <button
             className="pin-button"
             onClick={toggleCollapsed}
@@ -159,9 +146,10 @@ export default function Sidebar() {
             title="Collapse sidebar"
           >
             <DynamicIcon name="Pin" size={14} />
+            <span>Collapse</span>
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Navigation Content */}
       <div className="sidebar-content">
@@ -169,7 +157,7 @@ export default function Sidebar() {
           {SECTIONS.map((section) => {
             if (!section.title) return null;
             
-            const isExpanded = expandedGroups[section.title] ?? false;
+            const isExpanded = expandedGroups[section.title] ?? true;
             const isHovered = hoveredSection === section.title && collapsed;
             
             return (
@@ -178,30 +166,74 @@ export default function Sidebar() {
                 className={`nav-section ${isHovered ? "hovered" : ""}`}
                 onMouseEnter={() => collapsed && section.title && setHoveredSection(section.title)}
               >
-                {/* Section Header */}
-                <div
-                  className="section-header"
-                  onClick={() => toggleGroup(section.title!)}
-                  role="button"
-                  tabIndex={0}
-                  aria-expanded={isExpanded}
-                >
-                  <span className="section-title">{section.title}</span>
-                  {!collapsed && (
+                {/* Section Header - Only show in expanded mode or if no children */}
+                {!collapsed && (
+                  <div
+                    className="section-header"
+                    onClick={() => toggleGroup(section.title!)}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded}
+                  >
+                    <span className="section-title">{section.title}</span>
                     <DynamicIcon 
                       name="ChevronRight" 
                       className={`section-chevron ${isExpanded ? "expanded" : ""}`}
                       size={16}
                     />
-                  )}
-                </div>
+                  </div>
+                )}
 
-                {/* Navigation Items */}
-                {(isExpanded || collapsed) && (
+                {/* Navigation Items - Children below parent */}
+                {(!collapsed && isExpanded) && (
                   <div className="nav-items">
                     {section.items.map((item) => {
                       if ('to' in item) {
-                        return renderNavItem(item);
+                        const active = isActive(item.to);
+                        return (
+                          <Link
+                            key={item.to}
+                            href={item.to}
+                            className={`nav-item ${active ? "active" : ""}`}
+                            aria-current={active ? "page" : undefined}
+                          >
+                            <div className="nav-icon">
+                              <DynamicIcon 
+                                name={item.icon} 
+                                className={active ? "icon-active" : "icon-child"}
+                                size={18}
+                              />
+                            </div>
+                            <span className="nav-label">{item.label}</span>
+                          </Link>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                )}
+
+                {/* Collapsed Mode - Show only icons */}
+                {collapsed && (
+                  <div className="nav-items-collapsed">
+                    {section.items.map((item) => {
+                      if ('to' in item) {
+                        const active = isActive(item.to);
+                        return (
+                          <Link
+                            key={item.to}
+                            href={item.to}
+                            className={`nav-item-icon ${active ? "active" : ""}`}
+                            aria-current={active ? "page" : undefined}
+                            title={item.label}
+                          >
+                            <DynamicIcon 
+                              name={item.icon} 
+                              className={active ? "icon-active" : "icon-parent"}
+                              size={18}
+                            />
+                          </Link>
+                        );
                       }
                       return null;
                     })}
@@ -224,7 +256,22 @@ export default function Sidebar() {
                     <div className="flyout-items">
                       {section.items.map((item) => {
                         if ('to' in item) {
-                          return renderNavItem(item, true);
+                          const active = isActive(item.to);
+                          return (
+                            <Link
+                              key={item.to}
+                              href={item.to}
+                              className={`flyout-item ${active ? "active" : ""}`}
+                              onClick={() => setHoveredSection(null)}
+                            >
+                              <DynamicIcon 
+                                name={item.icon} 
+                                className={active ? "icon-active" : "icon-child"}
+                                size={16}
+                              />
+                              <span>{item.label}</span>
+                            </Link>
+                          );
                         }
                         return null;
                       })}
