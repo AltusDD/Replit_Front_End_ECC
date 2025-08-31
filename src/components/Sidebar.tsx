@@ -12,8 +12,14 @@ const SECTIONS: Section[] = Array.isArray(sections) && sections.length ? section
 export default function Sidebar() {
   const [location] = useLocation();
   
-  // Hardcode expanded sidebar temporarily
-  const [collapsed, setCollapsed] = useState(false);
+  // Collapsed state persisted to localStorage
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("ecc:nav:collapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     try {
