@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "wouter";
 
 /** Get current path safely, even if Sidebar is rendered outside <Router> */
 function useSafePath() {
@@ -55,6 +55,9 @@ const NAV = [
 
 export default function Sidebar() {
   const path = useSafePath();
+  // wouter adapter: keep old `loc.pathname` logic working
+  const [pathname] = useLocation();
+  const loc = { pathname };
 
   // collapsed state persisted
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -163,8 +166,7 @@ export default function Sidebar() {
                     return (
                       <El
                         key={it.to}
-                        to={El === Link ? it.to : undefined}
-                        href={El !== Link ? it.to : undefined}
+  href={it.to}
                         className={`nav-row leaf ${active ? "active" : ""}`}
                         aria-current={active ? "page" : undefined}
                       >

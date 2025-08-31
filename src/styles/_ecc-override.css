@@ -1,172 +1,58 @@
-/* ===== ECC OVERRIDE (loads last, high-specificity, no TSX edits) ===== */
+/* === ECC SIDEBAR POLISH (router-agnostic) ================================= */
 
-/* Make sure the layout uses a two-column grid and the seam is clean */
-.app-shell, .layout {
-  display: grid !important;
-  grid-template-columns: var(--sidebar-w, 304px) 1fr !important;
-  height: 100vh !important;
-  overflow: hidden !important;
-  background: var(--bg, #0a0a0a) !important;
-}
-.app-shell.collapsed, .layout.collapsed {
-  grid-template-columns: var(--sidebar-w-collapsed, 76px) 1fr !important;
-}
+/* True black rail so it matches the page */
+.sidebar, [data-role="sidebar"] { background: var(--bg) !important; }
 
-/* Sidebar base */
-.sidebar, [data-role="sidebar"] {
-  background: var(--nav-bg, #0a0a0a) !important;
-  color: var(--nav-fg, #fff) !important;
-  border-right: 1px solid var(--border-1, #242629) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  min-width: 0 !important;
+/* Independent scroll; NO visible scrollbar */
+.sidebar-scroll{ height:100vh; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; scrollbar-width:none; }
+.sidebar-scroll::-webkit-scrollbar{ display:none; }
+
+/* Brand/logo: bright, crisp; keep full logo in flyout and collapsed */
+.sidebar .brand img, .sidebar .brand .brand-logo{
+  display:block; max-width:180px; max-height:64px; object-fit:contain;
+  filter: brightness(1.12) drop-shadow(0 0 8px rgba(255,215,0,.16));
+}
+.sidebar.collapsed .brand img, .sidebar.collapsed .brand .brand-logo{
+  max-width:64px; max-height:64px; margin:0 auto;
 }
 
-/* Brand/logo */
-.sidebar .brand, [data-role="sidebar"] .brand {
-  padding: 16px 18px 12px !important;
-  border-bottom: 1px solid var(--border-1, #242629) !important;
+/* Row grid = icon | label | chevron (prevents left "scoot") */
+:root{ --nav-icon:18px; --nav-gap:10px; --nav-pad-x:12px; }
+
+.sidebar .nav-item, .sidebar .group-row, .sidebar .leaf{
+  display:grid;
+  grid-template-columns: var(--nav-icon) minmax(0,1fr) auto;
+  align-items:center; column-gap:var(--nav-gap);
+  padding:8px var(--nav-pad-x);
 }
-.sidebar .brand .brand-logo, [data-role="sidebar"] .brand .brand-logo,
-.sidebar .brand img, [data-role="sidebar"] .brand img {
-  display: block !important;
-  width: 100% !important;
-  max-width: 192px !important;
-  max-height: 64px !important;
-  object-fit: contain !important;
-  filter: brightness(1.15) drop-shadow(0 0 8px rgba(255,215,0,.14)) !important;
-}
-.sidebar.collapsed .brand, [data-role="sidebar"].collapsed .brand { padding: 12px 0 10px !important; text-align: center !important; }
-.sidebar.collapsed .brand .brand-logo, [data-role="sidebar"].collapsed .brand .brand-logo,
-.sidebar.collapsed .brand img, [data-role="sidebar"].collapsed .brand img {
-  max-width: 48px !important; max-height: 48px !important; margin: 0 auto !important;
+.sidebar .nav-item .label, .sidebar .group-row .lbl, .sidebar .leaf .lbl{
+  margin:0 !important; text-indent:0 !important; min-width:0;
 }
 
-/* Scroll area: wheel works, scrollbar hidden */
-.sidebar-scroll, [data-role="sidebar"] .sidebar-scroll {
-  flex: 1 1 auto !important;
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-  overscroll-behavior: contain !important;
-  scrollbar-width: none !important;
-}
-.sidebar-scroll::-webkit-scrollbar, [data-role="sidebar"] .sidebar-scroll::-webkit-scrollbar { display: none !important; }
-
-/* Section titles */
-.sidebar .section-title, [data-role="sidebar"] .section-title {
-  color: var(--nav-muted, #bdc0c3) !important;
-  font-weight: 700 !important;
-  font-size: 12px !important;
-  letter-spacing: .6px !important;
-  padding: 14px 16px 6px !important;
-  text-transform: uppercase !important;
-}
-
-/* Remove bullets/indents from any UL inside the rail */
-.sidebar nav ul, [data-role="sidebar"] nav ul,
-.sidebar ul, [data-role="sidebar"] ul {
-  list-style: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-.sidebar li::marker, [data-role="sidebar"] li::marker { content: none !important; }
-.sidebar .leaf::before, [data-role="sidebar"] .leaf::before { content: none !important; }
-
-/* Row grid: icon | label | chevron */
-:root { --nav-icon: 18px; --nav-gap: 10px; --nav-pad-x: 12px; }
-.sidebar .nav-item, [data-role="sidebar"] .nav-item,
-.sidebar .group-row, [data-role="sidebar"] .group-row,
-.sidebar .leaf,     [data-role="sidebar"] .leaf {
-  display: grid !important;
-  grid-template-columns: var(--nav-icon) minmax(0,1fr) auto !important;
-  align-items: center !important;
-  column-gap: var(--nav-gap) !important;
-  padding: 10px var(--nav-pad-x) !important;
-  margin: 4px 8px !important;
-  border-radius: 10px !important;
-  color: var(--nav-fg, #fff) !important;
-  text-decoration: none !important;
-}
-.sidebar .nav-item > :nth-child(2),
-[data-role="sidebar"] .nav-item > :nth-child(2),
-.sidebar .group-row > :nth-child(2),
-[data-role="sidebar"] .group-row > :nth-child(2),
-.sidebar .leaf > :nth-child(2),
-[data-role="sidebar"] .leaf > :nth-child(2) {
-  margin: 0 !important; text-indent: 0 !important; min-width: 0 !important;
-}
-.sidebar .icon, [data-role="sidebar"] .icon {
-  width: var(--nav-icon) !important; min-width: var(--nav-icon) !important; height: var(--nav-icon) !important; color: var(--gold, #ffd700) !important;
-}
-
-/* Hover + active */
-.sidebar .nav-item:hover, [data-role="sidebar"] .nav-item:hover,
-.sidebar .group-row:hover, [data-role="sidebar"] .group-row:hover,
-.sidebar .leaf:hover,     [data-role="sidebar"] .leaf:hover {
-  background: var(--panel-2, #151618) !important;
-}
-.sidebar .nav-item.active, [data-role="sidebar"] .nav-item.active,
-.sidebar .leaf.active,     [data-role="sidebar"] .leaf.active,
-.sidebar .leaf[aria-current="page"], [data-role="sidebar"] .leaf[aria-current="page"] {
-  background: var(--nav-active-bg, #191b1e) !important;
-  box-shadow: inset 0 0 0 2px var(--nav-active-ring, #ffd700) !important;
-}
-
-/* Children container */
-.leafList, [data-role="sidebar"] .leafList { margin: 4px 0 8px 0 !important; padding-left: 38px !important; display: grid !important; gap: 4px !important; }
-
-/* Collapsed rail: icon-only; no layout drift */
-.sidebar.collapsed .nav-item, [data-role="sidebar"].collapsed .nav-item,
-.sidebar.collapsed .group-row, [data-role="sidebar"].collapsed .group-row,
-.sidebar.collapsed .leaf,     [data-role="sidebar"].collapsed .leaf {
-  grid-template-columns: var(--nav-icon) !important;
-  justify-items: center !important;
-  padding: 10px !important;
-  margin: 6px 6px !important;
+/* Collapsed = icon-only WITHOUT shifting content area */
+.sidebar.collapsed .nav-item, .sidebar.collapsed .group-row, .sidebar.collapsed .leaf{
+  grid-template-columns: var(--nav-icon); justify-items:center;
 }
 .sidebar.collapsed .nav-item > :not(:first-child),
-[data-role="sidebar"].collapsed .nav-item > :not(:first-child),
 .sidebar.collapsed .group-row > :not(:first-child),
-[data-role="sidebar"].collapsed .group-row > :not(:first-child),
-.sidebar.collapsed .leaf > :not(:first-child),
-[data-role="sidebar"].collapsed .leaf > :not(:first-child) {
-  visibility: hidden !important; width: 0 !important; overflow: hidden !important; white-space: nowrap !important;
+.sidebar.collapsed .leaf     > :not(:first-child){
+  visibility:hidden; width:0; overflow:hidden; white-space:nowrap;
 }
 
-/* Show child icons in collapsed when the parent has an active child */
-.sidebar.collapsed .leafList, [data-role="sidebar"].collapsed .leafList { display: none !important; }
-.sidebar.collapsed .group-row[aria-expanded="true"] + .leafList,
-[data-role="sidebar"].collapsed .group-row[aria-expanded="true"] + .leafList,
-.sidebar.collapsed .group-row[data-current-child="true"] + .leafList,
-[data-role="sidebar"].collapsed .group-row[data-current-child="true"] + .leafList {
-  display: flex !important; gap: 6px !important; padding-left: 0 !important; align-items: center !important;
-}
-.sidebar.collapsed .leaf .lbl, [data-role="sidebar"].collapsed .leaf .lbl { display: none !important; }
-
-/* Fly-out on hover (collapsed) */
-.sidebar.collapsed:hover .nav-item, [data-role="sidebar"].collapsed:hover .nav-item,
-.sidebar.collapsed:hover .group-row, [data-role="sidebar"].collapsed:hover .group-row,
-.sidebar.collapsed:hover .leaf,     [data-role="sidebar"].collapsed:hover .leaf {
-  grid-template-columns: var(--nav-icon) minmax(0,1fr) auto !important;
-  justify-items: start !important;
-  padding: 10px var(--nav-pad-x) !important;
+/* Flyout on hover: restore full grid */
+.sidebar.collapsed:hover .nav-item, .sidebar.collapsed:hover .group-row, .sidebar.collapsed:hover .leaf{
+  grid-template-columns: var(--nav-icon) minmax(0,1fr) auto; justify-items:start; padding:8px var(--nav-pad-x);
 }
 .sidebar.collapsed:hover .nav-item > :not(:first-child),
-[data-role="sidebar"].collapsed:hover .nav-item > :not(:first-child),
 .sidebar.collapsed:hover .group-row > :not(:first-child),
-[data-role="sidebar"].collapsed:hover .group-row > :not(:first-child),
-.sidebar.collapsed:hover .leaf > :not(:first-child),
-[data-role="sidebar"].collapsed:hover .leaf > :not(:first-child) {
-  visibility: visible !important; width: auto !important; overflow: visible !important;
+.sidebar.collapsed:hover .leaf     > :not(:first-child){
+  visibility:visible; width:auto; overflow:visible;
 }
 
-/* Footer (pin button) */
-.sidebar .sidebar-footer, [data-role="sidebar"] .sidebar-footer {
-  padding: 14px 16px !important; border-top: 1px solid var(--border-1, #242629) !important;
+/* Active state: dark chip + gold ring, fully readable */
+.leaf.active, [aria-current="page"].leaf, .nav-item.active{
+  background:#17181a; box-shadow: inset 0 0 0 2px var(--gold); border-radius:12px;
 }
-.sidebar .pinBtn, [data-role="sidebar"] .pinBtn {
-  width: 100% !important; border-radius: 10px !important; border: 1px solid var(--border-1, #242629) !important;
-  background: #121314 !important; color: var(--muted-1, #c9cacc) !important; padding: 10px 12px !important; cursor: pointer !important;
-}
-.sidebar .pinBtn:hover, [data-role="sidebar"] .pinBtn:hover { background: var(--panel-2, #151618) !important; }
-.sidebar.collapsed .sidebar-footer, [data-role="sidebar"].collapsed .sidebar-footer { display: none !important; }
+
+/* Hide pin button when collapsed to keep a clean rail */
+.sidebar.collapsed .pinBtn{ display:none !important; }
