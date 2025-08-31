@@ -241,6 +241,40 @@ export default function Sidebar() {
           </div>
         </div>
       )}
+    {/* ——— Local, sidebar-scoped overrides to beat global/visited rules ——— */}
+    <style
+      // This is safe: scoped to .sidebar only and sits after global CSS
+      dangerouslySetInnerHTML={{
+        __html: `
+        .sidebar a,
+        .sidebar a:link,
+        .sidebar a:visited,
+        .sidebar a:active,
+        .sidebar .nav-row,
+        .sidebar .nav-row:visited,
+        .sidebar .leaf,
+        .sidebar .leaf:visited {
+          color: var(--ecc-text) !important;
+          text-decoration: none !important;
+        }
+        .sidebar .nav-row .label,
+        .sidebar .group-row .label {
+          color: var(--ecc-text) !important;
+        }
+        .sidebar .icon.parent { color: var(--ecc-gold) !important; }
+        .sidebar .icon.child  { color: var(--ecc-dim)  !important; }
+
+        /* Collapsed should be icon-only */
+        .sidebar.collapsed .section-title,
+        .sidebar.collapsed .label,
+        .sidebar.collapsed .expand { display: none !important; }
+
+        /* Bounded fly-out; never full screen */
+        .sidebar .flyout { max-width: var(--ecc-flyout-w, 280px) !important; }
+      `,
+      }}
+    />
+
     </aside>
   );
 }

@@ -85,11 +85,21 @@ html[data-sidebar-mounted="1"] body {
 .sidebar a,
 .sidebar a:link,
 .sidebar a:visited,
-.sidebar .nav-row,
-.sidebar .nav-row:visited {
-  color: inherit !important;
+.sidebar a:active {
+  color: var(--ecc-text) !important;
   text-decoration: none !important;
 }
+
+/* Explicitly hide text in collapsed mode (beats resets) */
+.sidebar.collapsed .section-title,
+.sidebar.collapsed .label,
+.sidebar.collapsed .expand {
+  display: none !important;
+}
+
+/* Keep icon colors consistent in both states */
+.sidebar .icon.parent { color: var(--ecc-gold) !important; }
+.sidebar .icon.child  { color: var(--ecc-dim)  !important; }
 
 /* Make the rail expand button visible when collapsed */
 .sidebar .railExpand{
