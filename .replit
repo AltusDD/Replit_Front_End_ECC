@@ -1,11 +1,9 @@
-# Use pnpm everywhere so Replit doesn’t fall back to npm/yarn
+
+# .replit
+# Make the big Run button start our dev server via pnpm.
 run = "pnpm dev"
 
 [packager]
 install = "pnpm install"
 
 hidden = [".cache", ".vite", "dist", "node_modules"]
-
-[[ports]]
-localPort = 5000
-externalPort = 80
