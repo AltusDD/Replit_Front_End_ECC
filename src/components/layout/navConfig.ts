@@ -1,32 +1,38 @@
-export type Leaf = { label: string; to: string; icon: string };
-export type Group = { label: string; icon: string; children: Leaf[] };
+export type Leaf = { label: string; to: string };
+export type Group = { label: string; children: Leaf[] };
 export type Item = Leaf | Group;
 export type Section = { title?: string; items: Item[] };
 
 const sections: Section[] = [
-  {
-    title: "Primary",
-    items: [{ label: "Dashboard", to: "/dashboard", icon: "Home" }],
-  },
+  { title: "Dashboard", items: [{ label: "Home", to: "/dashboard" }] },
   {
     title: "Portfolio V3",
     items: [
-      { label: "Properties", to: "/portfolio/properties", icon: "Layers" },
-      { label: "Units", to: "/portfolio/units", icon: "Box" },
-      { label: "Leases", to: "/portfolio/leases", icon: "FileText" },
-      { label: "Tenants", to: "/portfolio/tenants", icon: "User" },
-      { label: "Owners", to: "/portfolio/owners", icon: "Users" },
+      { label: "Properties", to: "/portfolio/properties" },
+      { label: "Units", to: "/portfolio/units" },
+      { label: "Leases", to: "/portfolio/leases" },
+      { label: "Tenants", to: "/portfolio/tenants" },
+      { label: "Owners", to: "/portfolio/owners" },
     ],
   },
   {
     title: "Cards",
     items: [
-      { label: "Property Card", to: "/card/property/:id", icon: "Grid" },
-      { label: "Unit Card", to: "/card/unit/:id", icon: "Package" },
-      // Remaining items...
+      { label: "Overview", to: "/cards/overview" },
+      { label: "Delinquencies", to: "/cards/delinquencies" },
+      { label: "Vacancy", to: "/cards/vacancy" },
     ],
   },
-  // Additional sections...
+  {
+    title: "Operations",
+    items: [
+      { label: "Accounting", to: "/operations/accounting" },
+      { label: "Leasing", to: "/operations/leasing" },
+      { label: "Maintenance", to: "/operations/maintenance" },
+      { label: "Marketing", to: "/operations/marketing" },
+    ],
+  },
 ];
 
+export { sections };
 export default sections;
