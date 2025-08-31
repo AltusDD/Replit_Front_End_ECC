@@ -8,7 +8,7 @@ export default defineConfig({
     host: true, 
     port: 5000, 
     strictPort: true,
-    allowedHosts: 'all'
+    allowedHosts: ['258f1742-e4c0-4f32-8100-1f937c055471-00-z25yygrpls5w.worf.replit.dev']
   },
   preview: { 
     host: true, 
