@@ -1,0 +1,172 @@
+REPLIT AGENT PROMPT: Modern Sidebar UI Update
+# Project: EstateCommand
+
+## GOAL
+Update the sidebar UI with a modern design language. Keep all structure and functionality as-is (e.g., `wouter` routing, collapse/pin, independent scroll), but apply a modernized visual style.
+
+---
+
+## ACTION: Replace `_ecc-override.css` With Modern Design
+
+Replace the contents of:
+
+**`src/styles/_ecc-override.css`**
+
+With the following updated stylesheet:
+
+```css
+:root {
+  --ecc-sidebar-w: 260px;
+  --ecc-sidebar-w-collapsed: 64px;
+  --ecc-bg: #121417;
+  --ecc-panel: #1a1c1f;
+  --ecc-seam: #2b2d31;
+  --ecc-text: #e4e6eb;
+  --ecc-dim: #8a8d93;
+  --ecc-gold: #f0c000;
+  --ecc-hover: #23262a;
+  --ecc-active: #2d3036;
+  --ecc-radius: 12px;
+}
+
+.sidebar {
+  width: var(--ecc-sidebar-w);
+  background: var(--ecc-panel);
+  color: var(--ecc-text);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--ecc-seam);
+  font-family: system-ui, sans-serif;
+}
+.sidebar.collapsed { width: var(--ecc-sidebar-w-collapsed); }
+
+.sidebar .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 14px 10px;
+}
+.sidebar .brand-logo {
+  height: 40px;
+  width: auto;
+}
+.sidebar .pinBtn {
+  margin-left: auto;
+  font-size: 12px;
+  border: 1px solid var(--ecc-seam);
+  background: transparent;
+  color: var(--ecc-dim);
+  border-radius: var(--ecc-radius);
+  padding: 4px 10px;
+  transition: background 0.2s;
+}
+.sidebar .pinBtn:hover {
+  background: var(--ecc-hover);
+}
+.sidebar.collapsed .pinBtn {
+  font-size: 10px;
+  padding: 2px 8px;
+}
+
+.sidebar .sidebar-scroll {
+  height: calc(100vh - 70px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.sidebar .sidebar-scroll::-webkit-scrollbar { width: 0; height: 0; }
+
+.sidebar .section {
+  padding: 8px;
+}
+.sidebar .section-title {
+  color: var(--ecc-dim);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 6px 12px;
+}
+
+.sidebar .nav-row {
+  display: grid;
+  grid-template-columns: 20px minmax(0,1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--ecc-radius);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s;
+}
+.sidebar .nav-row:hover {
+  background: var(--ecc-hover);
+}
+.sidebar .leaf.active {
+  background: var(--ecc-active);
+  box-shadow: inset 0 0 0 2px var(--ecc-gold);
+}
+.sidebar .icon {
+  width: 18px;
+  min-width: 18px;
+  text-align: center;
+  color: var(--ecc-gold);
+}
+.sidebar .label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar .expand {
+  opacity: 0.4;
+}
+
+.sidebar .group-row {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 20px minmax(0,1fr) auto;
+  align-items: center;
+  border-radius: var(--ecc-radius);
+}
+.sidebar .group-row:hover {
+  background: var(--ecc-hover);
+}
+.sidebar .leafList {
+  padding-left: 18px;
+}
+
+.sidebar.collapsed .nav-row {
+  grid-template-columns: 20px;
+  justify-items: center;
+  padding-left: calc((var(--ecc-sidebar-w-collapsed) - 20px) / 2 - 2px);
+  padding-right: 6px;
+}
+.sidebar.collapsed .label,
+.sidebar.collapsed .expand,
+.sidebar.collapsed .section-title {
+  display: none;
+}
+.sidebar.collapsed .leafList {
+  display: none;
+}
+
+NOTES
+
+Preserve all functionality: expand/collapse, highlighting, scroll, groups.
+
+This CSS is scoped to .sidebar — no global overrides.
+
+No structural changes to Sidebar.tsx are needed.
+
+Let us know when applied, and we’ll move on to header or page styling next!
+
+
+---
+
+Let me know once it’s applied, and I’ll walk you through the next piece — or help iterate on this look.

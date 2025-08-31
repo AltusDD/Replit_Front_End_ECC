@@ -1,0 +1,109 @@
+# Project: EstateCommand
+
+## GOAL
+Fix the sidebar visuals by applying the correct scoped styling from the verified ECC playbook. This resolves issues with spacing, colors, collapsed width, and hover states.
+
+---
+
+## ACTIONS TO TAKE
+
+### 1. Replace This File:
+**`src/styles/_ecc-override.css`**
+
+Use the following content (verified, fully scoped CSS):
+
+```css
+:root {
+  --ecc-sidebar-w: 280px;
+  --ecc-sidebar-w-collapsed: 76px;
+  --ecc-bg: #0e0f11;
+  --ecc-panel: #121316;
+  --ecc-seam: #222428;
+  --ecc-text: #d7d9dd;
+  --ecc-dim: #a6a8ac;
+  --ecc-gold: #ffd400;
+}
+
+.sidebar {
+  width: var(--ecc-sidebar-w);
+  background: var(--ecc-panel);
+  color: var(--ecc-text);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--ecc-seam);
+}
+.sidebar.collapsed { width: var(--ecc-sidebar-w-collapsed); }
+
+.sidebar .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px 8px;
+}
+.sidebar .brand-logo { height: 42px; width: auto; }
+.sidebar .pinBtn {
+  margin-left: auto;
+  font-size: 12px;
+  border: 1px solid var(--ecc-seam);
+  background: transparent;
+  color: var(--ecc-dim);
+  border-radius: 10px;
+  padding: 4px 10px;
+}
+.sidebar.collapsed .pinBtn { font-size: 10px; padding: 2px 8px; }
+
+.sidebar .sidebar-scroll {
+  height: calc(100vh - 70px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.sidebar .sidebar-scroll::-webkit-scrollbar { width: 0; height: 0; }
+
+.sidebar .section { padding: 6px 8px; }
+.sidebar .section-title {
+  color: var(--ecc-dim);
+  font-size: 12px;
+  letter-spacing: .08em;
+  padding: 8px 10px 6px;
+}
+
+.sidebar .nav-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0,1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.sidebar .nav-row:hover { background: #17181b; }
+.sidebar .leaf.active {
+  background: #17181b;
+  box-shadow: inset 0 0 0 2px var(--ecc-gold);
+}
+.sidebar .icon { width: 18px; min-width: 18px; text-align: center; color: var(--ecc-gold); }
+.sidebar .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar .expand { opacity: .5; }
+
+.sidebar .group-row {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: inherit;
+}
+.sidebar .leafList { padding-left: 20px; }
+
+.sidebar.collapsed .nav-row {
+  grid-template-columns: 18px;
+  justify-items: center;
+  padding-left: calc((var(--ecc-sidebar-w-collapsed) - 18px) / 2 - 2px);
+  padding-right: 8px;
+}
+.sidebar.collapsed .label,
+.sidebar.collapsed .expand,
+.sidebar.collapsed .section-title { display: none; }
+.sidebar.collapsed .leafList { display: none; }

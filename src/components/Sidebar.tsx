@@ -83,7 +83,7 @@ export default function Sidebar() {
             const isExpanded = expandedGroups[section.title || ""] ?? true;
             
             return (
-              <div key={section.title} className="nav-section">
+              <div key={section.title} className="section">
                 {section.title && (
                   <div
                     className="section-title"
@@ -91,10 +91,7 @@ export default function Sidebar() {
                     role="button"
                     aria-expanded={isExpanded}
                   >
-                    <span className="section-label">{section.title}</span>
-                    <span className={`section-chevron ${isExpanded ? "expanded" : ""}`}>
-                      ›
-                    </span>
+                    {section.title}
                   </div>
                 )}
                 
@@ -109,11 +106,12 @@ export default function Sidebar() {
                           <Link
                             key={item.to}
                             href={item.to}
-                            className={`nav-item ${active ? "active" : ""}`}
+                            className={`nav-row leaf ${active ? "active" : ""}`}
                             aria-current={active ? "page" : undefined}
                           >
-                            <span className="nav-icon">•</span>
-                            <span className="nav-label">{item.label}</span>
+                            <span className="icon">•</span>
+                            <span className="label">{item.label}</span>
+                            <span className="expand"></span>
                           </Link>
                         );
                       }
