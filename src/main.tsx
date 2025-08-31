@@ -1,6 +1,7 @@
 /* ECC BOOTSTRAP */
 import "@/styles/theme.css";
 import "@/styles/app.css";
+import "@/styles/_ecc-override.css"; // must be last
 
 
 import React from "react";
