@@ -1,114 +1,134 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
+import * as Icons from "lucide-react";
+import sections, { Section, Item, Group, Leaf } from "./layout/navConfig";
 
-type Leaf = { label: string; to: string };
-type Group = { label?: string; children: Leaf[] };
-type Item = Leaf | Group;
-type Section = { title?: string; items: Item[] };
-const isGroup = (i: Item): i is Group => (i as Group)?.children !== undefined;
+const LS_KEY = "ecc:nav:collapsed";
+const SIDEBAR_W = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--ecc-sidebar-w") || "280", 10) || 280;
+const SIDEBAR_W_COLLAPSED = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--ecc-sidebar-w-collapsed") || "72", 10) || 72;
 
-import * as Nav from "@/components/layout/navConfig";
-const RAW: any = (Nav as any).sections ?? (Nav as any).default ?? [];
-const DEFAULT_SECTIONS: Section[] = [{ title: "Dashboard", items: [{ label: "Home", to: "/dashboard" }] }];
-const SECTIONS: Section[] = Array.isArray(RAW) && RAW.length ? RAW : DEFAULT_SECTIONS;
+function useCollapsed() {
+const [collapsed, setCollapsed] = useState<boolean>(() => {
+try { return localStorage.getItem(LS_KEY) === "1"; } catch { return false; }
+});
+useEffect(() => {
+try { localStorage.setItem(LS_KEY, collapsed ? "1" : "0"); } catch {}
+const px = collapsed ? SIDEBAR_W_COLLAPSED : SIDEBAR_W;
+document.documentElement.style.setProperty("--ecc-sidepad", `${px}px`);
+}, [collapsed]);
+return { collapsed, setCollapsed };
+}
+
+function useActivePath() {
+const [loc] = useLocation();
+return loc;
+}
+
+function Icon({ name, className }: { name?: string; className?: string }) {
+// Pick icon by name; default to Circle
+const Cmp = (name && (Icons as any)[name]) || (Icons as any).Circle;
+return <Cmp size={18} className={className} aria-hidden="true" />;
+}
 
 export default function Sidebar() {
-  const [location] = useLocation();
-  const current = location || "/";
+const { collapsed, setCollapsed } = useCollapsed();
+const activePath = useActivePath();
+const [hovering, setHovering] = useState(false);
 
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    try { return localStorage.getItem("ecc:nav:collapsed") === "1"; } catch { return false; }
-  });
-  useEffect(() => {
-    try { localStorage.setItem("ecc:nav:collapsed", collapsed ? "1" : "0"); } catch {}
-  }, [collapsed]);
+// One-time mount shim: mark primary & reserve space even before first paint
+useEffect(() => {
+document.documentElement.dataset.sidebarMounted = "1";
+const pad = (localStorage.getItem(LS_KEY) === "1") ? SIDEBAR_W_COLLAPSED : SIDEBAR_W;
+document.documentElement.style.setProperty("--ecc-sidepad", `${pad}px`);
+}, []);
 
-  // reserve body space so content never slides under the rail
-  useEffect(() => {
-    document.documentElement.setAttribute("data-sidebar-mounted", "1");
-    const w = getComputedStyle(document.documentElement).getPropertyValue("--ecc-sidebar-w").trim() || "280px";
-    const wc = getComputedStyle(document.documentElement).getPropertyValue("--ecc-sidebar-w-collapsed").trim() || "76px";
-    document.documentElement.style.setProperty("--ecc-sidepad", collapsed ? wc : w);
-  }, [collapsed]);
+// Inline visited-link override to beat global theme
+useEffect(() => {
+const style = document.createElement("style");
+style.setAttribute("data-ecc-inline", "sidebar");
+style.innerHTML = `.sidebar a, .sidebar a:link, .sidebar a:visited, .sidebar a:active { color: var(--ecc-text) !important; text-decoration:none!important; }`;
+document.head.appendChild(style);
+return () => { style.remove(); };
+}, []);
 
-  const initialExpanded = useMemo(() => {
-    const map = new Map<string, boolean>();
-    SECTIONS.forEach((section, s) => {
-      (section.items || []).forEach((it, i) => {
-        if (isGroup(it)) {
-          const open = (it.children || []).some((c) => current.startsWith(c.to));
-          map.set(`${s}:${i}`, open);
-        }
-      });
-    });
-    return map;
-  }, [current]);
-  const [expanded, setExpanded] = useState(initialExpanded);
-  useEffect(() => setExpanded(initialExpanded), [initialExpanded]);
+const content = (
+<nav className="nav">
+{sections.map((section, i) => (
+<div className="section" key={i}>
+{section.title && <div className="section-title">{section.title}</div>}
+<div className="section-items">
+{section.items.map((item, j) => {
+const isGroup = (item as Group).children !== undefined;
+if (isGroup) {
+const g = item as Group;
+return (
+<div className="group" key={`${i}-${j}`}>
+<div className="row parent">
+<Icon name={g.icon} className="icon parent" />
+<span className="label">{g.label}</span>
+</div>
+<div className="children">
+{g.children.map((leaf, k) => {
+const active = activePath.startsWith(leaf.to);
+return (
+<Link href={leaf.to} key={`${i}-${j}-${k}`}>
+<a className={`row child ${active ? "active" : ""}`} data-to={leaf.to}>
+<Icon name={leaf.icon} className="icon child" />
+<span className="label">{leaf.label}</span>
+</a>
+</Link>
+);
+})}
+</div>
+</div>
+);
+} else {
+const leaf = item as Leaf;
+const active = activePath.startsWith(leaf.to);
+return (
+<Link href={leaf.to} key={`${i}-${j}`}>
+<a className={`row leaf ${active ? "active" : ""}`} data-to={leaf.to}>
+<Icon name={leaf.icon} className="icon child" />
+<span className="label">{leaf.label}</span>
+</a>
+</Link>
+);
+}
+})}
+</div>
+</div>
+))}
+</nav>
+);
 
-  const toggle = (k: string) => setExpanded((p) => new Map(p).set(k, !p.get(k)));
+return (
+<aside
+className={`sidebar ${collapsed ? "collapsed" : ""}`}
+data-ecc="primary"
+onMouseEnter={() => setHovering(true)}
+onMouseLeave={() => setHovering(false)}
+>
+<div className="topbar">
+<button className="pin" onClick={() => setCollapsed(c => !c)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+{collapsed ? "›" : "Pin"}
+</button>
+</div>
 
-  return (
-    <aside className={`sidebar ${collapsed ? "collapsed" : ""}`} data-ecc="primary" aria-label="Primary">
-      <div className="brand">
-        <img src="/logo.png" alt="Altus" className="brand-logo" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-        <button className="pinBtn" onClick={() => setCollapsed(!collapsed)}>{collapsed ? "Unpin" : "Pin"}</button>
-      </div>
+  <div className="sidebar-scroll">
+    {content}
+  </div>
 
-      <div className="sidebar-scroll">
-        <nav role="navigation" aria-label="Main">
-          {SECTIONS.map((section, sIdx) => (
-            <div className="section" key={section.title || sIdx}>
-              {section.title && <div className="section-title">{section.title}</div>}
-              {(section.items || []).map((it, iIdx) => {
-                const key = `${sIdx}:${iIdx}`;
-                if (isGroup(it)) {
-                  const open = expanded.get(key) ?? false;
-                  return (
-                    <div className="group" key={key}>
-                      <button type="button" className="nav-row group-row" aria-expanded={open} onClick={() => toggle(key)}>
-                        <span className="icon">•</span>
-                        <span className="label">{(it as any).label ?? "Group"}</span>
-                        <span className="expand" aria-hidden>▾</span>
-                      </button>
-                      <div className="leafList" hidden={!open}>
-                        {(it.children || []).map((ch) => {
-                          const active = current.startsWith(ch.to);
-                          return (
-                            <Link key={ch.to} href={ch.to} className={`nav-row leaf ${active ? "active" : ""}`} aria-current={active ? "page" : undefined}>
-                              <span className="icon">•</span>
-                              <span className="label">{ch.label}</span>
-                              <span className="expand" />
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                }
-                const leaf = it as Leaf;
-                const active = current.startsWith(leaf.to);
-                return (
-                  <Link key={leaf.to} href={leaf.to} className={`nav-row leaf ${active ? "active" : ""}`} aria-current={active ? "page" : undefined}>
-                    <span className="icon">•</span>
-                    <span className="label">{leaf.label}</span>
-                    <span className="expand" />
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
-      </div>
+  <button className="expand" onClick={() => setCollapsed(false)} aria-hidden={!collapsed}>
+    ‹
+  </button>
 
-      {/* visited-link kill inside sidebar only */}
-      <style>{`
-        .sidebar[data-ecc="primary"] a,
-        .sidebar[data-ecc="primary"] a:link,
-        .sidebar[data-ecc="primary"] a:visited,
-        .sidebar[data-ecc="primary"] a:active { color: var(--ecc-text) !important; text-decoration: none !important; }
-      `}</style>
-    </aside>
-  );
+  {/* Hover fly-out (overlay) */}
+  <div className={`flyout ${collapsed && hovering ? "show" : ""}`}>
+    <div className="sidebar-scroll">{content}</div>
+  </div>
+</aside>
+
+
+);
 }

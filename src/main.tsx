@@ -2,6 +2,7 @@
 import "@/styles/theme.css";
 import "@/styles/app.css";
 import "@/styles/_ecc-override.css";
+import "@/styles/_ecc-override.css";
 
 if (import.meta.env.DEV) {
   import("@/debug/crash-overlay");

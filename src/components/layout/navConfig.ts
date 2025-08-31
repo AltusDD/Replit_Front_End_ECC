@@ -1,39 +1,34 @@
 
-export type Leaf = { label: string; to: string };
-export type Group = { label: string; children: Leaf[] };
+import type { FC } from "react";
+
+export type Leaf = { label: string; to: string; icon?: string };
+export type Group = { label: string; icon?: string; children: Leaf[] };
 export type Item = Leaf | Group;
 export type Section = { title?: string; items: Item[] };
 
-const sections: Section[] = [
-  { title: "Dashboard", items: [{ label: "Home", to: "/dashboard" }] },
-  {
-    title: "Portfolio V3",
-    items: [
-      { label: "Properties", to: "/portfolio/properties" },
-      { label: "Units", to: "/portfolio/units" },
-      { label: "Leases", to: "/portfolio/leases" },
-      { label: "Tenants", to: "/portfolio/tenants" },
-      { label: "Owners", to: "/portfolio/owners" },
-    ],
-  },
-  {
-    title: "Cards",
-    items: [
-      { label: "Overview", to: "/cards/overview" },
-      { label: "Delinquencies", to: "/cards/delinquencies" },
-      { label: "Vacancy", to: "/cards/vacancy" },
-    ],
-  },
-  {
-    title: "Operations",
-    items: [
-      { label: "Accounting", to: "/operations/accounting" },
-      { label: "Leasing", to: "/operations/leasing" },
-      { label: "Maintenance", to: "/operations/maintenance" },
-      { label: "Marketing", to: "/operations/marketing" },
-    ],
-  },
+export const sections: Section[] = [
+{ title: "Dashboard", items: [{ label: "Home", to: "/dashboard", icon: "Home" }] },
+{
+title: "Portfolio V3",
+items: [
+{ label: "Properties", to: "/portfolio/properties", icon: "Building2" },
+{ label: "Units", to: "/portfolio/units", icon: "Layers" },
+{ label: "Leases", to: "/portfolio/leases", icon: "FileText" },
+{ label: "Tenants", to: "/portfolio/tenants", icon: "Users" },
+{ label: "Owners", to: "/portfolio/owners", icon: "UserRoundCog" },
+],
+},
+{ title: "Cards", items: [
+{ label: "Overview", to: "/cards/overview", icon: "LayoutGrid" },
+{ label: "Delinquencies", to: "/cards/delinquencies", icon: "CircleAlert" },
+{ label: "Vacancy", to: "/cards/vacancy", icon: "House" },
+]},
+{ title: "Operations", items: [
+{ label: "Accounting", to: "/operations/accounting", icon: "Calculator" },
+{ label: "Leasing", to: "/operations/leasing", icon: "KeyRound" },
+{ label: "Maintenance", to: "/operations/maintenance", icon: "Wrench" },
+{ label: "Marketing", to: "/operations/marketing", icon: "Megaphone" },
+]},
 ];
 
-export { sections };
 export default sections;
