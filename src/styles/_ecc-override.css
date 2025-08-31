@@ -1,15 +1,14 @@
-
 :root {
---ecc-sidebar-w: 280px;
---ecc-sidebar-w-collapsed: 72px;
---ecc-flyout-w: 280px;
-
---ecc-bg: #0e0f11;
---ecc-panel: #121316;
---ecc-seam: #222428;
---ecc-text: #d7d9dd;
---ecc-dim: #94a3b8; /* alt-blue for children */
---ecc-gold: #ffd400; /* Altus gold */
+  --ecc-bg: #0e0f11;
+  --ecc-panel: #121316;
+  --ecc-border: #222428;
+  --ecc-text: #d7d9dd;
+  --ecc-mut: #94a3b8;
+  --ecc-gold: #ffd400;
+  --ecc-sidebar-w: 280px;
+  --ecc-sidebar-w-collapsed: 72px;
+  --ecc-radius: 12px;
+  --ecc-padding: 12px;
 }
 
 /* Reserve body padding once the sidebar mounts */

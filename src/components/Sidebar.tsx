@@ -1,7 +1,6 @@
-
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
-import * as Icons from "lucide-react";
+import { Circle, FileText, Home, LayoutDashboard, Building2, Boxes, Users } from "lucide-react";
 import sections, { Section, Item, Group, Leaf } from "./layout/navConfig";
 
 const LS_KEY = "ecc:nav:collapsed";
@@ -26,8 +25,8 @@ return loc;
 }
 
 function Icon({ name, className }: { name?: string; className?: string }) {
-// Pick icon by name; default to Circle
-const Cmp = (name && (Icons as any)[name]) || (Icons as any).Circle;
+// Ensure icon component import and use correct mapping.
+const Cmp = name ? Icons[name] : Circle;
 return <Cmp size={18} className={className} aria-hidden="true" />;
 }
 
