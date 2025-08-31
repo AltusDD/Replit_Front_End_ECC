@@ -1,4 +1,3 @@
-
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import * as Lucide from "lucide-react";
@@ -87,6 +86,7 @@ export default function Sidebar() {
     <aside
       className={`sidebar ${collapsed ? "collapsed" : ""}`}
       aria-label="Primary Navigation"
+      data-ecc="primary"            // 👈 add this
       onMouseEnter={() => collapsed && setHovering(true)}
       onMouseLeave={() => collapsed && setHovering(false)}
     >
@@ -191,7 +191,7 @@ export default function Sidebar() {
           <Lucide.ChevronRight size={18} />
         </button>
       )}
-      
+
       {/* Collapsed hover flyout */}
       {collapsed && (
         <div className={`flyout ${hovering ? "show" : ""}`} aria-hidden={!hovering} ref={flyoutRef}>

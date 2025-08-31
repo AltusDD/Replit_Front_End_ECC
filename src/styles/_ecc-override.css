@@ -147,6 +147,35 @@ html[data-sidebar-mounted="1"] body {
   width: 36px; height: 36px;
   display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--ecc-seam);
+
+/* Only show the new, canonical sidebar we just tagged */
+.sidebar:not([data-ecc="primary"]) {
+  display: none !important;
+}
+
+/* Safety: when expanded, never show the hover flyout */
+.sidebar:not(.collapsed) .flyout {
+  display: none !important;
+}
+
+/* Belt & suspenders: our sidebar is a fixed rail with bounded width */
+.sidebar[data-ecc="primary"] {
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  width: var(--ecc-sidebar-w, 280px);
+  z-index: 50;
+}
+.sidebar[data-ecc="primary"].collapsed {
+  width: var(--ecc-sidebar-w-collapsed, 72px);
+}
+
+/* Keep content shifted over by the active rail width */
+html[data-sidebar-mounted="1"] body {
+  padding-left: var(--ecc-sidepad, var(--ecc-sidebar-w, 280px)) !important;
+  box-sizing: border-box;
+}
+
   background: var(--ecc-hover);
   color: var(--ecc-text);
   border-radius: 999px;
