@@ -1,0 +1,3 @@
+
+run = "npm run dev"
+hidden = [".cache", ".vite", "dist", "node_modules"]
