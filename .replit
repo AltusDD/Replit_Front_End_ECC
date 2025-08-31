@@ -1,4 +1,6 @@
-modules = ["nodejs-20"]
 
-[nix]
-channel = "stable-25_05"
+run = "npm run dev"
+hidden = [".cache", ".vite", "dist", "node_modules"]
+
+[packager]
+install = "npm ci || npm i"
