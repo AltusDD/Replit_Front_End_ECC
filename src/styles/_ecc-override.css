@@ -2,17 +2,55 @@
 
 /* Sidebar should reserve space + stay above app content */
 .sidebar {
-  position: fixed;   /* NEW */
-  top: 0;            /* NEW */
-  left: 0;           /* NEW */
-  height: 100vh;     /* NEW */
-  z-index: 50;       /* NEW */
-  width: 280px;
-  background: var(--color-panel, #2A2A2A);
-  border-right: 1px solid var(--color-border, #404040);
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 50;
+}
+
+html[data-sidebar-mounted="1"] body {
+  padding-left: var(--ecc-sidepad, var(--ecc-sidebar-w)) !important;
+  box-sizing: border-box;
+}
+
+html[data-sidebar-mounted="1"] #root {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+html[data-sidebar-mounted="1"] #root > div:not(.sidebar) {
+  margin-left: 0 !important;
+}
+
+.sidebar .sidebar-scroll {
+  height: calc(100vh - 110px);
+}
+
+.sidebar .flyout {
+  left: calc(var(--ecc-sidebar-w-collapsed) - 2px);
+  max-width: var(--ecc-flyout-w);
+  z-index: 60;
+  pointer-events: auto;
+}
+
+.sidebar .label {
+  color: var(--ecc-text);
+}
+.sidebar .icon.parent {
+  color: var(--ecc-gold);
+}
+.sidebar .icon.child {
+  color: var(--ecc-dim);
+}
+
+.sidebar .brand-logo {
+  height: 48px;
+  filter: brightness(1.15) drop-shadow(0 2px 6px rgba(255,212,0,.2));
+  transition: transform .3s ease, opacity .3s ease, height .3s ease;
+}
+.sidebar.collapsed .brand-logo {
+  height: 32px;
 }
 
 .sidebar.collapsed {
