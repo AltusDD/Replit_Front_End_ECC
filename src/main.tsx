@@ -1,7 +1,6 @@
 
 import "./styles/theme.css";
-import "./styles/app.css";
-import "./styles/_ecc-override.css";
+import "./styles/app.css"; // Only these two CSS files should be imported as per the style checking script
 
 if (import.meta.env.DEV) {
   import("./debug/crash-overlay"); // keep dev overlay if present
@@ -18,3 +17,4 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <App />
   </React.StrictMode>
 );
+
