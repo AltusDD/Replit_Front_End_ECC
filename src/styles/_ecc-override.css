@@ -1,58 +1,176 @@
-/* === ECC SIDEBAR POLISH (router-agnostic) ================================= */
+/* ────────────────────────────────────────────────────────────────
+   ECC NAV: hard override that fixes bullets, spacing, scroll,
+   collapsed/flyout alignment, and restores the black panel look.
+   This is markup-agnostic and safe to drop in.
+   ──────────────────────────────────────────────────────────────── */
 
-/* True black rail so it matches the page */
-.sidebar, [data-role="sidebar"] { background: var(--bg) !important; }
-
-/* Independent scroll; NO visible scrollbar */
-.sidebar-scroll{ height:100vh; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; scrollbar-width:none; }
-.sidebar-scroll::-webkit-scrollbar{ display:none; }
-
-/* Brand/logo: bright, crisp; keep full logo in flyout and collapsed */
-.sidebar .brand img, .sidebar .brand .brand-logo{
-  display:block; max-width:180px; max-height:64px; object-fit:contain;
-  filter: brightness(1.12) drop-shadow(0 0 8px rgba(255,215,0,.16));
-}
-.sidebar.collapsed .brand img, .sidebar.collapsed .brand .brand-logo{
-  max-width:64px; max-height:64px; margin:0 auto;
-}
-
-/* Row grid = icon | label | chevron (prevents left "scoot") */
-:root{ --nav-icon:18px; --nav-gap:10px; --nav-pad-x:12px; }
-
-.sidebar .nav-item, .sidebar .group-row, .sidebar .leaf{
-  display:grid;
-  grid-template-columns: var(--nav-icon) minmax(0,1fr) auto;
-  align-items:center; column-gap:var(--nav-gap);
-  padding:8px var(--nav-pad-x);
-}
-.sidebar .nav-item .label, .sidebar .group-row .lbl, .sidebar .leaf .lbl{
-  margin:0 !important; text-indent:0 !important; min-width:0;
+:root{
+  /* Keep your theme tokens consistent here */
+  --bg: #0E0F10;          /* pure black panel */
+  --panel: #0F1114;       /* slightly lighter for cards */
+  --text: #E6E8EA;        /* main text */
+  --muted: #9AA4AF;       /* secondary text */
+  --line: #24272B;        /* hairline */
+  --gold: #FFD400;        /* brand gold */
+  --sidebar-w: 296px;
+  --sidebar-w-collapsed: 76px;
 }
 
-/* Collapsed = icon-only WITHOUT shifting content area */
-.sidebar.collapsed .nav-item, .sidebar.collapsed .group-row, .sidebar.collapsed .leaf{
-  grid-template-columns: var(--nav-icon); justify-items:center;
-}
-.sidebar.collapsed .nav-item > :not(:first-child),
-.sidebar.collapsed .group-row > :not(:first-child),
-.sidebar.collapsed .leaf     > :not(:first-child){
-  visibility:hidden; width:0; overflow:hidden; white-space:nowrap;
+/* Base shell rules (do not change your layout JS) */
+html, body, #root { height: 100%; }
+.app-shell, .layout {
+  height: 100vh !important;
+  overflow: hidden !important;                    /* independent scroll */
+  background: var(--bg) !important;
 }
 
-/* Flyout on hover: restore full grid */
-.sidebar.collapsed:hover .nav-item, .sidebar.collapsed:hover .group-row, .sidebar.collapsed:hover .leaf{
-  grid-template-columns: var(--nav-icon) minmax(0,1fr) auto; justify-items:start; padding:8px var(--nav-pad-x);
-}
-.sidebar.collapsed:hover .nav-item > :not(:first-child),
-.sidebar.collapsed:hover .group-row > :not(:first-child),
-.sidebar.collapsed:hover .leaf     > :not(:first-child){
-  visibility:visible; width:auto; overflow:visible;
+/* Sidebar panel */
+.sidebar, [data-role="sidebar"] {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  border-right: 1px solid var(--line) !important;
 }
 
-/* Active state: dark chip + gold ring, fully readable */
-.leaf.active, [aria-current="page"].leaf, .nav-item.active{
-  background:#17181a; box-shadow: inset 0 0 0 2px var(--gold); border-radius:12px;
+/* Remove native list bullets and gutter everywhere inside the sidebar */
+.sidebar nav, [data-role="sidebar"] nav,
+.sidebar [data-nav], [data-role="sidebar"] [data-nav]{
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
-/* Hide pin button when collapsed to keep a clean rail */
-.sidebar.collapsed .pinBtn{ display:none !important; }
+.sidebar nav ul, [data-role="sidebar"] nav ul,
+.sidebar ul, [data-role="sidebar"] ul,
+.sidebar li, [data-role="sidebar"] li{
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Independent scroll (wheel works, scrollbar hidden) */
+.sidebar-scroll{
+  height: calc(100vh - 0px) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  scrollbar-width: none !important;               /* Firefox */
+}
+.sidebar-scroll::-webkit-scrollbar{ display: none !important; } /* WebKit */
+
+/* Section headings */
+.sidebar .section-title,
+[data-role="sidebar"] .section-title{
+  color: var(--muted) !important;
+  font-weight: 700 !important;
+  letter-spacing: .06em !important;
+  font-size: 12px !important;
+  margin: 16px 16px 8px !important;
+  text-transform: uppercase !important;
+}
+
+/* Row grid: icon | label | chevron */
+:root{ --nav-icon: 18px; --nav-gap: 10px; --nav-pad-x: 14px; }
+
+.sidebar .nav-row,
+[data-role="sidebar"] .nav-row{
+  display: grid !important;
+  grid-template-columns: var(--nav-icon) minmax(0,1fr) auto !important;
+  align-items: center !important;
+  column-gap: var(--nav-gap) !important;
+  padding: 8px var(--nav-pad-x) !important;
+  border-radius: 10px !important;
+  text-decoration: none !important;
+  color: var(--text) !important;
+}
+
+.sidebar .nav-row .icon,
+[data-role="sidebar"] .nav-row .icon{
+  width: var(--nav-icon) !important;
+  min-width: var(--nav-icon) !important;
+  color: var(--gold) !important;
+}
+
+.sidebar .nav-row .label,
+[data-role="sidebar"] .nav-row .label{
+  min-width: 0 !important;
+  margin: 0 !important;
+  text-indent: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Hover/active */
+.sidebar .nav-row:hover,
+[data-role="sidebar"] .nav-row:hover{
+  background: #17181A !important;
+}
+.sidebar .nav-row.active,
+[data-role="sidebar"] .nav-row.active{
+  background: #17181A !important;
+  box-shadow: inset 0 0 0 2px var(--gold) !important;
+}
+
+/* Child lists */
+.sidebar .leafList,
+[data-role="sidebar"] .leafList{
+  padding-left: calc(var(--nav-icon) + var(--nav-gap) + var(--nav-pad-x)) !important;
+  margin-top: 4px !important;
+  display: grid !important;
+  gap: 2px !important;
+}
+
+/* Collapsed behavior (icon-only) */
+.sidebar.collapsed .nav-row,
+[data-role="sidebar"].collapsed .nav-row{
+  grid-template-columns: var(--nav-icon) !important;
+  justify-items: center !important;
+  padding-left: calc((var(--sidebar-w-collapsed) - var(--nav-icon))/2) !important;
+  padding-right: 8px !important;
+}
+.sidebar.collapsed .nav-row .label,
+[data-role="sidebar"].collapsed .nav-row .label,
+.sidebar.collapsed .expand,
+[data-role="sidebar"].collapsed .expand{
+  visibility: hidden !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+/* Fly-out on hover */
+.sidebar.collapsed:hover .nav-row,
+[data-role="sidebar"].collapsed:hover .nav-row{
+  grid-template-columns: var(--nav-icon) minmax(0,1fr) auto !important;
+  justify-items: start !important;
+  padding: 8px var(--nav-pad-x) !important;
+}
+.sidebar.collapsed:hover .nav-row .label,
+[data-role="sidebar"].collapsed:hover .nav-row .label,
+.sidebar.collapsed:hover .expand,
+[data-role="sidebar"].collapsed:hover .expand{
+  visibility: visible !important;
+  width: auto !important;
+  overflow: visible !important;
+}
+
+/* Brand/logo normalization (pinned & fly-out) */
+.sidebar .brand img,
+[data-role="sidebar"] .brand img{
+  display: block !important;
+  height: clamp(28px, 6vw, 56px) !important;
+  width: auto !important;
+  object-fit: contain !important;
+  margin: 18px auto 8px !important;
+}
+
+/* Remove any stray white seams/handles from stealing scroll */
+.splitter, .resize-handle, .content-seam, .divider{
+  pointer-events: none !important;
+}
+
+/* Make sure the main area scrolls independently */
+.main, .content, .page-scroll{
+  overflow: auto !important;
+  height: 100% !important;
+}

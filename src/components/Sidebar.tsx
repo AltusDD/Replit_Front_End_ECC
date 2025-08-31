@@ -100,20 +100,13 @@ export default function Sidebar() {
     setOpenGroups((p) => ({ ...p, [idx]: !p[idx] }));
 
   return (
-    <aside
-      className={`sidebar ${collapsed ? "collapsed" : ""}`}
-      data-role="sidebar"
-      aria-label="Primary"
-    >
-      {/* Brand */}
+    <aside className="sidebar" data-role="sidebar">
       <div className="brand">
-        {/* Put your logo asset in /public if needed; the class handles sizing */}
         <img
           className="brand-logo"
           src="/brand/altus-logo.png"
           alt="Altus Realty Group"
         />
-        {/* Pin/Unpin lives here so it stays near the brand; hidden in collapsed */}
         <button
           className="pinBtn hide-when-collapsed"
           onClick={() => setCollapsed((v) => !v)}
@@ -123,8 +116,8 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Scroll container */}
-      <div className="sidebar-scroll" role="navigation" data-nav>
+      <div className="sidebar-scroll">
+        <nav role="navigation" data-nav>
         {NAV.map((group, idx) => {
           const expanded = openGroups[idx] ?? true;
           const hasCurrentChild = idx === currentGroupIndex;
@@ -179,17 +172,7 @@ export default function Sidebar() {
             </div>
           );
         })}
-      </div>
-
-      {/* Footer (kept simple) */}
-      <div className="sidebar-footer">
-        <button
-          className="pinBtn"
-          onClick={() => setCollapsed((v) => !v)}
-          aria-pressed={collapsed ? "true" : "false"}
-        >
-          {collapsed ? "Unpin" : "Pin"}
-        </button>
+        </nav>
       </div>
     </aside>
   );

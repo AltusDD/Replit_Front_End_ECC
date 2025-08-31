@@ -1,207 +1,98 @@
-/* =========================================================
-   ECC APP LAYOUT + SIDEBAR — FULL DROP-IN REPLACEMENT
-   ========================================================= */
+/* ────────────────────────────────────────────────────────────────
+   ECC APP LAYOUT (clean baseline)
+   ──────────────────────────────────────────────────────────────── */
 
-/* ---------- Layout shell: independent scrolling ---------- */
-.app-shell,
-.layout {                /* your outer wrapper likely has one of these */
+:root{
+  --bg: #0E0F10;
+  --panel: #0F1114;
+  --line: #24272B;
+  --text: #E6E8EA;
+  --muted: #9AA4AF;
+  --gold: #FFD400;
+  --sidebar-w: 296px;
+  --sidebar-w-collapsed: 76px;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body, #root { height: 100%; background: var(--bg); color: var(--text); }
+
+body{
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+}
+
+/* Two pane shell: sidebar | content */
+.app-shell{
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
   height: 100vh;
-  overflow: hidden;      /* rail & content scroll independently */
+  gap: 0;
   background: var(--bg);
 }
 
-.app-shell.collapsed,
-.layout.collapsed {
-  grid-template-columns: var(--sidebar-w-collapsed) 1fr;
+/* If your layout wrapper uses .layout instead of .app-shell */
+.layout{
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+  background: var(--bg);
 }
 
-/* ------------------------ Sidebar ------------------------ */
-.sidebar {
-  background: var(--nav-bg) !important;
-  color: var(--nav-fg);
-  border-right: 1px solid var(--border-1);
-  display: flex;
-  flex-direction: column;
-  min-width: 0; /* prevent layout push */
+/* Content column */
+.main, .content{
+  position: relative;
+  overflow: auto;
+  height: 100%;
+  background: var(--bg);
 }
 
-/* Brand block */
-.sidebar .brand {
-  padding: 16px 18px 12px;
-  border-bottom: 1px solid var(--border-1);
-}
-.sidebar .brand .brand-logo {
-  display: block;
+/* Sidebar column (the element itself is styled in _ecc-override.css) */
+.sidebar{
   width: 100%;
-  max-width: 192px;      /* nice and proud */
-  max-height: 64px;
-  object-fit: contain;
-  filter: brightness(1.15) drop-shadow(0 0 8px rgba(255,215,0,.14));
+  height: 100%;
+  background: var(--bg);
+  border-right: 1px solid var(--line);
 }
 
-.sidebar.collapsed .brand {
-  padding: 12px 0 10px; text-align: center;
+/* page headings and cards keep your existing look */
+h1{
+  font-size: clamp(28px, 3.2vw, 48px);
+  line-height: 1.1;
+  margin: 24px 24px 12px;
+  font-weight: 800;
 }
-.sidebar.collapsed .brand .brand-logo {
-  max-width: 48px; max-height: 48px; margin: 0 auto;
+.card{
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
 }
 
-/* Scroll area: wheel works; bar hidden */
-.sidebar-scroll {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  scrollbar-width: none;               /* Firefox hide */
+/* Tables keep dark chrome */
+table{
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--text);
 }
-.sidebar-scroll::-webkit-scrollbar { display: none; }
-
-/* Section titles */
-.sidebar .section-title {
-  color: var(--nav-muted);
+thead th{
   font-weight: 700;
-  font-size: 12px;
-  letter-spacing: .6px;
-  padding: 14px 16px 6px;
-  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
 }
-
-/* --------- Uniform row grid (icon | label | chevron) --------- */
-:root { --nav-icon: 18px; --nav-gap: 10px; --nav-pad-x: 12px; }
-
-.sidebar .nav-item,
-.sidebar .group-row,
-.sidebar .leaf {
-  display: grid;
-  grid-template-columns: var(--nav-icon) minmax(0,1fr) auto;
-  align-items: center;
-  column-gap: var(--nav-gap);
-  padding: 10px var(--nav-pad-x);
-  margin: 4px 8px;
-  border-radius: 10px;
-  color: var(--nav-fg);
-  text-decoration: none;
-  user-select: none;
+tbody tr{
+  border-bottom: 1px solid var(--line);
 }
-
-.sidebar .nav-item .icon,
-.sidebar .group-row .icon,
-.sidebar .leaf .icon {
-  width: var(--nav-icon);
-  min-width: var(--nav-icon);
-  height: var(--nav-icon);
-  color: var(--gold);
+tbody tr:hover{
+  background: #121316;
 }
+td, th{ padding: 10px 12px; }
 
-/* Remove any bullet-like pseudo content introduced elsewhere */
-.sidebar .leaf::marker,
-.sidebar li::marker { content: none; }
-.sidebar .leaf::before { content: none !important; }
-
-/* Hover + active visuals */
-.sidebar .nav-item:hover,
-.sidebar .group-row:hover,
-.sidebar .leaf:hover { background: var(--panel-2); }
-
-.sidebar .nav-item.active,
-.sidebar .leaf.active,
-.sidebar .leaf[aria-current="page"] {
-  background: var(--nav-active-bg);
-  box-shadow: inset 0 0 0 2px var(--nav-active-ring);
+/* Utility */
+hr.hair{
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 16px 0;
 }
-
-/* Label block never “scoots” left */
-.sidebar .nav-item > :nth-child(2),
-.sidebar .group-row > :nth-child(2),
-.sidebar .leaf     > :nth-child(2) {
-  margin: 0 !important;
-  text-indent: 0 !important;
-  min-width: 0;
-}
-
-/* Children list (expanded groups) */
-.leafList {
-  margin: 4px 0 8px 0;
-  padding-left: 38px;
-  display: grid;
-  gap: 4px;
-}
-
-/* ------------- Collapsed rail: icon-only, no drift ------------- */
-.sidebar.collapsed .nav-item,
-.sidebar.collapsed .group-row,
-.sidebar.collapsed .leaf {
-  grid-template-columns: var(--nav-icon);
-  justify-items: center;
-  padding: 10px;
-  margin: 6px 6px;
-}
-
-.sidebar.collapsed .nav-item > :not(:first-child),
-.sidebar.collapsed .group-row > :not(:first-child),
-.sidebar.collapsed .leaf     > :not(:first-child) {
-  visibility: hidden;
-  width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-/* Show the current child position while collapsed:
-   If your markup toggles aria-expanded on the parent, or you add
-   data-current-child="true" on the parent when a child is active,
-   the icons for children will be shown inline under the parent icon. */
-.sidebar.collapsed .leafList { display: none; }
-
-.sidebar.collapsed .group-row[aria-expanded="true"] + .leafList,
-.sidebar.collapsed .group-row[data-current-child="true"] + .leafList {
-  display: flex;
-  gap: 6px;
-  padding-left: 0;
-  align-items: center;
-}
-
-.sidebar.collapsed .leaf .lbl { display: none; }
-
-/* Fly-out (collapsed + hover) shows full content with correct padding */
-.sidebar.collapsed:hover .nav-item,
-.sidebar.collapsed:hover .group-row,
-.sidebar.collapsed:hover .leaf {
-  grid-template-columns: var(--nav-icon) minmax(0,1fr) auto;
-  justify-items: start;
-  padding: 10px var(--nav-pad-x);
-}
-
-.sidebar.collapsed:hover .nav-item > :not(:first-child),
-.sidebar.collapsed:hover .group-row > :not(:first-child),
-.sidebar.collapsed:hover .leaf     > :not(:first-child) {
-  visibility: visible; width: auto; overflow: visible;
-}
-
-/* Footer (pin/unpin) */
-.sidebar .sidebar-footer {
-  padding: 14px 16px;
-  border-top: 1px solid var(--border-1);
-}
-.sidebar .pinBtn {
-  width: 100%;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-1);
-  background: #121314;
-  color: var(--muted-1);
-  padding: 10px 12px;
-  cursor: pointer;
-}
-.sidebar .pinBtn:hover { background: var(--panel-2); }
-
-/* When the rail is collapsed, hide the big footer button */
-.sidebar.collapsed .sidebar-footer { display: none; }
-
-/* ------------- Content seam (don’t capture wheel) ------------- */
-.content-seam, .splitter, .resize-handle {
-  pointer-events: none !important;
-}
-
-/* Optional: keep table containers from bleeding behind the rail */
-main, .content, .page { background: var(--bg); }
