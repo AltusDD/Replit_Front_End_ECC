@@ -1,26 +1,38 @@
-run = "pnpm dev"
+run = "npm run dev"
+modules = ["nodejs-20"]
+
+[env]
+CI = "true"
+NPM_CONFIG_AUDIT = "false"
+NPM_CONFIG_FUND = "false"
 
 [packager]
-install = "pnpm install"
+install = "npm ci || npm install"
 
 hidden = [".cache", ".vite", "dist", "node_modules"]
 
 [[ports]]
 localPort = 5173
-onOpen = "open-browser"
+
+[[ports]]
+localPort = 5174
+externalPort = 80
 
 [workflows]
-runButton = "Run Dev"
 
 [[workflows.workflow]]
-name = "Run Dev"
+name = "run"
 mode = "sequential"
 author = 41942539
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash -lc 'set -e; pkill -f vite || true; pkill -f \"node .*vite\" || true; rm -rf .vite dist; if command -v pnpm >/dev/null 2>&1; then pnpm install --prefer-offline --no-frozen-lockfile; else corepack prepare pnpm@10.15.0 --activate && corepack pnpm install --prefer-offline --no-frozen-lockfile; fi'"
+args = "rm -rf .vite dist"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash -lc 'export PORT=${PORT:-5173}; echo \"Starting Vite on $PORT\"; if command -v pnpm >/dev/null 2>&1; then pnpm dev; elif [ -f node_modules/vite/bin/vite.js ]; then node node_modules/vite/bin/vite.js --host --port \"$PORT\"; else echo \"Vite not installed; run the install task first.\" >&2; exit 1; fi'"
+args = "npm install --no-audit --no-fund"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=${PORT:-5173} npm run dev"
