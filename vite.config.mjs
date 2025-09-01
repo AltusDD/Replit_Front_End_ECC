@@ -4,10 +4,10 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true,            // bind 0.0.0.0
+    host: "0.0.0.0",       // explicitly bind to 0.0.0.0
     port: 5173,            // default; Replit will set PORT env too
     strictPort: false,     // allow fallback
-    allowedHosts: true     // accept worf.* hosts
+    hmr: { clientPort: 443 } // HMR for Replit
   },
   preview: {
     host: true,
