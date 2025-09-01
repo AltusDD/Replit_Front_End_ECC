@@ -5,9 +5,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: "0.0.0.0",       // explicitly bind to 0.0.0.0
-    port: 5173,            // default; Replit will set PORT env too
-    strictPort: false,     // allow fallback
-    hmr: { clientPort: 443 } // HMR for Replit
+    port: process.env.PORT || 5173,  // use PORT env var from Replit
+    strictPort: true,      // enforce exact port
+    hmr: { 
+      clientPort: 443,
+      host: "0.0.0.0"
+    }
   },
   preview: {
     host: true,

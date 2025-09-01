@@ -13,9 +13,6 @@ hidden = [".cache", ".vite", "dist", "node_modules"]
 
 [[ports]]
 localPort = 5173
-
-[[ports]]
-localPort = 5173
 onOpen = "open-browser"
 
 [workflows]
