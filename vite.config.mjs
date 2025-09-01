@@ -1,19 +1,25 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-const PORT = Number(process.env.PORT) || 5173;
+// Replit runs your preview on a *.replit.dev (and *.repl.co/*worf.replit.dev) host.
+// Use allowedHosts to allow those dynamic hosts.
+const allowed = [
+  ".replit.dev",
+  ".repl.co",
+  ".worf.replit.dev"
+];
 
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true,        // 0.0.0.0
-    port: PORT,
+    host: true,         // 0.0.0.0
+    port: 5173,
     strictPort: true,
-    allowedHosts: true
+    allowedHosts: allowed
   },
   preview: {
     host: true,
-    port: PORT,
+    port: 5173,
     strictPort: true
   }
 });

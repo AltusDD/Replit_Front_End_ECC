@@ -8,4 +8,4 @@ hidden = [".cache", ".vite", "dist", "node_modules"]
 
 [[ports]]
 localPort = 5173
-onOpen = "open-browser"   # tells Replit to open the preview when 5173 comes up
+onOpen = "open-browser"
