@@ -6,11 +6,11 @@ import { NAV_SECTIONS } from "./layout/navConfig";
 
 const STORAGE_KEY = "ecc.sidebar.collapsed";
 
-/** Get a lucide icon component by string name (safe fallback). */
+/** Return a lucide icon component by name with a safe fallback. */
 function useIcon(name?: string) {
   return useMemo(() => {
     if (!name) return Icons.Circle;
-    const lib: Record<string, React.ComponentType<any>> = Icons as any;
+    const lib: any = Icons;
     return lib[name] ?? Icons.Circle;
   }, [name]);
 }
@@ -38,10 +38,10 @@ export default function Sidebar() {
   }, [collapsed]);
 
   return (
-    <aside className={`ecc-sidebar ${collapsed ? "is-collapsed" : ""}`} data-collapsed={collapsed}>
+    <aside className={`ecc-sidebar ${collapsed ? "is-collapsed" : ""}`}>
       <div className="ecc-sidebar__inner">
         <Brand collapsed={collapsed} />
-        <nav className="ecc-nav">
+        <nav className="ecc-nav" aria-label="Main navigation">
           {NAV_SECTIONS.map((section) => (
             <Section
               key={section.label}
@@ -65,15 +65,11 @@ export default function Sidebar() {
 }
 
 function Brand({ collapsed }: { collapsed: boolean }) {
-  // Vite serves files under /public at the web root.
-  const altusLogo = "/brand/altus-logo.png";
-  const altusMark = "/brand/altus-mark.png";
-
   return (
-    <div className="ecc-brand">
+    <div className="ecc-brand" title="Altus Realty Group">
       <img
         className="ecc-brand__img"
-        src={collapsed ? altusMark : altusLogo}
+        src={collapsed ? "/brand/altus-mark.png" : "/brand/altus-logo.png"}
         alt="Altus"
         draggable={false}
       />
@@ -96,7 +92,7 @@ function Section({
       <ul className="ecc-list">
         {section.items.map((it) => (
           <li key={it.label} className="ecc-list__item">
-            {it.children && it.children.length ? (
+            {it.children?.length ? (
               <ParentLink item={it} collapsed={collapsed} activePath={activePath} />
             ) : (
               <LeafLink item={it} activePath={activePath} />
@@ -108,15 +104,8 @@ function Section({
   );
 }
 
-function isActive(path: string | undefined, activePath: string) {
-  if (!path) return false;
-  if (path === "/") return activePath === "/" || activePath === "/dashboard";
-  // Keep highlight for route and its descendants, but avoid "/" always matching.
-  return activePath === path || activePath.startsWith(path + "/");
-}
-
 function LeafLink({ item, activePath }: { item: NavItem; activePath: string }) {
-  const active = isActive(item.path, activePath);
+  const active = !!item.path && (activePath === item.path || activePath.startsWith(item.path + "/"));
   return (
     <Link href={item.path || "#"} className={`ecc-link ${active ? "is-active" : ""}`}>
       <ItemIcon item={item} />
@@ -134,23 +123,27 @@ function ParentLink({
   collapsed: boolean;
   activePath: string;
 }) {
-  const [open, setOpen] = useState<boolean>(false);
+  const [open, setOpen] = useState(false);
 
+  // Open a parent when one of its children is active
   useEffect(() => {
-    const anyActive = (item.children ?? []).some((c) => isActive(c.path, activePath));
-    setOpen(anyActive);
+    const hit = (item.children ?? []).some(
+      (c) => !!c.path && (activePath === c.path || activePath.startsWith(c.path + "/"))
+    );
+    setOpen(hit);
   }, [activePath, item.children]);
 
   if (collapsed) {
-    // Collapsed → show icon only; hover reveals flyout with children.
+    // Collapsed: icon button + hover flyout
     return (
-      <div className="ecc-parent group">
-        <button className="ecc-link is-parent" aria-haspopup="true" aria-expanded="false">
+      <div className="ecc-parent">
+        <button className="ecc-link is-parent" aria-haspopup="true" title={item.label}>
           <ItemIcon item={item} />
           <span className="ecc-link__label">{item.label}</span>
           <Icons.ChevronRight className="ecc-link__chev" size={16} />
         </button>
-        <div className="ecc-flyout" role="menu">
+
+        <div className="ecc-flyout">
           <div className="ecc-flyout__title">
             <ItemIcon item={item} />
             <span>{item.label}</span>
@@ -167,7 +160,7 @@ function ParentLink({
     );
   }
 
-  // Expanded → accordion.
+  // Expanded: accordion
   return (
     <div className={`ecc-parent ${open ? "is-open" : ""}`}>
       <button
@@ -179,6 +172,7 @@ function ParentLink({
         <span className="ecc-link__label">{item.label}</span>
         <Icons.ChevronDown className="ecc-link__chev" size={16} />
       </button>
+
       <ul className={`ecc-children ${open ? "is-open" : ""}`}>
         {(item.children ?? []).map((c) => (
           <li key={c.label}>
