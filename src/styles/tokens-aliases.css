@@ -1,0 +1,6 @@
+/* Map legacy names to our theme tokens so inline styles still work */
+:root{
+  --color-text-muted: var(--ink-3);
+  --color-text-primary: var(--ink-1);
+  --color-text-secondary: var(--ink-2);
+}

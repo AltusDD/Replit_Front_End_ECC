@@ -1,0 +1,29 @@
+/* Generic table styling used by current Table.tsx */
+.table{
+  width:100%;
+  border-collapse:collapse;
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.table thead th{
+  text-align:left;
+  font-weight:600;
+  font-size:12px;
+  letter-spacing:.02em;
+  color:var(--ink-3);
+  border-bottom:1px solid var(--border);
+  padding:10px 12px;
+}
+
+.table tbody td{
+  padding:10px 12px;
+  color:var(--ink-1);
+  border-bottom:1px solid var(--border);
+}
+
+.table tbody tr:hover{
+  background:rgba(214,179,106,.06);
+}
