@@ -1,179 +1,139 @@
-/* ===== Global layout shift via body class from Sidebar.tsx ===== */
+/* src/styles/app.css */
+
+/* --- Layout --- */
 .ecc-main {
-  margin-left: var(--sidebar-width);
-  transition: margin-left .22s ease;
-}
-.ecc--sidebar-collapsed .ecc-main {
-  margin-left: var(--sidebar-width-collapsed);
+  margin-left: var(--sidebar-w);
+  padding: 24px;
+  min-height: 100vh;
+  background: var(--bg);
 }
 
-/* ===== Sidebar shell ===== */
+/* --- Sidebar container --- */
 .ecc-sidebar {
   position: fixed;
   inset: 0 auto 0 0;
-  width: var(--sidebar-width);
-  background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+  width: var(--sidebar-w);
+  background: var(--panel);
   border-right: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  z-index: 50;
-  transition: width .22s ease;
-  display: grid;
-  grid-template-rows: 1fr;
+  z-index: 40;
+  transition: width .2s ease;
 }
-.ecc-sidebar.is-collapsed {
-  width: var(--sidebar-width-collapsed);
-}
+.ecc-sidebar.is-collapsed { width: var(--sidebar-w-collapsed); }
 
 .ecc-sidebar__inner {
-  overflow-y: auto;
-  padding: 18px 14px 72px 14px; /* bottom room for collapse button */
+  height: 100%;
+  overflow: auto;
+  padding: 18px 16px 72px;
 }
 
-/* ===== Brand (prevents logo blow-up) ===== */
+/* --- Brand / Logo --- */
 .ecc-brand {
-  display: grid;
-  place-items: center;
-  height: 72px;
-  margin: 6px 6px 14px;
-  border-radius: var(--radius);
-  background: rgba(255,255,255,0.02);
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent);
   border: 1px solid var(--border);
+  border-radius: var(--radius);
+  height: 92px;
+  margin-bottom: 18px;
 }
 .ecc-brand__img {
-  height: 44px;
-  width: auto;
-  object-fit: contain;
-  user-select: none;
-  pointer-events: none;
+  max-height: 64px; width: auto; object-fit: contain;
+  filter: brightness(1.25) contrast(1.1);
 }
-.ecc--sidebar-collapsed .ecc-brand {
-  height: 72px;
-}
-.ecc--sidebar-collapsed .ecc-brand__img {
-  height: 38px;
-}
+.ecc-sidebar.is-collapsed .ecc-brand { height: 72px; }
+.ecc-sidebar.is-collapsed .ecc-brand__img { max-height: 40px; }
 
-/* ===== Section headings ===== */
-.ecc-section { margin: 18px 8px 6px; }
+/* --- Section headings --- */
+.ecc-section { margin: 18px 0 8px; }
 .ecc-section__label {
-  color: var(--muted);
+  color: var(--ink-2);
   font-weight: 700;
+  letter-spacing: .12em;
   font-size: 12px;
-  letter-spacing: .08em;
   text-transform: uppercase;
-  padding: 6px 10px;
-  margin-bottom: 8px;
-  border-left: 3px solid var(--gold);
+  margin: 8px 0 10px;
+  position: relative;
+  padding-left: 20px;
+}
+.ecc-section__label::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 50%; transform: translateY(-50%);
+  width: 12px; height: 3px; border-radius: 3px;
+  background: var(--accent);
 }
 
-/* ===== Links ===== */
-.ecc-list { list-style: none; margin: 0; padding: 0; }
-.ecc-list__item { margin: 6px 0; }
+/* --- Link list --- */
+.ecc-list { list-style: none; padding: 0; margin: 0; }
+.ecc-list__item { margin-bottom: 10px; }
 
+/* --- Links --- */
 .ecc-link {
-  --pad-x: 14px;
-  display: grid;
-  grid-template-columns: 22px 1fr auto;
-  align-items: center;
-  gap: 10px;
-  padding: 12px var(--pad-x);
-  border-radius: var(--radius);
-  color: var(--text);
-  text-decoration: none;
-  background: rgba(255,255,255,0.02);
+  display: flex; align-items: center; gap: 10px;
+  width: 100%;
+  padding: 14px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  color: var(--ink-2);
   border: 1px solid transparent;
-  transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
+  text-decoration: none;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
 .ecc-link:hover {
-  background: rgba(42,99,255,.08);
-  border-color: rgba(42,99,255,.25);
+  background: rgba(214,179,106,0.08);
+  border-color: rgba(214,179,106,0.22);
+  color: var(--ink-1);
 }
 .ecc-link.is-active {
-  background: linear-gradient(180deg, rgba(42,99,255,.18), rgba(42,99,255,.12));
-  border-color: rgba(42,99,255,.45);
-  box-shadow: 0 0 0 3px var(--ring);
+  background: rgba(214,179,106,0.14);
+  border-color: rgba(214,179,106,0.35);
+  color: var(--ink-1);
+  box-shadow: 0 0 0 1px rgba(214,179,106,0.18) inset, 0 6px 18px rgba(0,0,0,0.35);
 }
 .ecc-link__icon {
-  color: var(--gold);
+  color: var(--ink-2); /* icons follow currentColor */
 }
-.ecc-link__label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 600;
-}
-.ecc-link__chev {
-  color: var(--muted);
-}
+.ecc-link:hover .ecc-link__icon,
+.ecc-link.is-active .ecc-link__icon { color: var(--accent); }
+.ecc-link__label { flex: 1 1 auto; }
+.ecc-link__chev { margin-left: auto; color: var(--ink-3); }
 
-/* Collapsed: hide labels but keep icons sized nicely */
-.ecc--sidebar-collapsed .ecc-link {
-  grid-template-columns: 22px;
-  justify-content: center;
-  padding: 12px 10px;
-}
-.ecc--sidebar-collapsed .ecc-link__label,
-.ecc--sidebar-collapsed .ecc-section__label {
-  display: none;
-}
-
-/* ===== Accordion children ===== */
-.ecc-children {
-  margin: 6px 0 0 0;
-  padding-left: 0;
-  list-style: none;
-  max-height: 0;
-  overflow: hidden;
+/* --- Parent (accordion) --- */
+.ecc-parent .ecc-children {
+  max-height: 0; overflow: hidden;
   transition: max-height .25s ease;
+  margin-top: 8px; padding-left: 0;
 }
-.ecc-children.is-open {
-  max-height: 700px;
-}
-.ecc-children .ecc-link {
-  background: rgba(255,255,255,0.03);
-}
-.ecc-children .ecc-link__icon { color: var(--blue-2); }
+.ecc-parent.is-open .ecc-children { max-height: 800px; } /* large enough */
+.ecc-children li { margin-bottom: 8px; }
 
-/* ===== Collapsed flyout ===== */
-.ecc-flyout {
-  display: none;
-  position: absolute;
-  left: calc(var(--sidebar-width-collapsed) - 8px);
-  top: 0;
-  background: var(--panel);
+/* --- Collapsed flyout --- */
+.ecc-sidebar.is-collapsed .ecc-link .ecc-link__label { display: none; }
+.ecc-sidebar.is-collapsed .ecc-link { justify-content: center; padding: 12px; }
+.ecc-sidebar.is-collapsed .ecc-parent { position: relative; }
+.ecc-sidebar.is-collapsed .ecc-flyout {
+  position: absolute; left: calc(100% + 10px); top: -6px;
+  min-width: 240px; display: none;
+  background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 12px;
-  min-width: 240px;
-  box-shadow: var(--shadow);
+  padding: 10px;
+  box-shadow: 0 14px 36px rgba(0,0,0,.5);
 }
+.ecc-sidebar.is-collapsed .group:hover .ecc-flyout { display: block; }
 .ecc-flyout__title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--muted);
-  padding: 6px 8px 10px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+  color: var(--ink-1); margin-bottom: 8px;
 }
-.ecc--sidebar-collapsed .ecc-parent { position: relative; }
-.ecc--sidebar-collapsed .ecc-parent:hover .ecc-flyout { display: block; }
 
-/* ===== Collapse control ===== */
+/* --- Collapse control button --- */
 .ecc-collapse-ctl {
   position: fixed;
-  left: 12px;
-  bottom: 12px;
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
+  left: 8px; bottom: 10px;
+  width: 38px; height: 38px;
   border-radius: 999px;
-  color: var(--text);
-  background: rgba(255,255,255,0.06);
   border: 1px solid var(--border);
-  backdrop-filter: blur(6px);
-  cursor: pointer;
-  transition: background .15s ease, transform .15s ease;
+  background: var(--panel-2);
+  color: var(--ink-1);
+  display: grid; place-items: center;
 }
-.ecc-collapse-ctl:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
+.ecc-collapse-ctl:hover { border-color: rgba(214,179,106,0.35); }

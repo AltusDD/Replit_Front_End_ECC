@@ -9,6 +9,10 @@
     "preview": "vite preview --host 0.0.0.0 --port 5173"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.1",
+    "@mui/x-data-grid": "^8.11.0",
     "autoprefixer": "^10.4.21",
     "lucide-react": "^0.542.0",
     "postcss": "^8.5.6",
