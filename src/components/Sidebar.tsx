@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import * as Icons from "lucide-react";
-import type { NavItem, NavSection } from "../layout/navConfig";
-import { NAV_SECTIONS } from "../layout/navConfig";
-import { useBadgeCounts } from "../../state/badges";
+import type { NavItem, NavSection } from "../config/navigation";
+import { NAV_SECTIONS } from "../config/navigation";
+import { useBadgeCounts } from "../state/badges";
 
 const STORAGE_KEY = "ecc.sidebar.collapsed";
 
-/** Safely resolve a lucide icon name. */
 function useIcon(name?: string) {
   return useMemo(() => {
     const lib: any = Icons;
@@ -99,18 +98,9 @@ function Section({
         {section.items.map((it) => (
           <li key={it.label} className="ecc-list__item">
             {it.children && it.children.length ? (
-              <ParentLink
-                item={it}
-                collapsed={collapsed}
-                activePath={activePath}
-                counts={counts}
-              />
+              <ParentLink item={it} collapsed={collapsed} activePath={activePath} counts={counts} />
             ) : (
-              <LeafLink
-                item={it}
-                activePath={activePath}
-                count={counts[it.badgeKey ?? ""]}
-              />
+              <LeafLink item={it} activePath={activePath} count={counts[it.badgeKey ?? ""]} />
             )}
           </li>
         ))}
@@ -130,12 +120,10 @@ function LeafLink({
 }) {
   const active = !!(item.path && activePath.startsWith(item.path));
   return (
-    <Link href={item.path || "#"}>
-      <a className={`ecc-link ${active ? "is-active" : ""}`}>
-        <ItemIcon item={item} />
-        <span className="ecc-link__label">{item.label}</span>
-        <Badge value={count} />
-      </a>
+    <Link href={item.path || "#"} className={`ecc-link ${active ? "is-active" : ""}`}>
+      <ItemIcon item={item} />
+      <span className="ecc-link__label">{item.label}</span>
+      <Badge value={count} />
     </Link>
   );
 }
@@ -166,22 +154,15 @@ function ParentLink({
       .reduce((a, b) => a + b, 0) || undefined;
 
   if (collapsed) {
-    const flyoutId = `flyout-${item.label.replace(/\s+/g, "-").toLowerCase()}`;
     return (
-      <div className="ecc-parent ecc-parent--collapsed">
-        <button
-          className="ecc-link is-parent"
-          aria-haspopup="true"
-          aria-expanded="false"
-          aria-controls={flyoutId}
-          type="button"
-        >
+      <div className="ecc-parent group">
+        <button className="ecc-link is-parent" aria-haspopup="true" type="button">
           <ItemIcon item={item} />
           <span className="ecc-link__label">{item.label}</span>
           <Badge value={parentCount} />
           <Icons.ChevronRight className="ecc-link__chev" size={16} />
         </button>
-        <div className="ecc-flyout" role="menu" id={flyoutId}>
+        <div className="ecc-flyout" role="menu">
           <div className="ecc-flyout__title">
             <ItemIcon item={item} />
             <span>{item.label}</span>
@@ -190,11 +171,7 @@ function ParentLink({
           <ul className="ecc-children">
             {(item.children ?? []).map((c) => (
               <li key={c.label}>
-                <LeafLink
-                  item={c}
-                  activePath={activePath}
-                  count={c.badgeKey ? counts[c.badgeKey] : undefined}
-                />
+                <LeafLink item={c} activePath={activePath} count={c.badgeKey ? counts[c.badgeKey] : undefined} />
               </li>
             ))}
           </ul>
@@ -219,11 +196,7 @@ function ParentLink({
       <ul className={`ecc-children ${open ? "is-open" : ""}`}>
         {(item.children ?? []).map((c) => (
           <li key={c.label}>
-            <LeafLink
-              item={c}
-              activePath={activePath}
-              count={c.badgeKey ? counts[c.badgeKey] : undefined}
-            />
+            <LeafLink item={c} activePath={activePath} count={c.badgeKey ? counts[c.badgeKey] : undefined} />
           </li>
         ))}
       </ul>

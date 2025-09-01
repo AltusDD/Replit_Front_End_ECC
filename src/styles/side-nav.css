@@ -1,0 +1,19 @@
+/* src/styles/side-nav.css */
+.ecc-sidebar.is-collapsed .ecc-link .ecc-link__label{display:none}
+.ecc-sidebar.is-collapsed .ecc-link{justify-content:center;padding:12px}
+
+.ecc-sidebar.is-collapsed .ecc-parent{position:relative}
+.ecc-sidebar.is-collapsed .ecc-flyout{
+  position:absolute;
+  left:calc(100% + 10px);
+  top:-6px;
+  min-width:240px;
+  display:none;
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:10px;
+  box-shadow:0 14px 36px rgba(0,0,0,.5);
+}
+.ecc-sidebar.is-collapsed .group:hover .ecc-flyout{display:block}
+.ecc-flyout__title{display:flex;align-items:center;gap:8px;color:var(--ink-1);margin-bottom:8px}
