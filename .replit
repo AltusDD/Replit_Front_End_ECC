@@ -1,5 +1,4 @@
 run = "pnpm dev"
-modules = ["nodejs-20"]
 
 [packager]
 install = "pnpm install"
@@ -9,3 +8,19 @@ hidden = [".cache", ".vite", "dist", "node_modules"]
 [[ports]]
 localPort = 5173
 onOpen = "open-browser"
+
+[workflows]
+runButton = "Run Dev"
+
+[[workflows.workflow]]
+name = "Run Dev"
+mode = "sequential"
+author = 41942539
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash -lc 'set -e; pkill -f vite || true; pkill -f \"node .*vite\" || true; rm -rf .vite dist; if command -v pnpm >/dev/null 2>&1; then pnpm install --prefer-offline --no-frozen-lockfile; else corepack prepare pnpm@10.15.0 --activate && corepack pnpm install --prefer-offline --no-frozen-lockfile; fi'"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash -lc 'export PORT=${PORT:-5173}; echo \"Starting Vite on $PORT\"; if command -v pnpm >/dev/null 2>&1; then pnpm dev; elif [ -f node_modules/vite/bin/vite.js ]; then node node_modules/vite/bin/vite.js --host --port \"$PORT\"; else echo \"Vite not installed; run the install task first.\" >&2; exit 1; fi'"
