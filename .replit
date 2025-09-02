@@ -54,3 +54,6 @@ args = "npm install --no-audit --no-fund"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "PORT=${PORT:-5173} npm run dev"
+
+[nix]
+channel = "stable-25_05"
