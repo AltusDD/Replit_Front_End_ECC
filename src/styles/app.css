@@ -39,7 +39,7 @@
 
 /* flyout */
 .ecc-parent.group{position:relative}
-.ecc-flyout{display:none;position:absolute;left:calc(var(--sidebar-width-collapsed) - 6px);top:-4px;min-width:228px;background:var(--panel-2);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-1);padding:8px;z-index:999}
+.ecc-flyout{display:none;position:absolute;left:calc(72px - 6px);top:-4px;min-width:228px;background:var(--panel-2);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-1);padding:8px;z-index:999}
 .ecc-flyout__title{display:flex;align-items:center;gap:10px;padding:6px 8px 8px;color:var(--text);border-bottom:1px solid var(--divider);margin-bottom:6px}
 .ecc--sidebar-collapsed .group:hover .ecc-flyout{display:block}
 

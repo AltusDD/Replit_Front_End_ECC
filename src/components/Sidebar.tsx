@@ -281,13 +281,17 @@ function Section({
 
 function LeafLink({ item, activePath }: { item: NavItem; activePath: string }) {
   const active = item.path && activePath.startsWith(item.path);
-  const node = (
-    <span className={`ecc-link ${active ? "is-active" : ""}`}>
+  return item.path ? (
+    <Link href={item.path} className={`ecc-link ${active ? "is-active" : ""}`}>
       <ItemIcon item={item} />
       <span className="ecc-link__label">{item.label}</span>
-    </span>
+    </Link>
+  ) : (
+    <a className="ecc-link">
+      <ItemIcon item={item} />
+      <span className="ecc-link__label">{item.label}</span>
+    </a>
   );
-  return item.path ? <Link href={item.path}>{node}</Link> : <a className="ecc-link">{node}</a>;
 }
 
 function ParentLink({
