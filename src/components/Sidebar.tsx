@@ -1,13 +1,187 @@
+// src/components/Sidebar.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import * as Icons from "lucide-react";
-import type { NavItem, NavSection } from "../config/navigation";
-import { NAV_SECTIONS } from "../config/navigation";
-import { useBadgeCounts } from "../state/badges";
 
+/* ---------- Types ---------- */
+type NavItem = {
+  label: string;
+  path?: string;
+  icon?: string;
+  children?: NavItem[];
+};
+
+type NavSection = {
+  label: string;
+  items: NavItem[];
+};
+
+/* ---------- Single Source of Truth (no external import) ---------- */
+const NAV_SECTIONS: NavSection[] = [
+  {
+    label: "Primary",
+    items: [{ label: "Dashboard", path: "/dashboard", icon: "Home" }],
+  },
+
+  {
+    label: "Managed Assets",
+    items: [
+      {
+        label: "Portfolio", // parent only; children are the actual pages
+        icon: "LayoutGrid",
+        children: [
+          { label: "Properties", path: "/portfolio/properties", icon: "Building2" },
+          { label: "Units", path: "/portfolio/units", icon: "House" },
+          { label: "Leases", path: "/portfolio/leases", icon: "ScrollText" },
+          { label: "Tenants", path: "/portfolio/tenants", icon: "Users" },
+          { label: "Owners", path: "/portfolio/owners", icon: "UserSquare2" },
+        ],
+      },
+    ],
+  },
+
+  {
+    label: "Cards (Entity Hubs)",
+    items: [
+      {
+        label: "Cards",
+        icon: "SquareStack",
+        children: [
+          { label: "Property Card", path: "/card/property/:id", icon: "Box" },
+          { label: "Unit Card", path: "/card/unit/:id", icon: "Box" },
+          { label: "Lease Card", path: "/card/lease/:id", icon: "Box" },
+          { label: "Tenant Card", path: "/card/tenant/:id", icon: "Box" },
+          { label: "Owner Card", path: "/card/owner/:id", icon: "Box" },
+        ],
+      },
+    ],
+  },
+
+  {
+    label: "Operations",
+    items: [
+      {
+        label: "Accounting",
+        icon: "Calculator",
+        children: [
+          { label: "Overview", path: "/ops/accounting/overview", icon: "Gauge" },
+          { label: "Rent Collection", path: "/ops/accounting/rent-collection", icon: "Coins" },
+          { label: "Expenses", path: "/ops/accounting/expenses", icon: "Receipt" },
+          { label: "Financial Reports", path: "/ops/accounting/financial-reports", icon: "LineChart" },
+          { label: "Tenant Ledgers", path: "/ops/accounting/tenant-ledgers", icon: "Book" },
+          { label: "Collections Dashboard", path: "/ops/accounting/collections-dashboard", icon: "BarChart" },
+          { label: "Collections Log", path: "/ops/accounting/collections-log", icon: "ListTree" },
+          { label: "Payment Plans", path: "/ops/accounting/payment-plans", icon: "ScrollText" },
+          { label: "Deposits", path: "/ops/accounting/deposits", icon: "PiggyBank" },
+          { label: "Transfers", path: "/ops/accounting/transfers", icon: "Repeat2" },
+          { label: "Subsidized Housing", path: "/ops/accounting/subsidized-housing", icon: "Home" },
+          { label: "Assistance Programs", path: "/ops/accounting/assistance-programs", icon: "LifeBuoy" },
+        ],
+      },
+      {
+        label: "AI Analytics",
+        icon: "Brain",
+        children: [
+          { label: "Risk Summary", path: "/ops/ai/risk-summary", icon: "ShieldAlert" },
+          { label: "Renewal Forecasting", path: "/ops/ai/renewal-forecasting", icon: "CalendarClock" },
+          { label: "Vacancy Analytics", path: "/ops/ai/vacancy-analytics", icon: "PieChart" },
+          { label: "ML Leasing Logs", path: "/ops/ai/ml-leasing-logs", icon: "ScrollText" },
+        ],
+      },
+      {
+        label: "Legal Tracker",
+        icon: "Gavel",
+        children: [
+          { label: "Case Manager", path: "/ops/legal/case-manager", icon: "FolderKanban" },
+          { label: "Advanced Legal Ops", path: "/ops/legal/advanced", icon: "PanelTop" },
+          { label: "Legal Docs", path: "/ops/legal/docs", icon: "FileText" },
+          { label: "Attorney Reports", path: "/ops/legal/attorney-reports", icon: "FileChartColumn" },
+        ],
+      },
+      {
+        label: "Maintenance", // renamed from Work Orders
+        icon: "Wrench",
+        children: [
+          { label: "Work Orders", path: "/ops/work/work-orders", icon: "Wrench" },
+          { label: "Vendors", path: "/ops/work/vendors", icon: "Truck" },
+          { label: "Materials & Inventory", path: "/ops/work/materials-inventory", icon: "Boxes" },
+          { label: "Smart Routing", path: "/ops/work/smart-routing", icon: "Route" },
+          { label: "AI Intelligence", path: "/ops/work/ai-intelligence", icon: "Sparkles" },
+          { label: "Build/Repair Projects", path: "/ops/work/build-repair-projects", icon: "Hammer" },
+          { label: "Capital Projects", path: "/ops/work/capital-projects", icon: "LandPlot" },
+        ],
+      },
+      { label: "Reports", path: "/ops/reports", icon: "BarChartBig" },
+    ],
+  },
+
+  {
+    label: "Growth",
+    items: [
+      { label: "Marketing", path: "/growth/marketing", icon: "Megaphone" },
+      // Inventory intentionally lives under Maintenance per your direction.
+    ],
+  },
+
+  {
+    label: "System",
+    items: [
+      { label: "Automation", path: "/system/automation", icon: "Workflow" },
+      { label: "Settings", path: "/system/settings", icon: "Settings" },
+    ],
+  },
+
+  {
+    label: "Data Management",
+    items: [
+      {
+        label: "Data Management",
+        icon: "Database",
+        children: [
+          { label: "Sync Audit", path: "/data/sync-audit", icon: "ClipboardList" },
+          { label: "Sync Management", path: "/data/sync-management", icon: "ServerCog" },
+          { label: "Raw Data", path: "/data/raw", icon: "Database" },
+          { label: "Sync Logs", path: "/data/sync-logs", icon: "BookCopy" },
+          { label: "System Settings", path: "/data/system-settings", icon: "SlidersVertical" },
+        ],
+      },
+    ],
+  },
+
+  {
+    label: "Investor Portal",
+    items: [
+      {
+        label: "Investor Portal",
+        icon: "BriefcaseBusiness",
+        children: [
+          { label: "Dashboard", path: "/investor/dashboard", icon: "LayoutDashboard" },
+          { label: "Portfolio Analytics", path: "/investor/portfolio-analytics", icon: "AreaChart" },
+          { label: "Financial Reports", path: "/investor/financial-reports", icon: "FileChartLine" },
+        ],
+      },
+    ],
+  },
+
+  {
+    label: "Integrations",
+    items: [
+      {
+        label: "Integrations",
+        icon: "PlugZap",
+        children: [
+          { label: "Dropbox Files", path: "/integrations/dropbox", icon: "Folder" },
+          { label: "CoreLogic / MLS Grid", path: "/integrations/corelogic", icon: "Grid3X3" },
+          { label: "Field App Link", path: "/integrations/field-app", icon: "Smartphone" },
+          { label: "Deal Room Link", path: "/integrations/deal-room", icon: "Handshake" },
+        ],
+      },
+    ],
+  },
+];
+
+/* ---------- Icon helper ---------- */
 const STORAGE_KEY = "ecc.sidebar.collapsed";
-
-/** Resolve a lucide icon safely by name */
 function useIcon(name?: string) {
   return useMemo(() => {
     if (!name) return Icons.Circle;
@@ -15,71 +189,56 @@ function useIcon(name?: string) {
     return lib[name] ?? Icons.Circle;
   }, [name]);
 }
-
-function ItemIcon({ item, kind = "child" as "parent" | "child" }) {
+function ItemIcon({ item }: { item: NavItem }) {
   const Ico = useIcon(item.icon);
-  return (
-    <Ico
-      className={`ecc-link__icon ${kind === "parent" ? "is-parent" : "is-child"}`}
-      size={18}
-      strokeWidth={1.75}
-    />
-  );
+  return <Ico className="ecc-link__icon" size={18} strokeWidth={1.75} />;
 }
 
-function Badge({ value }: { value?: number }) {
-  if (!value || value <= 0) return null;
-  return <span className="ecc-badge">{value}</span>;
-}
-
+/* ---------- Sidebar ---------- */
 export default function Sidebar() {
   const [location] = useLocation();
-  const counts = useBadgeCounts();
-
   const [collapsed, setCollapsed] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(STORAGE_KEY) === "1";
-    } catch {
-      return false;
-    }
+    try { return localStorage.getItem(STORAGE_KEY) === "1"; } catch { return false; }
   });
 
-  // apply body class immediately and whenever it changes
   useEffect(() => {
     try {
-      document.body.classList.toggle("ecc--sidebar-collapsed", collapsed);
       localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
+      document.body.classList.toggle("ecc--sidebar-collapsed", collapsed);
     } catch {}
   }, [collapsed]);
 
   return (
-    <aside className={`ecc-sidebar ${collapsed ? "is-collapsed" : ""}`}>
+    <aside className="ecc-sidebar">
       <div className="ecc-sidebar__inner">
-        <Brand collapsed={collapsed} />
-        <nav className="ecc-nav">
-          {NAV_SECTIONS.map((section) => (
-            <Section
-              key={section.label}
-              section={section}
-              collapsed={collapsed}
-              activePath={location}
-              counts={counts}
-            />
-          ))}
-        </nav>
+        <div className="ecc-sidebar__scroll">
+          <Brand collapsed={collapsed} />
+          <nav className="ecc-nav">
+            {NAV_SECTIONS.map((section) => (
+              <Section
+                key={section.label}
+                section={section}
+                collapsed={collapsed}
+                activePath={location}
+              />
+            ))}
+          </nav>
+        </div>
       </div>
 
       <button
         className="ecc-collapse-ctl"
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         onClick={() => setCollapsed((v) => !v)}
+        title={collapsed ? "Expand" : "Collapse"}
       >
-        {collapsed ? <Icons.ChevronsRight size={18} /> : <Icons.ChevronsLeft size={18} />}
+        {collapsed ? <Icons.ChevronsRight size={16} /> : <Icons.ChevronsLeft size={16} />}
       </button>
     </aside>
   );
 }
 
+/* ---------- Pieces ---------- */
 function Brand({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="ecc-brand">
@@ -97,12 +256,10 @@ function Section({
   section,
   collapsed,
   activePath,
-  counts,
 }: {
   section: NavSection;
   collapsed: boolean;
   activePath: string;
-  counts: Record<string, number | undefined>;
 }) {
   return (
     <div className="ecc-section">
@@ -111,9 +268,9 @@ function Section({
         {section.items.map((it) => (
           <li key={it.label} className="ecc-list__item">
             {it.children && it.children.length ? (
-              <ParentLink item={it} collapsed={collapsed} activePath={activePath} counts={counts} />
+              <ParentLink item={it} collapsed={collapsed} activePath={activePath} />
             ) : (
-              <LeafLink item={it} activePath={activePath} count={counts[it.badgeKey ?? ""]} />
+              <LeafLink item={it} activePath={activePath} />
             )}
           </li>
         ))}
@@ -122,35 +279,25 @@ function Section({
   );
 }
 
-function LeafLink({
-  item,
-  activePath,
-  count,
-}: {
-  item: NavItem;
-  activePath: string;
-  count?: number;
-}) {
-  const active = !!(item.path && activePath.startsWith(item.path));
-  return (
-    <Link href={item.path || "#"} className={`ecc-link ${active ? "is-active" : ""}`}>
+function LeafLink({ item, activePath }: { item: NavItem; activePath: string }) {
+  const active = item.path && activePath.startsWith(item.path);
+  const node = (
+    <span className={`ecc-link ${active ? "is-active" : ""}`}>
       <ItemIcon item={item} />
       <span className="ecc-link__label">{item.label}</span>
-      <Badge value={count} />
-    </Link>
+    </span>
   );
+  return item.path ? <Link href={item.path}>{node}</Link> : <a className="ecc-link">{node}</a>;
 }
 
 function ParentLink({
   item,
   collapsed,
   activePath,
-  counts,
 }: {
   item: NavItem;
   collapsed: boolean;
   activePath: string;
-  counts: Record<string, number | undefined>;
 }) {
   const [open, setOpen] = useState<boolean>(false);
 
@@ -161,30 +308,23 @@ function ParentLink({
     setOpen(anyActive);
   }, [activePath, item.children]);
 
-  const parentCount =
-    (item.children ?? [])
-      .map((c) => (c.badgeKey ? counts[c.badgeKey] ?? 0 : 0))
-      .reduce((a, b) => a + b, 0) || undefined;
-
   if (collapsed) {
     return (
       <div className="ecc-parent group">
-        <button className="ecc-link is-parent" aria-haspopup="true" type="button">
+        <button className="ecc-link is-parent" aria-haspopup="true">
           <ItemIcon item={item} />
           <span className="ecc-link__label">{item.label}</span>
-          <Badge value={parentCount} />
           <Icons.ChevronRight className="ecc-link__chev" size={16} />
         </button>
-        <div className="ecc-flyout" role="menu">
+        <div className="ecc-flyout">
           <div className="ecc-flyout__title">
             <ItemIcon item={item} />
             <span>{item.label}</span>
-            <Badge value={parentCount} />
           </div>
           <ul className="ecc-children">
             {(item.children ?? []).map((c) => (
               <li key={c.label}>
-                <LeafLink item={c} activePath={activePath} count={c.badgeKey ? counts[c.badgeKey] : undefined} />
+                <LeafLink item={c} activePath={activePath} />
               </li>
             ))}
           </ul>
@@ -199,17 +339,15 @@ function ParentLink({
         className="ecc-link is-parent"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        type="button"
       >
         <ItemIcon item={item} />
         <span className="ecc-link__label">{item.label}</span>
-        <Badge value={parentCount} />
         <Icons.ChevronDown className="ecc-link__chev" size={16} />
       </button>
-      <ul className={`ecc-children ${open ? "is-open" : ""}`}>
+      <ul className="ecc-children">
         {(item.children ?? []).map((c) => (
           <li key={c.label}>
-            <LeafLink item={c} activePath={activePath} count={c.badgeKey ? counts[c.badgeKey] : undefined} />
+            <LeafLink item={c} activePath={activePath} />
           </li>
         ))}
       </ul>
