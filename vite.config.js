@@ -35,5 +35,12 @@ export default defineConfig({
       ignored: ["**/node_modules/**", "**/.git/**", "**/.local/share/pnpm/**"],
     },
   },
-  optimizeDeps: { disabled: true },
+  optimizeDeps: { 
+    disabled: false,
+    include: ['use-sync-external-store/shim'],
+    force: true
+  },
+  define: {
+    global: 'globalThis',
+  },
 });
