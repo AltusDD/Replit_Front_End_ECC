@@ -1,5 +1,5 @@
-import Table from "@/components/ui/Table";
-import { useCollection } from "@lib/useApi";
+import Table from "../../../components/ui/Table";
+import { useCollection } from "../../../lib/useApi";
 
 const cols = [
   { label:"id", key:"id", width:110, render:(r:any)=> (r.id ? String(r.id).slice(0,8) : "—"), sortKey:(r:any)=> r.id },

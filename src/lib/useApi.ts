@@ -1,61 +1,109 @@
-import { useEffect, useMemo, useState } from 'react';
+// src/lib/useApi.ts
+import { useEffect, useMemo, useState } from "react";
 
-export const API_BASE = import.meta.env.VITE_API_BASE || '/api';
-const HEADERS: Record<string,string> = { Accept:'application/json' };
-const KEY = import.meta.env.VITE_API_KEY || ''; if (KEY) HEADERS['x-api-key'] = KEY;
+export type ApiResult<T> = {
+  data: T;
+  loading: boolean;
+  error: Error | null;
+};
 
-export function buildUrl(path:string, params?:Record<string,any>) {
-  let u = /^https?:\/\//i.test(path) ? path : (path.startsWith('/') ? path : `${API_BASE.replace(/\/$/,'')}/${path}`);
-  if (params && Object.keys(params).length) {
-    const s = new URLSearchParams();
-    Object.entries(params).forEach(([k,v])=> v!=null && s.set(k, String(v)));
-    const q = s.toString(); if (q) u += (u.includes('?') ? '&' : '?')+q;
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json }
+  | Json[];
+
+function buildQuery(params?: Record<string, any>): string {
+  if (!params) return "";
+  const usp = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v === undefined || v === null) return;
+    usp.set(k, String(v));
+  });
+  const qs = usp.toString();
+  return qs ? `?${qs}` : "";
+}
+
+/**
+ * Fetcher that tries multiple URL patterns until one returns OK.
+ * Returns parsed JSON (any) or throws Error.
+ */
+async function getFirstOk(urls: string[]): Promise<any> {
+  let lastErr: any = null;
+  for (const u of urls) {
+    try {
+      const r = await fetch(u, { headers: { Accept: "application/json" } });
+      if (!r.ok) {
+        lastErr = new Error(`${r.status} ${r.statusText} for ${u}`);
+        continue;
+      }
+      return await r.json();
+    } catch (e) {
+      lastErr = e;
+    }
   }
-  return u;
+  throw lastErr ?? new Error("No endpoint responded OK");
 }
-export async function fetchJSON<T=any>(url:string, init:RequestInit={}) {
-  const res = await fetch(url, {...init, headers:{...HEADERS, ...(init.headers||{})}});
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return res.json() as Promise<T>;
+
+/**
+ * Normalizes variations of server responses:
+ *  - array
+ *  - { items: T[] }
+ *  - { data: T[] }
+ *  - { results: T[] }
+ */
+function normalizeArray<T = any>(j: any): T[] {
+  if (Array.isArray(j)) return j as T[];
+  if (Array.isArray(j?.items)) return j.items as T[];
+  if (Array.isArray(j?.data)) return j.data as T[];
+  if (Array.isArray(j?.results)) return j.results as T[];
+  // allow single object
+  if (j && typeof j === "object") return [j as T];
+  return [];
 }
-export function useCounts(){
-  const [data,set] = useState<any|null>(null);
-  const [loading,setL] = useState(true);
-  const [error,setE] = useState<any>(null);
-  useEffect(()=>{(async()=>{
-    setL(true); setE(null);
-    const tries = [
-      buildUrl('/api/portfolio/counts'),
-      buildUrl('/api/counts'),
-      buildUrl('portfolio/counts'),
-      buildUrl('counts'),
-      buildUrl('/api/rpc/portfolio_counts')
-    ];
-    for (const u of tries) {
-      try { set(await fetchJSON(u)); setL(false); return; } catch {}
-    }
-    setE(new Error('Counts endpoint not found')); setL(false);
-  })()},[]);
-  return {data, loading, error};
-}
-export function useCollection(col:string, params:Record<string,any>={}){
-  const qs = useMemo(()=>{const s=new URLSearchParams();Object.entries(params).forEach(([k,v])=>v!=null&&s.set(k,String(v)));const q=s.toString();return q?`?${q}`:''},[JSON.stringify(params)]);
-  const [data,set]=useState<any[]>([]); const [loading,setL]=useState(true); const [error,setE]=useState<any>(null);
-  useEffect(()=>{let live=true;(async()=>{
-    setL(true); setE(null);
-    const tries = [
-      buildUrl(`/api/portfolio/${col}${qs}`),
-      buildUrl(`/api/${col}${qs}`),
-      buildUrl(`portfolio/${col}${qs}`),
-      buildUrl(`${col}${qs}`)
-    ];
-    for (const u of tries) {
-      try { const j:any = await fetchJSON(u); if(!live) return;
-        const rows = Array.isArray(j?.items)?j.items : Array.isArray(j?.data)?j.data : Array.isArray(j)?j : [];
-        set(rows); setL(false); return;
-      } catch {}
-    }
-    if(live){ set([]); setE(new Error('No collection found')); setL(false); }
-  })(); return()=>{live=false}},[col,qs]);
-  return {data, loading, error};
+
+/**
+ * useCollection — simple collection hook with sensible defaults.
+ * Tries several common REST shapes for the ECC backend.
+ */
+export function useCollection<T = any>(
+  collection: string,
+  params?: Record<string, any>
+): ApiResult<T[]> {
+  const [data, setData] = useState<T[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const qs = useMemo(() => buildQuery(params), [params]);
+
+  useEffect(() => {
+    let off = false;
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const urls = [
+          `/api/${collection}${qs}`,
+          `/api/${collection}/list${qs}`,
+          `/api/v1/${collection}${qs}`,
+          `/${collection}${qs}`,
+        ];
+        const j = await getFirstOk(urls);
+        const rows = normalizeArray<T>(j);
+        if (!off) setData(rows);
+      } catch (e: any) {
+        if (!off) setError(e instanceof Error ? e : new Error(String(e)));
+      } finally {
+        if (!off) setLoading(false);
+      }
+    };
+    load();
+    return () => {
+      off = true;
+    };
+  }, [collection, qs]);
+
+  return { data, loading, error };
 }
