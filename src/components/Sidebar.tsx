@@ -209,7 +209,7 @@ export default function Sidebar() {
   }, [collapsed]);
 
   return (
-    <aside className="ecc-sidebar">
+    <aside className={`ecc-sidebar ${collapsed ? "is-collapsed" : ""}`}>
       <div className="ecc-sidebar__inner">
         <div className="ecc-sidebar__scroll">
           <Brand collapsed={collapsed} />
