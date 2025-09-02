@@ -1,20 +1,54 @@
+/* Altus UI – Theme & Style Contract (authoritative) — tokens only
+   Import this once in your app entry (e.g., src/app/main.tsx or App.tsx) */
+
 :root{
-  --sidebar-width: 264px;
-  --sidebar-width-collapsed: 72px;
-  --radius-lg: 14px;
-  --radius-md: 10px;
-  --gap-xs: 6px; --gap-sm: 10px; --gap-md: 14px;
+  /* Palette (Dark) */
+  --bg:            #0B0F14;  /* app background */
+  --surface:       #0F141A;  /* panels/cards */
+  --surface-2:     #121A22;  /* elevated panels / hero bands */
+  --border:        #232A33;
 
-  --bg:#0a0d11; --panel:#0e1319; --panel-2:#121822;
-  --border:#1c2430; --divider:#1a2029;
+  --text:          #F2F5F7;
+  --text-subtle:   #C9D1D9;  /* labels, captions */
+  --text-muted:    #AEB8C7;  /* helper text only */
 
-  --text:#d7dde7; --text-muted:#9aa6b2; --text-dim:#7d8895;
+  --gold:          #F7C948;  /* Empire Gold */
+  --gold-700:      #E2B33C;  /* hover/pressed */
+  --link:          #8AB4FF;  /* hyperlinks only */
 
-  --brand-500:#d4af37; --brand-600:#b8932d;
-  --focus: rgba(212,175,55,.35);
-  --active: rgba(212,175,55,.12);
-  --hover: rgba(255,255,255,.04);
-  --shadow-1: 0 8px 28px rgba(0,0,0,.35);
+  --success:       #32D296;
+  --warning:       #FFB020;
+  --danger:        #FF6B6B;
+  --info:          #5CC8FF;
+
+  /* Component Anatomy */
+  --radius-sm:     10px;
+  --radius-md:     12px;
+  --radius-lg:     14px;
+  --radius-xl:     18px;
+  --radius-pill:   999px;
+
+  --gap-1:          8px;
+  --gap-2:         12px;
+  --gap-3:         16px;
+  --gap-4:         24px;
+
+  /* Elevation (subtle, crisp) */
+  --shadow-1: 0 1px 0 rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.22);
+  --shadow-2: 0 0 0 1px rgba(255,255,255,.02) inset, 0 12px 28px rgba(0,0,0,.30);
+
+  /* Typography */
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  --fs-12: 12px;  --fs-14: 14px;  --fs-16: 16px;  --fs-18: 18px;  --fs-22: 22px;  --fs-28: 28px;
+  --lh-tight: 1.15;  --lh-normal: 1.35;
+
+  /* Motion */
+  --ease: cubic-bezier(.2,.8,.2,1);
+  --t-fast: 120ms; --t-med: 180ms;
+
+  /* Focus (high contrast) */
+  --focus: 0 0 0 2px #000, 0 0 0 4px var(--gold);
 }
 
-html,body{background:var(--bg);color:var(--text);}
+/* App base */
+html, body { background: var(--bg); color: var(--text); font-family: var(--font); }

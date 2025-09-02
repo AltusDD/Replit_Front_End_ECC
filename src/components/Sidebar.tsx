@@ -1,360 +1,304 @@
-// src/components/Sidebar.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import * as Icons from "lucide-react";
+import { NAV_SECTIONS } from "@/config/navigation";
 
-/* ---------- Types ---------- */
-type NavItem = {
-  label: string;
+// Optional badge hook (non-breaking if your store isn't present)
+let useBadgeCounts: () => Record<string, number>;
+try {
+  // Prefer alias if you have one
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  useBadgeCounts = require("@/state/badges").useBadgeCounts;
+} catch {
+  useBadgeCounts = () => ({});
+}
+
+type IconName = keyof typeof Icons;
+
+type NavChild = {
+  title: string;
+  path: string;
+  icon?: IconName;
+  badgeKey?: string;
+};
+
+type NavParent = {
+  title: string;
+  icon: IconName;
   path?: string;
-  icon?: string;
-  children?: NavItem[];
+  children?: NavChild[];
+  badgeKey?: string;
 };
 
-type NavSection = {
-  label: string;
-  items: NavItem[];
-};
-
-/* ---------- Single Source of Truth (no external import) ---------- */
-const NAV_SECTIONS: NavSection[] = [
-  {
-    label: "Primary",
-    items: [{ label: "Dashboard", path: "/dashboard", icon: "Home" }],
-  },
-
-  {
-    label: "Managed Assets",
-    items: [
-      {
-        label: "Portfolio", // parent only; children are the actual pages
-        icon: "LayoutGrid",
-        children: [
-          { label: "Properties", path: "/portfolio/properties", icon: "Building2" },
-          { label: "Units", path: "/portfolio/units", icon: "House" },
-          { label: "Leases", path: "/portfolio/leases", icon: "ScrollText" },
-          { label: "Tenants", path: "/portfolio/tenants", icon: "Users" },
-          { label: "Owners", path: "/portfolio/owners", icon: "UserSquare2" },
-        ],
-      },
-    ],
-  },
-
-  {
-    label: "Cards (Entity Hubs)",
-    items: [
-      {
-        label: "Cards",
-        icon: "SquareStack",
-        children: [
-          { label: "Property Card", path: "/card/property/:id", icon: "Box" },
-          { label: "Unit Card", path: "/card/unit/:id", icon: "Box" },
-          { label: "Lease Card", path: "/card/lease/:id", icon: "Box" },
-          { label: "Tenant Card", path: "/card/tenant/:id", icon: "Box" },
-          { label: "Owner Card", path: "/card/owner/:id", icon: "Box" },
-        ],
-      },
-    ],
-  },
-
-  {
-    label: "Operations",
-    items: [
-      {
-        label: "Accounting",
-        icon: "Calculator",
-        children: [
-          { label: "Overview", path: "/ops/accounting/overview", icon: "Gauge" },
-          { label: "Rent Collection", path: "/ops/accounting/rent-collection", icon: "Coins" },
-          { label: "Expenses", path: "/ops/accounting/expenses", icon: "Receipt" },
-          { label: "Financial Reports", path: "/ops/accounting/financial-reports", icon: "LineChart" },
-          { label: "Tenant Ledgers", path: "/ops/accounting/tenant-ledgers", icon: "Book" },
-          { label: "Collections Dashboard", path: "/ops/accounting/collections-dashboard", icon: "BarChart" },
-          { label: "Collections Log", path: "/ops/accounting/collections-log", icon: "ListTree" },
-          { label: "Payment Plans", path: "/ops/accounting/payment-plans", icon: "ScrollText" },
-          { label: "Deposits", path: "/ops/accounting/deposits", icon: "PiggyBank" },
-          { label: "Transfers", path: "/ops/accounting/transfers", icon: "Repeat2" },
-          { label: "Subsidized Housing", path: "/ops/accounting/subsidized-housing", icon: "Home" },
-          { label: "Assistance Programs", path: "/ops/accounting/assistance-programs", icon: "LifeBuoy" },
-        ],
-      },
-      {
-        label: "AI Analytics",
-        icon: "Brain",
-        children: [
-          { label: "Risk Summary", path: "/ops/ai/risk-summary", icon: "ShieldAlert" },
-          { label: "Renewal Forecasting", path: "/ops/ai/renewal-forecasting", icon: "CalendarClock" },
-          { label: "Vacancy Analytics", path: "/ops/ai/vacancy-analytics", icon: "PieChart" },
-          { label: "ML Leasing Logs", path: "/ops/ai/ml-leasing-logs", icon: "ScrollText" },
-        ],
-      },
-      {
-        label: "Legal Tracker",
-        icon: "Gavel",
-        children: [
-          { label: "Case Manager", path: "/ops/legal/case-manager", icon: "FolderKanban" },
-          { label: "Advanced Legal Ops", path: "/ops/legal/advanced", icon: "PanelTop" },
-          { label: "Legal Docs", path: "/ops/legal/docs", icon: "FileText" },
-          { label: "Attorney Reports", path: "/ops/legal/attorney-reports", icon: "FileChartColumn" },
-        ],
-      },
-      {
-        label: "Maintenance", // renamed from Work Orders
-        icon: "Wrench",
-        children: [
-          { label: "Work Orders", path: "/ops/work/work-orders", icon: "Wrench" },
-          { label: "Vendors", path: "/ops/work/vendors", icon: "Truck" },
-          { label: "Materials & Inventory", path: "/ops/work/materials-inventory", icon: "Boxes" },
-          { label: "Smart Routing", path: "/ops/work/smart-routing", icon: "Route" },
-          { label: "AI Intelligence", path: "/ops/work/ai-intelligence", icon: "Sparkles" },
-          { label: "Build/Repair Projects", path: "/ops/work/build-repair-projects", icon: "Hammer" },
-          { label: "Capital Projects", path: "/ops/work/capital-projects", icon: "LandPlot" },
-        ],
-      },
-      { label: "Reports", path: "/ops/reports", icon: "BarChartBig" },
-    ],
-  },
-
-  {
-    label: "Growth",
-    items: [
-      { label: "Marketing", path: "/growth/marketing", icon: "Megaphone" },
-      // Inventory intentionally lives under Maintenance per your direction.
-    ],
-  },
-
-  {
-    label: "System",
-    items: [
-      { label: "Automation", path: "/system/automation", icon: "Workflow" },
-      { label: "Settings", path: "/system/settings", icon: "Settings" },
-    ],
-  },
-
-  {
-    label: "Data Management",
-    items: [
-      {
-        label: "Data Management",
-        icon: "Database",
-        children: [
-          { label: "Sync Audit", path: "/data/sync-audit", icon: "ClipboardList" },
-          { label: "Sync Management", path: "/data/sync-management", icon: "ServerCog" },
-          { label: "Raw Data", path: "/data/raw", icon: "Database" },
-          { label: "Sync Logs", path: "/data/sync-logs", icon: "BookCopy" },
-          { label: "System Settings", path: "/data/system-settings", icon: "SlidersVertical" },
-        ],
-      },
-    ],
-  },
-
-  {
-    label: "Investor Portal",
-    items: [
-      {
-        label: "Investor Portal",
-        icon: "BriefcaseBusiness",
-        children: [
-          { label: "Dashboard", path: "/investor/dashboard", icon: "LayoutDashboard" },
-          { label: "Portfolio Analytics", path: "/investor/portfolio-analytics", icon: "AreaChart" },
-          { label: "Financial Reports", path: "/investor/financial-reports", icon: "FileChartLine" },
-        ],
-      },
-    ],
-  },
-
-  {
-    label: "Integrations",
-    items: [
-      {
-        label: "Integrations",
-        icon: "PlugZap",
-        children: [
-          { label: "Dropbox Files", path: "/integrations/dropbox", icon: "Folder" },
-          { label: "CoreLogic / MLS Grid", path: "/integrations/corelogic", icon: "Grid3X3" },
-          { label: "Field App Link", path: "/integrations/field-app", icon: "Smartphone" },
-          { label: "Deal Room Link", path: "/integrations/deal-room", icon: "Handshake" },
-        ],
-      },
-    ],
-  },
-];
-
-/* ---------- Icon helper ---------- */
 const STORAGE_KEY = "ecc.sidebar.collapsed";
-function useIcon(name?: string) {
-  return useMemo(() => {
-    if (!name) return Icons.Circle;
-    const lib: any = Icons;
-    return lib[name] ?? Icons.Circle;
-  }, [name]);
-}
-function ItemIcon({ item }: { item: NavItem }) {
-  const Ico = useIcon(item.icon);
-  return <Ico className="ecc-link__icon" size={18} strokeWidth={1.75} />;
-}
 
-/* ---------- Sidebar ---------- */
-export default function Sidebar() {
-  const [location] = useLocation();
+/** Hook: persisted collapsed state */
+function useCollapsed() {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
-    try { return localStorage.getItem(STORAGE_KEY) === "1"; } catch { return false; }
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : true; // start collapsed by default
+    } catch {
+      return true;
+    }
   });
-
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
-      document.body.classList.toggle("ecc--sidebar-collapsed", collapsed);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(collapsed));
     } catch {}
   }, [collapsed]);
-
-  return (
-    <aside className={`ecc-sidebar ${collapsed ? "is-collapsed" : ""}`}>
-      <div className="ecc-sidebar__inner">
-        <div className="ecc-sidebar__scroll">
-          <Brand collapsed={collapsed} />
-          <nav className="ecc-nav">
-            {NAV_SECTIONS.map((section) => (
-              <Section
-                key={section.label}
-                section={section}
-                collapsed={collapsed}
-                activePath={location}
-              />
-            ))}
-          </nav>
-        </div>
-      </div>
-
-      <button
-        className="ecc-collapse-ctl"
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        onClick={() => setCollapsed((v) => !v)}
-        title={collapsed ? "Expand" : "Collapse"}
-      >
-        {collapsed ? <Icons.ChevronsRight size={16} /> : <Icons.ChevronsLeft size={16} />}
-      </button>
-    </aside>
-  );
+  return { collapsed, setCollapsed };
 }
 
-/* ---------- Pieces ---------- */
-function Brand({ collapsed }: { collapsed: boolean }) {
-  return (
-    <div className="ecc-brand">
-      <img
-        className="ecc-brand__img"
-        src={collapsed ? "/brand/altus-mark.png" : "/brand/altus-logo.png"}
-        alt="Altus"
-        draggable={false}
-      />
-    </div>
-  );
+/** Utility: dynamic lucide icon */
+function useIcon(name?: IconName) {
+  return useMemo(() => {
+    if (!name) return null;
+    const I = Icons[name];
+    return I ?? Icons.Circle;
+  }, [name]);
 }
 
-function Section({
-  section,
-  collapsed,
-  activePath,
-}: {
-  section: NavSection;
-  collapsed: boolean;
-  activePath: string;
-}) {
-  return (
-    <div className="ecc-section">
-      <div className="ecc-section__label">{section.label}</div>
-      <ul className="ecc-list">
-        {section.items.map((it) => (
-          <li key={it.label} className="ecc-list__item">
-            {it.children && it.children.length ? (
-              <ParentLink item={it} collapsed={collapsed} activePath={activePath} />
-            ) : (
-              <LeafLink item={it} activePath={activePath} />
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+/** Flyout portal root (fixed-position sibling inside body) */
+function useFlyoutRoot() {
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const node = document.createElement("div");
+    node.setAttribute("id", "ecc-flyout-root");
+    document.body.appendChild(node);
+    ref.current = node;
+    return () => {
+      node.remove();
+    };
+  }, []);
+  return ref;
 }
 
-function LeafLink({ item, activePath }: { item: NavItem; activePath: string }) {
-  const active = item.path && activePath.startsWith(item.path);
-  return item.path ? (
-    <Link href={item.path} className={`ecc-link ${active ? "is-active" : ""}`}>
-      <ItemIcon item={item} />
-      <span className="ecc-link__label">{item.label}</span>
-    </Link>
-  ) : (
-    <a className="ecc-link">
-      <ItemIcon item={item} />
-      <span className="ecc-link__label">{item.label}</span>
-    </a>
-  );
+/** Bounds utility to keep flyout on-screen */
+function confineToViewport(x: number, y: number, w: number, h: number) {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  let nx = x;
+  let ny = y;
+  if (nx + w > vw) nx = Math.max(0, vw - w - 8);
+  if (ny + h > vh) ny = Math.max(0, vh - h - 8);
+  return { x: nx, y: ny };
 }
 
-function ParentLink({
-  item,
-  collapsed,
-  activePath,
-}: {
-  item: NavItem;
-  collapsed: boolean;
-  activePath: string;
-}) {
-  const [open, setOpen] = useState<boolean>(false);
+export default function Sidebar() {
+  const [location] = useLocation();
+  const { collapsed, setCollapsed } = useCollapsed();
+  const badges = useBadgeCounts();
+  const flyRootRef = useFlyoutRoot();
+
+  // Flyout state
+  const [flyOpen, setFlyOpen] = useState(false);
+  const [flyItems, setFlyItems] = useState<NavChild[]>([]);
+  const [flyStyle, setFlyStyle] = useState<React.CSSProperties>({});
+  const [activeParentTitle, setActiveParentTitle] = useState<string | null>(null);
+
+  // timers to prevent hover-gap flicker
+  const openTimer = useRef<number | null>(null);
+  const closeTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    const anyActive = (item.children ?? []).some(
-      (c) => c.path && activePath.startsWith(c.path)
-    );
-    setOpen(anyActive);
-  }, [activePath, item.children]);
+    return () => {
+      if (openTimer.current) window.clearTimeout(openTimer.current);
+      if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    };
+  }, []);
 
-  if (collapsed) {
-    return (
-      <div className="ecc-parent group">
-        <button className="ecc-link is-parent" aria-haspopup="true">
-          <ItemIcon item={item} />
-          <span className="ecc-link__label">{item.label}</span>
-          <Icons.ChevronRight className="ecc-link__chev" size={16} />
-        </button>
-        <div className="ecc-flyout">
-          <div className="ecc-flyout__title">
-            <ItemIcon item={item} />
-            <span>{item.label}</span>
-          </div>
-          <ul className="ecc-children">
-            {(item.children ?? []).map((c) => (
-              <li key={c.label}>
-                <LeafLink item={c} activePath={activePath} />
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    );
-  }
+  const handleParentEnter = (
+    e: React.MouseEvent,
+    parent: NavParent,
+    rowEl: HTMLDivElement
+  ) => {
+    if (!collapsed) return; // flyout only used in collapsed mode
+    if (closeTimer.current) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+    openTimer.current = window.setTimeout(() => {
+      const rect = rowEl.getBoundingClientRect();
+      const width = 288; // flyout width
+      const estHeight = Math.min(56 * (parent.children?.length || 1) + 16, window.innerHeight - 16);
+      const { x, y } = confineToViewport(rect.right + 6, rect.top, width, estHeight);
+
+      setFlyItems(parent.children || []);
+      setActiveParentTitle(parent.title);
+      setFlyStyle({
+        position: "fixed",
+        left: `${x}px`,
+        top: `${y}px`,
+        width: `${width}px`,
+      });
+      setFlyOpen(true);
+    }, 80); // small delay to avoid jitter
+  };
+
+  const handleParentLeave = () => {
+    if (!collapsed) return;
+    if (openTimer.current) {
+      window.clearTimeout(openTimer.current);
+      openTimer.current = null;
+    }
+    // Soft-close with small delay so crossing the "gap" doesn't flicker
+    closeTimer.current = window.setTimeout(() => {
+      setFlyOpen(false);
+      setActiveParentTitle(null);
+      setFlyItems([]);
+    }, 120);
+  };
+
+  const handleFlyoutEnter = () => {
+    if (!collapsed) return;
+    if (closeTimer.current) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+
+  const handleFlyoutLeave = () => {
+    if (!collapsed) return;
+    closeTimer.current = window.setTimeout(() => {
+      setFlyOpen(false);
+      setActiveParentTitle(null);
+      setFlyItems([]);
+    }, 120);
+  };
+
+  const isActive = (path?: string) => {
+    if (!path) return false;
+    // Ensure leading slash logic is safe
+    try {
+      return location === path || location.startsWith(path + "/");
+    } catch {
+      return false;
+    }
+  };
 
   return (
-    <div className={`ecc-parent ${open ? "is-open" : ""}`}>
-      <button
-        className="ecc-link is-parent"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <ItemIcon item={item} />
-        <span className="ecc-link__label">{item.label}</span>
-        <Icons.ChevronDown className="ecc-link__chev" size={16} />
-      </button>
-      <ul className="ecc-children">
-        {(item.children ?? []).map((c) => (
-          <li key={c.label}>
-            <LeafLink item={c} activePath={activePath} />
-          </li>
-        ))}
-      </ul>
-    </div>
+    <aside
+      className={`ecc-sidebar ${collapsed ? "is-collapsed" : "is-expanded"}`}
+      data-ecc="primary"
+      aria-label="Primary"
+      role="navigation"
+    >
+      <div className="ecc-rail">
+        {/* Header / Brand */}
+        <div className="ecc-header" aria-hidden={collapsed ? "true" : "false"}>
+          <div className="ecc-logo" />
+          {!collapsed && <div className="ecc-title" title="Empire Command Center">Empire Command Center</div>}
+          <button
+            className="ecc-pin"
+            aria-pressed={collapsed ? "true" : "false"}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            {collapsed ? <Icons.ChevronRight size={18} /> : <Icons.ChevronLeft size={18} />}
+          </button>
+        </div>
+
+        {/* Scrollable nav list (only the list scrolls; flyout is fixed, sibling in body) */}
+        <div className="ecc-scroll" role="list">
+          {NAV_SECTIONS.map((section: NavParent, idx: number) => {
+            const Icon = useIcon(section.icon) || Icons.Folder;
+            const parentBadge = section.badgeKey ? badges[section.badgeKey] : undefined;
+            const rowRef = React.createRef<HTMLDivElement>();
+            const hasChildren = (section.children?.length || 0) > 0;
+
+            const parentActive =
+              isActive(section.path) ||
+              (hasChildren && section.children!.some((c) => isActive(c.path)));
+
+            const row = (
+              <div
+                key={`${section.title}-${idx}`}
+                className={`ecc-row ${parentActive ? "is-active" : ""}`}
+                ref={rowRef}
+                onMouseEnter={(e) => rowRef.current && handleParentEnter(e, section, rowRef.current)}
+                onMouseLeave={handleParentLeave}
+              >
+                <div className="ecc-row-inner" role="listitem">
+                  <div className="ecc-icon-wrap" aria-hidden="true">
+                    <Icon className="ecc-icon" size={20} />
+                  </div>
+
+                  {!collapsed && (
+                    <>
+                      {section.path ? (
+                        <Link href={section.path} className="ecc-label" aria-current={parentActive ? "page" : undefined}>
+                          {section.title}
+                        </Link>
+                      ) : (
+                        <span className="ecc-label" aria-expanded={parentActive ? "true" : "false"}>
+                          {section.title}
+                        </span>
+                      )}
+                      <div className="ecc-spacer" />
+                      {typeof parentBadge === "number" && (
+                        <span className="ecc-badge" aria-label={`${parentBadge} items`}>{parentBadge}</span>
+                      )}
+                      {hasChildren && <Icons.ChevronRight className="ecc-caret" size={16} aria-hidden="true" />}
+                    </>
+                  )}
+                </div>
+
+                {/* Inline children shown only when expanded */}
+                {!collapsed && hasChildren && (
+                  <div className="ecc-children" role="group" aria-label={`${section.title} submenu`}>
+                    {section.children!.map((child, i) => {
+                      const CIcon = useIcon(child.icon) || Icons.Dot;
+                      const childActive = isActive(child.path);
+                      const count = child.badgeKey ? badges[child.badgeKey] : undefined;
+                      return (
+                        <Link
+                          href={child.path}
+                          key={`${child.title}-${i}`}
+                          className={`ecc-child ${childActive ? "is-active" : ""}`}
+                          aria-current={childActive ? "page" : undefined}
+                        >
+                          <CIcon className="ecc-child-icon" size={16} />
+                          <span className="ecc-child-label" title={child.title}>{child.title}</span>
+                          <div className="ecc-spacer" />
+                          {typeof count === "number" && <span className="ecc-badge small">{count}</span>}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+
+            return row;
+          })}
+        </div>
+      </div>
+
+      {/* Fixed-position flyout, anchored by getBoundingClientRect (only in collapsed mode) */}
+      {collapsed && flyRootRef.current && flyOpen && flyItems.length > 0 && (
+        <div
+          className="ecc-flyout"
+          style={flyStyle}
+          role="menu"
+          aria-label={`${activeParentTitle ?? ""} submenu`}
+          onMouseEnter={handleFlyoutEnter}
+          onMouseLeave={handleFlyoutLeave}
+        >
+          {flyItems.map((child, i) => {
+            const CIcon = useIcon(child.icon) || Icons.Dot;
+            const count = child.badgeKey ? badges[child.badgeKey] : undefined;
+            return (
+              <Link href={child.path} key={`${child.title}-${i}`} className="ecc-flyout-item" role="menuitem">
+                <CIcon className="ecc-flyout-icon" size={16} />
+                <span className="ecc-flyout-label" title={child.title}>{child.title}</span>
+                <div className="ecc-spacer" />
+                {typeof count === "number" && <span className="ecc-badge small">{count}</span>}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </aside>
   );
 }
