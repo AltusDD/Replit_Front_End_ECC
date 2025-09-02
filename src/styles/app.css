@@ -25,6 +25,25 @@
   overflow: auto;
   padding: 18px 16px 72px;
 }
+/* --- ECC: collapsed flyout fixes (avoid clipping) --- */
+.ecc-sidebar.is-collapsed { overflow: visible; }
+.ecc-sidebar.is-collapsed .ecc-sidebar__inner { overflow: visible; }
+.ecc-flyout { z-index: 1000; } /* ensure on top of content */
+
+/* --- ECC: collapsed item hover + icon contrast --- */
+.ecc-sidebar.is-collapsed .ecc-link {
+  background: transparent;
+  border-color: transparent;
+}
+.ecc-sidebar.is-collapsed .ecc-link:hover {
+  background: rgba(214,179,106,.08);
+  border-color: rgba(214,179,106,.22);
+}
+
+/* Slightly brighter icon color in the rail so it reads as Altus gold-y */
+.ecc-sidebar.is-collapsed .ecc-link .ecc-link__icon { color: var(--ink-2); }
+.ecc-sidebar.is-collapsed .ecc-link:hover .ecc-link__icon { color: var(--accent); }
+
 
 /* --- Brand / Logo --- */
 .ecc-brand {

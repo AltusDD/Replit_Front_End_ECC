@@ -1,3 +1,48 @@
+A) Flyout + colors + collapse polish (CSS addendum)
+
+Edit src/styles/app.css and add these blocks (they’re safe to paste anywhere near the other sidebar rules):
+
+/* --- ECC: collapsed flyout fixes (avoid clipping) --- */
+.ecc-sidebar.is-collapsed { overflow: visible; }
+.ecc-sidebar.is-collapsed .ecc-sidebar__inner { overflow: visible; }
+.ecc-flyout { z-index: 1000; } /* ensure on top of content */
+
+/* --- ECC: collapsed item hover + icon contrast --- */
+.ecc-sidebar.is-collapsed .ecc-link {
+  background: transparent;
+  border-color: transparent;
+}
+.ecc-sidebar.is-collapsed .ecc-link:hover {
+  background: rgba(214,179,106,.08);
+  border-color: rgba(214,179,106,.22);
+}
+
+/* Slightly brighter icon color in the rail so it reads as Altus gold-y */
+.ecc-sidebar.is-collapsed .ecc-link .ecc-link__icon { color: var(--ink-2); }
+.ecc-sidebar.is-collapsed .ecc-link:hover .ecc-link__icon { color: var(--accent); }
+
+
+Why: the flyout was being clipped by overflow:auto on the sidebar scroller. Making it overflow:visible in collapsed mode lets the flyout render outside the rail, and boosting z-index prevents it hiding under the main pane. The hover/contrast tweaks make the collapsed rail feel more intentional.
+
+B) Collapse state (ensure main margin updates immediately)
+
+Your Sidebar already toggles the body class; just make sure we set the class on mount too (for first paint). Here’s a tiny, safe upgrade. Replace the useEffect that touches the body class in src/components/Sidebar.tsx with this version:
+
+  useEffect(() => {
+    try {
+      // apply immediately on mount and whenever it changes
+      document.body.classList.toggle("ecc--sidebar-collapsed", collapsed);
+      localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
+    } catch {}
+  }, [collapsed]);
+
+
+(If your file already looks like this, you’re good.)
+
+C) Treat API 404 as “no rows” (remove scary red error)
+
+Full replacement for src/lib/useApi.ts that keeps your existing behavior but turns a 404 into an empty result instead of an error banner:
+
 // src/lib/useApi.ts
 import { useEffect, useMemo, useState } from "react";
 
@@ -95,3 +140,13 @@ export function useCollection<T = any>(
 
   return { data, loading, error };
 }
+
+
+Now your Portfolio pages render with “Loaded 0 …” instead of a big 404 error bar until the backend endpoints are online.
+
+Quick verify
+npm run dev
+# then in the app:
+# 1) Click the collapse button (bottom-left). Hover a parent item (e.g., Portfolio) → flyout should appear.
+# 2) Colors in the collapsed rail should show better contrast & hover gold.
+# 3) Visit /portfolio/properties → no red 404; shows empty table + caption.
