@@ -21,13 +21,7 @@ export default function PropertiesPage() {
       { label: "type", key: "type", width: 120, render: (r: any) => pick(r, ["type", "asset_type"], "—") },
       { label: "class", key: "class", width: 100, render: (r: any) => pick(r, ["class", "asset_class"], "—") },
       { label: "active", key: "active", width: 90, render: (r: any) => (pick(r, ["active", "is_active"], false) ? "Yes" : "No") },
-      {
-        label: "address_street1",
-        key: "address_street1",
-        width: 280,
-        render: (r: any) =>
-          pick(r, ["address_street1", "address1", "address"], "—"),
-      },
+      { label: "address_street1", key: "address_street1", width: 280, render: (r: any) => pick(r, ["address_street1", "address1", "address"], "—") },
       { label: "city", key: "city", width: 140, render: (r: any) => pick(r, ["city"], "—") },
       { label: "state", key: "state", width: 80, render: (r: any) => pick(r, ["state", "region"], "—") },
       { label: "units", key: "units", width: 90, render: (r: any) => pick(r, ["units", "unit_count"], "—") },
