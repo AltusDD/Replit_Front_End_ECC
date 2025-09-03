@@ -1,112 +1,77 @@
 import React, { useMemo, useState } from "react";
-import { DataTable, Col } from "../../../components/DataTable";
-import KPIBar from "../../../components/KPIBar";
-import { UNIT_COLUMNS } from "../columns";
+import { DataTable } from "../../../components/DataTable";
 import { useCollection } from "../../../features/data/useCollection";
 import { indexBy } from "../../../utils/dict";
-import { money } from "../../../utils/format";
-
-type Row = {
-  id:any; doorloop_id?:any; property:string; unit_number:string;
-  beds:number|''; baths:number|''; sq_ft:number|''; status:string; market_rent:number|undefined;
-};
+import { UNIT_COLUMNS, mapUnit } from "../columns";
 
 export default function UnitsPage() {
   const units = useCollection<any>("units");
   const props = useCollection<any>("properties");
+  const leases = useCollection<any>("leases");
 
-  const [statusF, setStatusF] = useState<"ALL"|"Occupied"|"Vacant"|"Other">("ALL");
-  const [minBeds, setMinBeds] = useState<number|''>('');
-  const [minBaths, setMinBaths] = useState<number|''>('');
+  const [minBd, setMinBd] = useState<number>(0);
+  const [minBa, setMinBa] = useState<number>(0);
 
-  const rawRows = useMemo<Row[]>(() => {
+  const { rows, kpis, error, loading } = useMemo(() => {
     const pById = indexBy(props.data, "id");
-    return (units.data || []).map((u: any) => {
-      const rent = typeof u.rent_cents === "number" ? u.rent_cents/100 : (u.market_rent ?? u.rent ?? u.rent_amount);
-      const status = u.status ?? (u.id && u.property_id ? "" : "");
-      return {
-        id: u.id ?? u.doorloop_id,
-        doorloop_id: u.doorloop_id,
-        property: u.property ?? u.property_name ?? pById.get(u.property_id)?.name ?? "",
-        unit_number: u.unit_number ?? u.number ?? u.name ?? "",
-        beds: u.beds ?? u.bedrooms ?? '',
-        baths: u.baths ?? u.bathrooms ?? '',
-        sq_ft: u.sq_ft ?? u.sqft ?? '',
-        status: status,
-        market_rent: typeof rent === "number" ? rent : undefined,
-      };
+    const activeLeaseUnits = new Set(
+      (leases.data || [])
+        .filter((l) => String(l.status).toLowerCase() === "active")
+        .map((l) => String(l.unit_id))
+    );
+
+    const enriched = (units.data || []).map((u) => {
+      const propName = pById.get(u.property_id)?.name || "—";
+      const occupied = activeLeaseUnits.has(String(u.id));
+      return mapUnit(u, propName, occupied);
     });
-  }, [units.data, props.data]);
 
-  const filtered = useMemo(() => {
-    return rawRows.filter(r => {
-      if (statusF !== "ALL") {
-        const s = (r.status || "").toLowerCase();
-        const bucket = s === "occupied" ? "Occupied" : s === "vacant" ? "Vacant" : "Other";
-        if (bucket !== statusF) return false;
-      }
-      if (minBeds !== '' && (Number(r.beds) < Number(minBeds))) return false;
-      if (minBaths !== '' && (Number(r.baths) < Number(minBaths))) return false;
-      return true;
-    });
-  }, [rawRows, statusF, minBeds, minBaths]);
+    const filtered = enriched.filter((r) => (r.beds || 0) >= minBd && (r.baths || 0) >= minBa);
 
-  const totals = useMemo(() => {
-    const total = filtered.length;
-    const occ = filtered.filter(r => String(r.status).toLowerCase()==="occupied").length;
-    const vac = filtered.filter(r => String(r.status).toLowerCase()==="vacant").length;
-    const avgRent = (() => {
-      const rents = filtered.map(r => r.market_rent).filter((x):x is number => typeof x === "number");
-      if (!rents.length) return undefined;
-      return rents.reduce((a,b)=>a+b,0)/rents.length;
-    })();
-    return { total, occ, vac, avgRent };
-  }, [filtered]);
+    const kpis = {
+      units: enriched.length,
+      occupied: enriched.filter((r) => String(r.status).toLowerCase() === "occupied").length,
+      vacant: enriched.filter((r) => String(r.status).toLowerCase() !== "occupied").length,
+      avgMarket: (() => {
+        const nums = enriched.map((r) => Number(r.rent || 0)).filter((n) => n > 0);
+        if (!nums.length) return 0;
+        return nums.reduce((a, b) => a + b, 0) / nums.length;
+      })(),
+    };
 
-  const cols: Col<Row>[] = [
-    { key: "property", header: "Property" },
-    { key: "unit_number", header: "Unit" },
-    { key: "beds", header: "Bd", align: "right" },
-    { key: "baths", header: "Ba", align: "right" },
-    { key: "sq_ft", header: "SqFt", align: "right" },
-    { key: "status", header: "Status", render: (r) => <span className={`badge ${String(r.status).toLowerCase()==="occupied"?"ok":String(r.status).toLowerCase()==="vacant"?"warn":""}`}>{r.status || "—"}</span> },
-    { key: "market_rent", header: "Market Rent", align: "right", render: (r)=> <span className="mono">{money(r.market_rent)}</span> },
-  ];
-
-  const filtersRight = (
-    <>
-      <select className="flt-select" value={statusF} onChange={(e)=>setStatusF(e.target.value as any)}>
-        <option>ALL</option><option>Occupied</option><option>Vacant</option><option>Other</option>
-      </select>
-      <input className="flt-input" type="number" min="0" placeholder="Min Bd" value={minBeds as any}
-        onChange={(e)=>setMinBeds(e.target.value===""? '' : Number(e.target.value))} style={{ width:90 }} />
-      <input className="flt-input" type="number" min="0" placeholder="Min Ba" value={minBaths as any}
-        onChange={(e)=>setMinBaths(e.target.value===""? '' : Number(e.target.value))} style={{ width:90 }} />
-    </>
-  );
+    return {
+      rows: filtered,
+      kpis,
+      loading: units.loading || props.loading || leases.loading,
+      error: units.error || props.error || leases.error,
+    };
+  }, [units, props, leases, minBd, minBa]);
 
   return (
-    <>
-      <KPIBar items={[
-        { label: "Units", value: totals.total },
-        { label: "Occupied", value: totals.occ, tone: "ok" },
-        { label: "Vacant", value: totals.vac, tone: totals.vac ? "warn" : "ok" },
-        { label: "Avg Market Rent", value: money(totals.avgRent ?? "—") },
-      ]}/>
+    <div className="ecc-page">
+      <div className="ecc-kpis">
+        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.units}</div><div className="ecc-kpi-l">UNITS</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.occupied}</div><div className="ecc-kpi-l">OCCUPIED</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.vacant}</div><div className="ecc-kpi-l">VACANT</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-n">${kpis.avgMarket.toFixed(2)}</div><div className="ecc-kpi-l">AVG MARKET RENT</div></div>
+      </div>
+
       <DataTable
-        title="Units"
-        columns={cols}
-        rows={filtered}
-        loading={units.loading}
-        error={units.error ?? undefined}
-        searchKeys={UNIT_COLUMNS.map(c => c.key as keyof Row & string)}
-        defaultPageSize={50}
-        pageSizeOptions={[25,50,100,200]}
-        toolbarRight={filtersRight}
-        csvFileName="units.csv"
-        rowKey={(r)=>r.id}
-        emptyText="No units"
+        rows={rows}
+        columns={UNIT_COLUMNS}
+        loading={loading}
+        error={error}
+        toolbar={
+          <>
+            <select className="ecc-select" value={minBd} onChange={(e) => setMinBd(Number(e.target.value))}>
+              <option value={0}>Min Bd</option><option value={1}>1</option><option value={2}>2</option><option value={3}>3</option><option value={4}>4</option>
+            </select>
+            <select className="ecc-select" value={minBa} onChange={(e) => setMinBa(Number(e.target.value))}>
+              <option value={0}>Min Ba</option><option value={1}>1</option><option value={1.5}>1.5</option><option value={2}>2</option><option value={3}>3</option>
+            </select>
+          </>
+        }
       />
-    </>
+    </div>
   );
 }

@@ -1,32 +1,26 @@
-type Keyer<T> = keyof T | ((r: T) => string | number);
+// src/utils/dict.ts
+export type Index<T> = Record<string | number, T>;
+export type Group<T> = Record<string | number, T[]>;
 
-function toKey<T>(key: Keyer<T>) {
-  return typeof key === "function"
-    ? key
-    : (r: T) => (r as any)[key] as string | number;
-}
-
-export function indexBy<T>(rows: T[], key: Keyer<T>): Map<string | number, T> {
-  const k = toKey(key);
-  const out = new Map<string | number, T>();
+// Accepts either a string key or a callback
+export function indexBy<T>(rows: T[], key: keyof T | ((r: T) => string | number)): Index<T> {
+  const fn = typeof key === "function" ? key : (r: any) => r?.[key] as any;
+  const out: Index<T> = {};
   for (const r of rows || []) {
-    const kk = k(r);
-    if (kk != null) out.set(kk, r);
+    const k = fn(r);
+    if (k != null) out[k] = r;
   }
   return out;
 }
 
-export function groupBy<T>(rows: T[], key: Keyer<T>): Map<string | number, T[]> {
-  const k = toKey(key);
-  const out = new Map<string | number, T[]>();
+export function groupBy<T>(rows: T[], key: keyof T | ((r: T) => string | number)): Group<T> {
+  const fn = typeof key === "function" ? key : (r: any) => r?.[key] as any;
+  const out: Group<T> = {};
   for (const r of rows || []) {
-    const kk = k(r);
-    if (kk == null) continue;
-    if (!out.has(kk)) out.set(kk, []);
-    out.get(kk)!.push(r);
+    const k = fn(r);
+    if (k == null) continue;
+    if (!out[k]) out[k] = [];
+    out[k].push(r);
   }
   return out;
 }
-
-/* Keep old imports working: some pages import money from "@/utils/dict" */
-export { money, percent, shortDate, boolText } from "./format";

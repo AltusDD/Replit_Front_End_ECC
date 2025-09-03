@@ -1,224 +1,61 @@
-/* src/styles/table.css
-   Genesis-grade table + KPI styles
-   Uses Altus theme tokens only (no raw hex). */
+/* src/styles/table.css */
+.ecc-table-wrap { display: grid; gap: 12px; }
 
-/* ────────────────────────────────────────────────────────────
-   Card + toolbar
-   ──────────────────────────────────────────────────────────── */
-.table-card {
-  background: var(--ink-1);
-  border: 1px solid var(--ink-3);
-  border-radius: 14px;
-  overflow: hidden;
+.ecc-table-toolbar,
+.ecc-table-footer {
+  display: flex; align-items: center; justify-content: space-between;
 }
 
-.table-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--ink-3);
-  background: var(--ink-2);
-  flex-wrap: wrap;
+.ecc-table-toolbar-left { display: flex; gap: 8px; align-items: center; }
+.ecc-table-toolbar-right { display: flex; gap: 8px; align-items: center; }
+
+.ecc-input, .ecc-select, .ecc-btn {
+  background: var(--surface-1, #111);
+  color: var(--ink-1, #e6e6e6);
+  border: 1px solid var(--line-1, #2a2a2a);
+  border-radius: 8px; padding: 6px 10px; font: inherit;
 }
+.ecc-btn { cursor: pointer; }
 
-.table-title {
-  color: var(--text-1);
-  font-weight: 700;
-  letter-spacing: .2px;
-}
+.ecc-error { color: var(--ink-danger, #ff6b6b); }
+.ecc-loading, .ecc-empty, .ecc-muted { color: var(--ink-3, #9aa0a6); }
 
-.table-title .muted {
-  color: var(--text-2);
-  font-weight: 400;
-  margin-left: 6px;
-}
+.ecc-table-scroller { overflow: auto; max-height: calc(100vh - 260px); border-radius: 10px; border: 1px solid var(--line-1, #2a2a2a); }
 
-.table-tools {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-left: auto;
-  flex-wrap: wrap;
-}
-
-.table-search,
-.table-select,
-.btn,
-.flt-input,
-.flt-select,
-.flt-check {
-  background: var(--ink-1);
-  color: var(--text-1);
-  border: 1px solid var(--ink-3);
-  border-radius: 10px;
-  padding: 8px 10px;
-}
-
-.table-search::placeholder,
-.flt-input::placeholder {
-  color: var(--text-2);
-}
-
-.table-select { min-width: 110px; }
-.btn { cursor: pointer; }
-
-.table-error {
-  color: var(--accent-bad);
-  padding: 10px 14px;
-}
-
-/* ────────────────────────────────────────────────────────────
-   Table base
-   ──────────────────────────────────────────────────────────── */
-.table-wrap { max-width: 100%; overflow: auto; }
-
-.ecc-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  color: var(--text-1);
-  font-size: 14px;
-}
-
-/* Head */
+.ecc-table { width: 100%; border-collapse: separate; border-spacing: 0; }
 .ecc-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--ink-2);
-  color: var(--text-2);
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  font-weight: 600;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--ink-3);
+  position: sticky; top: 0; z-index: 2;
+  background: var(--surface-0, #0b0b0b);
+  color: var(--ink-1, #e6e6e6);
+  text-align: left; font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--line-1, #2a2a2a);
   white-space: nowrap;
-  user-select: none;
-  cursor: pointer;
+}
+.ecc-table thead th .ecc-sort { margin-left: 6px; opacity: 0.8; }
+
+.ecc-table tbody tr:nth-child(odd) td { /* Genesis banding: black row */
+  background: var(--surface-0, #0b0b0b);
+}
+.ecc-table tbody tr:nth-child(even) td { /* Genesis banding: deep grey row */
+  background: var(--surface-2, #141414);
 }
 
-.ecc-table thead th.sorted.asc::after  { content: " ▲"; color: var(--brand-gold); }
-.ecc-table thead th.sorted.desc::after { content: " ▼"; color: var(--brand-gold); }
-
-/* Body cells */
-.ecc-table tbody td {
-  padding: 12px;
-  border-bottom: 1px solid var(--ink-3);
+.ecc-table td {
+  padding: 10px 12px; border-bottom: 1px solid var(--line-1, #2a2a2a);
+  color: var(--ink-2, #cfd3d7);
 }
+.ecc-table tbody tr:hover td { background: var(--surface-hover, #1b1b1b); }
 
-/* Banded rows: black / grey (tokens only) */
-.ecc-table tbody tr:nth-child(odd)  { background: var(--ink-1); }
-.ecc-table tbody tr:nth-child(even) { background: var(--ink-2); }
-
-/* Hover with subtle gold tint */
-.ecc-table tbody tr:hover {
-  background: color-mix(in oklab, var(--ink-2) 88%, var(--brand-gold));
-}
-
-.ecc-table td.empty {
-  text-align: center;
-  color: var(--text-2);
-  padding: 32px 12px;
-}
-
-/* Pager */
-.table-pager {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  color: var(--text-2);
-}
-
-.table-pager button {
-  background: var(--ink-2);
-  color: var(--text-1);
-  border: 1px solid var(--ink-3);
-  border-radius: 10px;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-/* ────────────────────────────────────────────────────────────
-   Badges / utilities
-   ──────────────────────────────────────────────────────────── */
-.badge,
 .ecc-badge {
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--ink-3);
-  background: var(--ink-2);
-  color: var(--text-2);
-  white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px;
+  border-radius: 999px; font-size: 12px; line-height: 1.4;
+  background: var(--chip-1, #202020); color: var(--ink-1, #e6e6e6);
 }
+.ecc-badge--ok   { background: var(--chip-ok-bg, #1f3322); color: var(--chip-ok-ink, #9ef0b8); }
+.ecc-badge--warn { background: var(--chip-warn-bg, #332f1f); color: var(--chip-warn-ink, #ffeaa7); }
+.ecc-badge--bad  { background: var(--chip-bad-bg, #331f1f); color: var(--chip-bad-ink, #ffadad); }
 
-.badge.ok,
-.ecc-badge--ok {
-  background: color-mix(in oklab, var(--accent-okay) 70%, var(--ink-1));
-  color: var(--text-1);
-}
-
-.badge.warn,
-.ecc-badge--warn {
-  background: var(--accent-warn);
-  color: var(--ink-1);
-}
-
-.badge.bad,
-.ecc-badge--bad {
-  background: color-mix(in oklab, var(--accent-bad) 70%, var(--ink-1));
-  color: var(--text-1);
-}
-
-.mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-.right { text-align: right; }
-
-/* Focus rings (token-based) */
-.table-search:focus,
-.table-select:focus,
-.flt-input:focus,
-.flt-select:focus,
-.table-pager button:focus,
-.btn:focus {
-  outline: 2px solid var(--brand-gold);
-  outline-offset: 1px;
-}
-
-/* ────────────────────────────────────────────────────────────
-   KPI Bar
-   ──────────────────────────────────────────────────────────── */
-.kpi-bar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-  margin: 8px 0 12px;
-}
-
-.kpi {
-  background: var(--ink-2);
-  border: 1px solid var(--ink-3);
-  border-radius: 12px;
-  padding: 10px 12px;
-}
-
-.kpi-value {
-  color: var(--text-1);
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.kpi-label {
-  color: var(--text-2);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-
-.kpi-sub { color: var(--text-2); font-weight: 400; }
-
-.kpi.ok   .kpi-value { color: color-mix(in oklab, var(--accent-okay) 80%, var(--text-1)); }
-.kpi.warn .kpi-value { color: var(--accent-warn); }
-.kpi.bad  .kpi-value { color: color-mix(in oklab, var(--accent-bad) 80%, var(--text-1)); }
+/* KPI strip */
+.ecc-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 10px; }
+.ecc-kpi { background: var(--surface-1, #111); border: 1px solid var(--line-1, #2a2a2a); border-radius: 12px; padding: 12px; }
+.ecc-kpi-n { font-weight: 700; font-size: 20px; color: var(--ink-1, #e6e6e6); }
+.ecc-kpi-l { font-size: 12px; color: var(--ink-3, #9aa0a6); }

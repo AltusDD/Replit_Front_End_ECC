@@ -1,96 +1,77 @@
 import React, { useMemo, useState } from "react";
-import { DataTable, Col } from "../../../components/DataTable";
-import KPIBar from "../../../components/KPIBar";
-import { LEASE_COLUMNS } from "../columns";
+import { DataTable } from "../../../components/DataTable";
 import { useCollection } from "../../../features/data/useCollection";
 import { indexBy } from "../../../utils/dict";
-import { money, shortDate } from "../../../utils/format";
-
-type Row = { id:any; doorloop_id?:any; tenant_names:string; property:string; rent:number|undefined; start:any; end:any; status:string };
+import { LEASE_COLUMNS, mapLease } from "../columns";
 
 export default function LeasesPage() {
   const leases = useCollection<any>("leases");
   const tenants = useCollection<any>("tenants");
   const props = useCollection<any>("properties");
 
-  const [statusF, setStatusF] = useState<"ALL"|"active"|"ended">("ALL");
+  const [status, setStatus] = useState<string>("ALL");
 
-  const rawRows = useMemo<Row[]>(() => {
-    const tById = indexBy(tenants.data, "id");
+  const { rows, kpis, error, loading } = useMemo(() => {
     const pById = indexBy(props.data, "id");
-    return (leases.data || []).map((l: any) => {
-      const names =
-        l.tenant_names ||
-        tById.get(l.primary_tenant_id)?.display_name ||
-        tById.get(l.tenant_id)?.display_name ||
-        tById.get(l.primary_tenant_id)?.full_name ||
-        tById.get(l.tenant_id)?.full_name || "";
-      const rent = typeof l.rent_cents === "number" ? l.rent_cents/100 : (l.rent ?? l.total_recurring_rent);
-      return {
-        id: l.id ?? l.doorloop_id,
-        doorloop_id: l.doorloop_id,
-        tenant_names: names,
-        property: l.property ?? pById.get(l.property_id)?.name ?? "",
-        rent: typeof rent === "number" ? rent : undefined,
-        start: l.start ?? l.start_date,
-        end: l.end ?? l.end_date,
-        status: (l.status ?? "").toLowerCase(),
-      };
+    const tById = indexBy(tenants.data, "id");
+
+    const tenantsName = (l: any) => {
+      const t =
+        tById.get(l.primary_tenant_id) ||
+        tById.get(l.tenant_id);
+      return t?.display_name || t?.full_name || [t?.first_name, t?.last_name].filter(Boolean).join(" ");
+    };
+
+    const enriched = (leases.data || []).map((l) => {
+      const propName = pById.get(l.property_id)?.name || "—";
+      return mapLease(l, propName, tenantsName(l));
     });
-  }, [leases.data, tenants.data, props.data]);
 
-  const filtered = useMemo(() => {
-    return rawRows.filter(r => statusF==="ALL" ? true : r.status === statusF);
-  }, [rawRows, statusF]);
+    const filtered = enriched.filter((r) => status === "ALL" || String(r.status).toLowerCase() === status.toLowerCase());
 
-  const totals = useMemo(() => {
-    const active = filtered.filter(r=>r.status==="active");
-    const ended = filtered.filter(r=>r.status==="ended");
-    const mrr = active.reduce((a,r)=> a + (r.rent || 0), 0);
-    const avgRent = active.length ? mrr / active.length : 0;
-    return { count: filtered.length, active: active.length, ended: ended.length, mrr, avgRent };
-  }, [filtered]);
+    const kpis = {
+      leases: enriched.length,
+      active: enriched.filter((r) => String(r.status).toLowerCase() === "active").length,
+      ended: enriched.filter((r) => String(r.status).toLowerCase() === "ended").length,
+      mrr: enriched.reduce((s, r) => s + (Number(r.rent || 0)), 0),
+      avg: (() => {
+        const nums = enriched.map((r) => Number(r.rent || 0)).filter((n) => n > 0);
+        if (!nums.length) return 0;
+        return nums.reduce((a, b) => a + b, 0) / nums.length;
+      })(),
+    };
 
-  const cols: Col<Row>[] = [
-    { key: "tenant_names", header: "Tenant(s)" },
-    { key: "property", header: "Property" },
-    { key: "rent", header: "Rent", align: "right", render: (r)=> <span className="mono">{money(r.rent)}</span> },
-    { key: "start", header: "Start", render: (r)=> shortDate(r.start) },
-    { key: "end", header: "End", render: (r)=> shortDate(r.end) },
-    { key: "status", header: "Status", render: (r)=> <span className={`badge ${r.status==="active"?"ok":r.status==="ended"?"bad":"warn"}`}>{r.status || "—"}</span> },
-  ];
-
-  const filtersRight = (
-    <select className="flt-select" value={statusF} onChange={(e)=>setStatusF(e.target.value as any)}>
-      <option value="ALL">All</option>
-      <option value="active">active</option>
-      <option value="ended">ended</option>
-    </select>
-  );
+    return {
+      rows: filtered,
+      kpis,
+      loading: leases.loading || tenants.loading || props.loading,
+      error: leases.error || tenants.error || props.error,
+    };
+  }, [leases, tenants, props, status]);
 
   return (
-    <>
-      <KPIBar items={[
-        { label: "Leases", value: totals.count },
-        { label: "Active", value: totals.active, tone: "ok" },
-        { label: "Ended", value: totals.ended, tone: totals.ended ? "warn" : "ok" },
-        { label: "MRR", value: money(totals.mrr) },
-        { label: "Avg Rent", value: money(totals.avgRent) },
-      ]}/>
+    <div className="ecc-page">
+      <div className="ecc-kpis">
+        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.leases}</div><div className="ecc-kpi-l">LEASES</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.active}</div><div className="ecc-kpi-l">ACTIVE</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.ended}</div><div className="ecc-kpi-l">ENDED</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-n">${kpis.mrr.toLocaleString()}</div><div className="ecc-kpi-l">MRR</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-n">${kpis.avg.toFixed(2)}</div><div className="ecc-kpi-l">AVG RENT</div></div>
+      </div>
+
       <DataTable
-        title="Leases"
-        columns={cols}
-        rows={filtered}
-        loading={leases.loading}
-        error={leases.error ?? undefined}
-        searchKeys={LEASE_COLUMNS.map(c => c.key as keyof Row & string)}
-        defaultPageSize={50}
-        pageSizeOptions={[25,50,100,200]}
-        toolbarRight={filtersRight}
-        csvFileName="leases.csv"
-        rowKey={(r)=>r.id}
-        emptyText="No leases"
+        rows={rows}
+        columns={LEASE_COLUMNS}
+        loading={loading}
+        error={error}
+        toolbar={
+          <select className="ecc-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="ALL">All</option>
+            <option value="active">Active</option>
+            <option value="ended">Ended</option>
+          </select>
+        }
       />
-    </>
+    </div>
   );
 }

@@ -1,158 +1,188 @@
+// src/components/DataTable.tsx
 import React, { useMemo, useState } from "react";
-import "../styles/table.css";
-import { toCSV, downloadCSV } from "../utils/csv";
 
-type Align = "left" | "right" | "center";
-export type Col<T> = {
-  key: keyof T & string;
+export type Column<T> = {
+  key: keyof T | string;
   header: string;
-  align?: Align;
-  width?: number | string;
+  className?: string;
   render?: (row: T) => React.ReactNode;
+  sort?: (a: T, b: T) => number;
 };
 
-export type Column<T> = Col<T>; // Compatibility alias
-
-export function DataTable<T extends Record<string, any>>({
-  title,
-  columns,
-  rows,
-  loading,
-  error,
-  emptyText = "No data",
-  searchKeys,
-  defaultPageSize = 50,
-  pageSizeOptions = [25,50,100,200],
-  rowKey,
-  toolbarRight,
-  enableExport = true,
-  csvFileName = "export.csv",
-  maxRows = 5000,
-}: {
-  title?: string;
-  columns: Col<T>[];
+type Props<T> = {
   rows: T[];
+  columns: Column<T>[];
   loading?: boolean;
   error?: string | null;
-  emptyText?: string;
-  searchKeys?: (keyof T & string)[];
-  defaultPageSize?: number;
   pageSizeOptions?: number[];
-  rowKey?: (row: T, index: number) => React.Key;
-  toolbarRight?: React.ReactNode;
-  enableExport?: boolean;
-  csvFileName?: string;
-  maxRows?: number;
-}) {
-  const [query, setQuery] = useState("");
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(defaultPageSize);
+  defaultPageSize?: number;
+  searchPlaceholder?: string;
+  toolbar?: React.ReactNode; // page-specific filters
+};
 
-  const keys = searchKeys || (columns.map(c => c.key) as (keyof T & string)[]);
-  const capped = useMemo(() => rows.slice(0, maxRows), [rows, maxRows]);
+function toCSV<T>(rows: T[], columns: Column<T>[]) {
+  const headers = columns.map((c) => `"${String(c.header).replace(/"/g, '""')}"`).join(",");
+  const body = rows
+    .map((r) =>
+      columns
+        .map((c) => {
+          const v =
+            c.render ? (c.render(r) as any) :
+            (r as any)[c.key as any];
+          const s = (typeof v === "string" ? v : v == null ? "" : String(v)).replace(/"/g, '""');
+          return `"${s}"`;
+        })
+        .join(",")
+    )
+    .join("\n");
+  return headers + "\n" + body;
+}
+
+export function DataTable<T>(props: Props<T>) {
+  const {
+    rows,
+    columns,
+    loading,
+    error,
+    toolbar,
+    pageSizeOptions = [25, 50, 100],
+    defaultPageSize = 50,
+    searchPlaceholder = "Search…",
+  } = props;
+
+  const [q, setQ] = useState("");
+  const [sortIdx, setSortIdx] = useState<number | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [pageSize, setPageSize] = useState(defaultPageSize);
+  const [page, setPage] = useState(0);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return capped;
-    const q = query.toLowerCase();
-    return capped.filter(r => keys.some(k => (r?.[k] ?? "").toString().toLowerCase().includes(q)));
-  }, [capped, query, keys]);
+    if (!q) return rows;
+    const needle = q.toLowerCase();
+    return rows.filter((r: any) =>
+      Object.values(r || {}).some((v) => String(v ?? "").toLowerCase().includes(needle))
+    );
+  }, [rows, q]);
 
   const sorted = useMemo(() => {
-    if (!sortKey) return filtered;
-    const copy = filtered.slice();
-    copy.sort((a, b) => {
-      const av = a?.[sortKey as keyof T]; const bv = b?.[sortKey as keyof T];
-      const an = typeof av === "number" ? av : Number(av);
-      const bn = typeof bv === "number" ? bv : Number(bv);
-      if (isFinite(an) && isFinite(bn)) return sortDir === "asc" ? an - bn : bn - an;
-      const as = (av ?? "").toString().toLowerCase();
-      const bs = (bv ?? "").toString().toLowerCase();
-      return sortDir === "asc" ? (as > bs ? 1 : as < bs ? -1 : 0) : (as < bs ? 1 : as > bs ? -1 : 0);
-    });
-    return copy;
-  }, [filtered, sortKey, sortDir]);
+    if (sortIdx == null) return filtered;
+    const col = columns[sortIdx];
+    const fn =
+      col.sort ||
+      ((a: any, b: any) => {
+        const av = a[col.key as any];
+        const bv = b[col.key as any];
+        return String(av ?? "").localeCompare(String(bv ?? ""), undefined, { numeric: true });
+      });
+    const copy = filtered.slice().sort(fn);
+    return sortDir === "asc" ? copy : copy.reverse();
+  }, [filtered, sortIdx, sortDir, columns]);
 
-  const pages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const current = sorted.slice(page * pageSize, page * pageSize + pageSize);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const pageRows = useMemo(() => {
+    const from = page * pageSize;
+    return sorted.slice(from, from + pageSize);
+  }, [sorted, page, pageSize]);
 
-  function onSort(k: string) {
-    setPage(0);
-    if (sortKey !== k) { setSortKey(k); setSortDir("asc"); }
-    else { setSortDir(sortDir === "asc" ? "desc" : "asc"); }
+  function onHeaderClick(i: number) {
+    if (sortIdx === i) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortIdx(i);
+      setSortDir("asc");
+    }
   }
-  function doExport() { downloadCSV(csvFileName, toCSV(sorted, columns.map(c => ({ key: c.key, header: c.header })))); }
+
+  function exportCSV() {
+    const csv = toCSV(sorted, columns);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "export.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
-    <div className="table-card">
-      <div className="table-toolbar">
-        <div className="table-title">
-          {title ?? "Table"}
-          <span className="muted"> {loading ? "Loading…" : `(${sorted.length})`}</span>
-        </div>
-        <div className="table-tools">
-          {toolbarRight}
-          <input className="table-search" placeholder="Search…" value={query}
-            onChange={(e)=>{ setQuery(e.target.value); setPage(0); }} />
-          <select className="table-select" value={pageSize} onChange={(e)=>{ setPageSize(Number(e.target.value)); setPage(0); }}>
-            {pageSizeOptions.map(n => <option key={n} value={n}>{n}/page</option>)}
+    <div className="ecc-table-wrap">
+      <div className="ecc-table-toolbar">
+        <div className="ecc-table-toolbar-left">{toolbar}</div>
+        <div className="ecc-table-toolbar-right">
+          <input
+            className="ecc-input"
+            placeholder={searchPlaceholder}
+            value={q}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setPage(0);
+            }}
+          />
+          <select
+            className="ecc-select"
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setPage(0);
+            }}
+          >
+            {pageSizeOptions.map((n) => (
+              <option key={n} value={n}>{n}/page</option>
+            ))}
           </select>
-          {enableExport && <button className="btn" onClick={doExport}>Export CSV</button>}
+          <button className="ecc-btn" onClick={exportCSV}>Export CSV</button>
         </div>
       </div>
 
-      {error && <div className="table-error">Error: {error}</div>}
+      {error && <div className="ecc-error">Error: {error}</div>}
+      {loading && <div className="ecc-loading">Loading…</div>}
 
-      <div className="table-wrap">
+      <div className="ecc-table-scroller">
         <table className="ecc-table">
           <thead>
             <tr>
-              {columns.map((c) => (
-                <th key={c.key} style={{ width: c.width, textAlign: c.align ?? "left" }}
-                    onClick={() => onSort(c.key)} className={sortKey === c.key ? `sorted ${sortDir}` : undefined} role="button">
-                  {c.header}
+              {columns.map((c, i) => (
+                <th
+                  key={String(c.key)}
+                  className={c.className}
+                  onClick={() => onHeaderClick(i)}
+                >
+                  <span>{c.header}</span>
+                  {sortIdx === i && <span className="ecc-sort">{sortDir === "asc" ? "▲" : "▼"}</span>}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {loading && current.length === 0 && (
-              <tr><td colSpan={columns.length} className="empty">Loading…</td></tr>
+            {!loading && pageRows.length === 0 && (
+              <tr><td colSpan={columns.length} className="ecc-empty">No rows</td></tr>
             )}
-            {!loading && current.length === 0 && (
-              <tr><td colSpan={columns.length} className="empty">{emptyText}</td></tr>
-            )}
-            {current.map((r, i) => (
-              <tr key={rowKey ? rowKey(r, i) : i}>
-                {columns.map((c) => (
-                  <td key={c.key} style={{ textAlign: c.align ?? "left" }}>
-                    {c.render ? c.render(r) : display(r[c.key])}
-                  </td>
-                ))}
+            {pageRows.map((r, i) => (
+              <tr key={(r as any).id ?? i}>
+                {columns.map((c) => {
+                  const raw = (r as any)[c.key as any];
+                  return (
+                    <td key={String(c.key)} className={c.className}>
+                      {c.render ? c.render(r) : (raw == null ? "—" : String(raw))}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {pages > 1 && (
-        <div className="table-pager">
-          <button disabled={page === 0} onClick={() => setPage(0)}>&laquo;</button>
-          <button disabled={page === 0} onClick={() => setPage(p => Math.max(0, p-1))}>&lsaquo;</button>
-          <span>Page {page+1} / {pages}</span>
-          <button disabled={page >= pages-1} onClick={() => setPage(p => Math.min(pages-1, p+1))}>&rsaquo;</button>
-          <button disabled={page >= pages-1} onClick={() => setPage(pages-1)}>&raquo;</button>
+      <div className="ecc-table-footer">
+        <div className="ecc-muted">Rows: {sorted.length}</div>
+        <div className="ecc-pager">
+          <button className="ecc-btn" disabled={page === 0} onClick={() => setPage(0)}>⏮</button>
+          <button className="ecc-btn" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>◀</button>
+          <span className="ecc-muted">Page {page + 1} / {totalPages}</span>
+          <button className="ecc-btn" disabled={page >= totalPages - 1} onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}>▶</button>
+          <button className="ecc-btn" disabled={page >= totalPages - 1} onClick={() => setPage(totalPages - 1)}>⏭</button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
-
-function display(v: any) {
-  if (v == null || v === "") return "—";
-  if (Array.isArray(v)) return v.join(", ");
-  return String(v);
-}
-
-export default DataTable;

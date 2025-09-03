@@ -1,117 +1,80 @@
 import React, { useMemo, useState } from "react";
-import { DataTable, Col } from "../../../components/DataTable";
-import KPIBar from "../../../components/KPIBar";
-import { TENANT_COLUMNS } from "../columns";
+import { DataTable } from "../../../components/DataTable";
 import { useCollection } from "../../../features/data/useCollection";
 import { indexBy } from "../../../utils/dict";
-import { money } from "../../../utils/format";
-
-type Row = { id:any; doorloop_id?:any; name:string; property:string; unit:string; email:string; phone:string; status:string; balance:any };
+import { TENANT_COLUMNS, mapTenant } from "../columns";
 
 export default function TenantsPage() {
   const tenants = useCollection<any>("tenants");
   const leases = useCollection<any>("leases");
-  const units  = useCollection<any>("units");
-  const props  = useCollection<any>("properties");
+  const units = useCollection<any>("units");
+  const props = useCollection<any>("properties");
 
-  const [statusF, setStatusF] = useState<"ALL"|"LEASE_TENANT"|"PROSPECT_TENANT">("ALL");
-  const [contactableOnly, setContactableOnly] = useState(false);
+  const [contactableOnly, setContactableOnly] = useState<boolean>(false);
 
-  const rows = useMemo<Row[]>(() => {
+  const { rows, kpis, error, loading } = useMemo(() => {
     const uById = indexBy(units.data, "id");
     const pById = indexBy(props.data, "id");
-    const latest = new Map<any, any>();
+
+    // For each tenant, pick latest related lease for property/unit context
+    const latestByTenant: Record<string, any> = {};
     for (const l of leases.data || []) {
-      const tids = [l.primary_tenant_id, l.tenant_id].filter(Boolean);
+      const tids = [l.primary_tenant_id, l.tenant_id].filter(Boolean).map(String);
       for (const tid of tids) {
-        const cur = latest.get(tid);
-        const score = Date.parse(l.updated_at || l.start_date || "") || 0;
-        const curScore = cur ? (Date.parse(cur.updated_at || cur.start_date || "") || 0) : -1;
-        if (!cur || score >= curScore) latest.set(tid, l);
+        const current = latestByTenant[tid];
+        const stamp = new Date(l.updated_at || l.start_date || 0).getTime();
+        const curStamp = current ? new Date(current.updated_at || current.start_date || 0).getTime() : -1;
+        if (!current || stamp > curStamp) latestByTenant[tid] = l;
       }
     }
-    return (tenants.data || []).map((t: any) => {
-      const l = latest.get(t.id);
-      const u = l ? uById.get(l.unit_id) : undefined;
-      const p = u ? pById.get(u.property_id) : (l ? pById.get(l.property_id) : undefined);
-      const name =
-        t.name || t.display_name || t.full_name || [t.first_name, t.last_name].filter(Boolean).join(" ");
-      return {
-        id: t.id ?? t.doorloop_id,
-        doorloop_id: t.doorloop_id,
-        name,
-        property: p?.name ?? "",
-        unit: u?.unit_number ?? u?.number ?? u?.name ?? "",
-        email: t.primary_email ?? t.email ?? "",
-        phone: t.primary_phone ?? t.phone ?? "",
-        status: (l?.status ?? t.status ?? t.type ?? "").toString(),
-        balance: t.balance,
-      };
+
+    const enriched = (tenants.data || []).map((t) => {
+      const l = latestByTenant[String(t.id)];
+      const unitLabel = l ? (uById.get(l.unit_id)?.unit_number || "—") : "—";
+      const propName = l ? (pById.get(l.property_id)?.name || "—") : "—";
+      return mapTenant(t, propName, unitLabel);
     });
-  }, [tenants.data, leases.data, units.data, props.data]);
 
-  const filtered = useMemo(() => {
-    return rows.filter(r => {
-      if (statusF !== "ALL" && r.status !== statusF) return false;
-      if (contactableOnly && !(r.email || r.phone)) return false;
-      return true;
-    });
-  }, [rows, statusF, contactableOnly]);
+    const filtered = contactableOnly
+      ? enriched.filter((r) => (r.email && r.email !== "—") || (r.phone && r.phone !== "—"))
+      : enriched;
 
-  const totals = useMemo(() => {
-    const count = filtered.length;
-    const contactable = filtered.filter(r => r.email || r.phone).length;
-    const leaseTenants = filtered.filter(r => r.status === "LEASE_TENANT").length;
-    const prospects = filtered.filter(r => r.status === "PROSPECT_TENANT").length;
-    return { count, contactable, leaseTenants, prospects };
-  }, [filtered]);
+    const kpis = {
+      tenants: enriched.length,
+      contactable: enriched.filter((r) => (r.email && r.email !== "—") || (r.phone && r.phone !== "—")).length,
+      leaseTenants: enriched.filter((r) => String(r.status).toLowerCase().includes("lease")).length,
+      prospects: enriched.filter((r) => String(r.status).toLowerCase().includes("prospect")).length,
+    };
 
-  const cols: Col<Row>[] = [
-    { key: "name", header: "Name" },
-    { key: "property", header: "Property" },
-    { key: "unit", header: "Unit" },
-    { key: "email", header: "Email" },
-    { key: "phone", header: "Phone" },
-    { key: "status", header: "Status", render: (r)=> <span className={`badge ${r.status==="LEASE_TENANT"?"ok":""}`}>{r.status || "—"}</span> },
-    { key: "balance", header: "Balance", align: "right", render: (r)=> <span className="mono">{money(r.balance)}</span> },
-  ];
-
-  const filtersRight = (
-    <>
-      <select className="flt-select" value={statusF} onChange={(e)=>setStatusF(e.target.value as any)}>
-        <option value="ALL">All</option>
-        <option value="LEASE_TENANT">LEASE_TENANT</option>
-        <option value="PROSPECT_TENANT">PROSPECT_TENANT</option>
-      </select>
-      <label className="flt-check" style={{ display:"inline-flex", alignItems:"center", gap:6 }}>
-        <input type="checkbox" checked={contactableOnly} onChange={(e)=>setContactableOnly(e.target.checked)} />
-        Contactable only
-      </label>
-    </>
-  );
+    return {
+      rows: filtered,
+      kpis,
+      loading: tenants.loading || leases.loading || units.loading || props.loading,
+      error: tenants.error || leases.error || units.error || props.error,
+    };
+  }, [tenants, leases, units, props, contactableOnly]);
 
   return (
-    <>
-      <KPIBar items={[
-        { label: "Tenants", value: totals.count },
-        { label: "Contactable", value: totals.contactable },
-        { label: "Lease Tenants", value: totals.leaseTenants, tone: "ok" },
-        { label: "Prospects", value: totals.prospects, tone: "warn" },
-      ]}/>
+    <div className="ecc-page">
+      <div className="ecc-kpis">
+        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.tenants}</div><div className="ecc-kpi-l">TENANTS</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.contactable}</div><div className="ecc-kpi-l">CONTACTABLE</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.leaseTenants}</div><div className="ecc-kpi-l">LEASE TENANTS</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.prospects}</div><div className="ecc-kpi-l">PROSPECTS</div></div>
+      </div>
+
       <DataTable
-        title="Tenants"
-        columns={cols}
-        rows={filtered}
-        loading={tenants.loading}
-        error={tenants.error ?? undefined}
-        searchKeys={TENANT_COLUMNS.map(c => c.key as keyof Row & string)}
-        defaultPageSize={50}
-        pageSizeOptions={[25,50,100,200]}
-        toolbarRight={filtersRight}
-        csvFileName="tenants.csv"
-        rowKey={(r)=>r.id}
-        emptyText="No tenants"
+        rows={rows}
+        columns={TENANT_COLUMNS}
+        loading={loading}
+        error={error}
+        toolbar={
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <input type="checkbox" checked={contactableOnly} onChange={(e) => (e.target.checked ? setContactableOnly(true) : setContactableOnly(false))}/>
+            Contactable only
+          </label>
+        }
       />
-    </>
+    </div>
   );
 }

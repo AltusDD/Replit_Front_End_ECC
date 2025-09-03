@@ -1,199 +1,191 @@
+// src/pages/portfolio/columns.tsx
 import React from "react";
-import { money, percent, shortDate } from "../../utils/format";
+import { money, percent, shortDate, boolText, badge } from "../../utils/format";
+import type { Column } from "../../components/DataTable";
 
-/** Column descriptors kept simple: key + header. */
-export const PROPERTY_COLUMNS = [
-  { key: "name",       header: "PROPERTY" },
-  { key: "type",       header: "TYPE" },
-  { key: "class",      header: "CLASS" },
-  { key: "state",      header: "STATE" },
-  { key: "city",       header: "CITY" },
-  { key: "unit_count", header: "UNITS" },
-  { key: "occupancy",  header: "OCC%" },
-  { key: "active",     header: "ACTIVE" },
+// ── Entity types (shape is tolerant to your live schema) ─────────────
+export type Property = {
+  id: string | number;
+  name?: string;
+  type?: string;
+  class?: string;
+  address_city?: string;
+  address_state?: string;
+  unit_count?: number;
+  occupancy_rate?: number; // optional from DB
+  active?: boolean;
+};
+
+export type Unit = {
+  id: string | number;
+  property_id?: string | number;
+  unit_number?: string;
+  beds?: number;
+  baths?: number;
+  sq_ft?: number;
+  status?: string;
+  rent_amount?: number;
+};
+
+export type Lease = {
+  id: string | number;
+  property_id?: string | number;
+  unit_id?: string | number;
+  rent_cents?: number;
+  start_date?: string;
+  end_date?: string;
+  status?: string;
+  tenant_names?: string; // optional if server computed
+  doorloop_id?: string | number;
+  primary_tenant_id?: string | number;
+  tenant_id?: string | number;
+};
+
+export type Tenant = {
+  id: string | number;
+  display_name?: string;
+  full_name?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  type?: string; // active / PROSPECT_TENANT etc
+};
+
+export type Owner = {
+  id: string | number;
+  display_name?: string;
+  company_name?: string;
+  full_name?: string;
+  first_name?: string;
+  last_name?: string;
+  active?: boolean;
+};
+
+// ── Columns (display only) ───────────────────────────────────────────
+export const PROPERTY_COLUMNS: Column<any>[] = [
+  { key: "name", header: "PROPERTY" },
+  { key: "type", header: "TYPE" },
+  { key: "class", header: "CLASS" },
+  { key: "state", header: "STATE" },
+  { key: "city", header: "CITY" },
+  { key: "unit_count", header: "UNITS", sort: (a, b) => (a.unit_count || 0) - (b.unit_count || 0) },
+  {
+    key: "occupancy",
+    header: "OCC%",
+    render: (r) => percent(r.occupancy),
+    sort: (a, b) => (a.occupancy || 0) - (b.occupancy || 0),
+  },
+  {
+    key: "active",
+    header: "ACTIVE",
+    render: (r) => badge(r.active ? "ok" : "bad", boolText(r.active)),
+  },
 ];
 
-export const UNIT_COLUMNS = [
-  { key: "property",    header: "PROPERTY" },
-  { key: "unit_number", header: "UNIT" },
-  { key: "beds",        header: "BD" },
-  { key: "baths",       header: "BA" },
-  { key: "sq_ft",       header: "SQFT" },
-  { key: "status",      header: "STATUS" },
-  { key: "market_rent", header: "MARKET RENT" },
-];
-
-export const LEASE_COLUMNS = [
-  { key: "tenant_names", header: "TENANT(S)" },
-  { key: "property",     header: "PROPERTY" },
-  { key: "rent",         header: "RENT" },
-  { key: "start",        header: "START" },
-  { key: "end",          header: "END" },
-  { key: "status",       header: "STATUS" },
-];
-
-export const TENANT_COLUMNS = [
-  { key: "name",     header: "NAME" },
+export const UNIT_COLUMNS: Column<any>[] = [
   { key: "property", header: "PROPERTY" },
-  { key: "unit",     header: "UNIT" },
-  { key: "email",    header: "EMAIL" },
-  { key: "phone",    header: "PHONE" },
-  { key: "status",   header: "STATUS" },
-  { key: "balance",  header: "BALANCE" },
+  { key: "unit_label", header: "UNIT" },
+  { key: "beds", header: "BD", sort: (a, b) => (a.beds || 0) - (b.beds || 0) },
+  { key: "baths", header: "BA", sort: (a, b) => (a.baths || 0) - (b.baths || 0) },
+  { key: "sq_ft", header: "SQFT", sort: (a, b) => (a.sq_ft || 0) - (b.sq_ft || 0) },
+  { key: "status", header: "STATUS" },
+  { key: "rent", header: "MARKET RENT", render: (r) => money(r.rent), sort: (a, b) => (a.rent || 0) - (b.rent || 0) },
 ];
 
-export const OWNER_COLUMNS = [
-  { key: "name",           header: "OWNER" },
-  { key: "email",          header: "EMAIL" },
-  { key: "phone",          header: "PHONE" },
-  { key: "property_count", header: "PROPS" },
-  { key: "active",         header: "ACTIVE" },
+export const LEASE_COLUMNS: Column<any>[] = [
+  { key: "tenant_names", header: "TENANT(S)" },
+  { key: "property", header: "PROPERTY" },
+  { key: "rent", header: "RENT", render: (r) => money(r.rent), sort: (a, b) => (a.rent || 0) - (b.rent || 0) },
+  { key: "start", header: "START", render: (r) => shortDate(r.start), sort: (a, b) => String(a.start).localeCompare(String(b.start)) },
+  { key: "end", header: "END", render: (r) => shortDate(r.end), sort: (a, b) => String(a.end).localeCompare(String(b.end)) },
+  { key: "status", header: "STATUS" },
 ];
 
-/* ────────────────────────────────────────────────────────────
-   Mappers: normalize raw API rows to the keys used above
-   ──────────────────────────────────────────────────────────── */
-export function mapProperty(r: any) {
-  const unitCount = Number(r.unit_count ?? r.units ?? r.total_units ?? 0) || 0;
-  let occ = r.occupancy ?? r.occupancy_rate ?? r.occ_percent;
+export const TENANT_COLUMNS: Column<any>[] = [
+  { key: "name", header: "NAME" },
+  { key: "property", header: "PROPERTY" },
+  { key: "unit", header: "UNIT" },
+  { key: "email", header: "EMAIL" },
+  { key: "phone", header: "PHONE" },
+  { key: "status", header: "STATUS" },
+  { key: "balance", header: "BALANCE", render: (r) => money(r.balance), sort: (a, b) => (a.balance || 0) - (b.balance || 0) },
+];
 
-  if (occ == null) {
-    const occUnits = Number(r.occupied_unit_count ?? r.occ_units ?? 0);
-    const totUnits = unitCount || Number(r.total_units ?? 0);
-    if (totUnits > 0) occ = (occUnits / totUnits) * 100;
-  }
-  if (occ != null) {
-    const v = Number(occ);
-    if (Number.isFinite(v)) occ = v <= 1.000001 ? v * 100 : v;
-    else occ = null;
-  }
+export const OWNER_COLUMNS: Column<any>[] = [
+  { key: "name", header: "OWNER" },
+  { key: "email", header: "EMAIL" },
+  { key: "phone", header: "PHONE" },
+  { key: "property_count", header: "PROPS", sort: (a, b) => (a.property_count || 0) - (b.property_count || 0) },
+  { key: "active", header: "ACTIVE", render: (r) => badge(r.active ? "ok" : "bad", boolText(r.active)) },
+];
 
+// ── Client-side mappers (fills missing fields) ───────────────────────
+export function mapProperty(p: any, join: { city?: string; state?: string; units?: number; occ?: number }) {
   return {
-    id: r.id ?? r.doorloop_id ?? r.property_id,
-    name:
-      r.name ??
-      r.address ??
-      [r.address_street1 ?? r.address1, r.city ?? r.address_city, r.state ?? r.address_state]
-        .filter(Boolean)
-        .join(", "),
-    type: r.type ?? r.property_type ?? "—",
-    class: r.class ?? r.asset_class ?? "—",
-    state: r.state ?? r.address_state ?? "—",
-    city: r.city ?? r.address_city ?? "—",
-    unit_count: unitCount,
-    occupancy: typeof occ === "number" ? Number(occ) : null,
-    active: Boolean(r.active ?? r.is_active ?? true),
+    id: p.id,
+    name: p.name ?? "—",
+    type: p.type ?? "—",
+    class: p.class ?? "—",
+    city: p.address_city ?? join.city ?? "—",
+    state: p.address_state ?? join.state ?? "—",
+    unit_count: p.unit_count ?? join.units ?? 0,
+    occupancy: typeof p.occupancy_rate === "number" ? p.occupancy_rate : (join.occ ?? 0),
+    active: !!p.active,
   };
 }
 
-export function mapUnit(r: any) {
-  const beds = Number(r.beds ?? r.bedrooms ?? 0) || 0;
-  const baths = Number(r.baths ?? r.bathrooms ?? 0) || 0;
-  const sqft = Number(r.sq_ft ?? r.sqft ?? r.square_feet ?? 0) || 0;
-  const rent =
-    r.market_rent ??
-    r.rent_amount ??
-    (r.rent_cents != null ? Number(r.rent_cents) / 100 : null);
-
-  const propName =
-    r.property ??
-    r.property_name ??
-    [r.property_street1 ?? r.address_street1 ?? r.address1, r.property_city ?? r.city, r.property_state ?? r.state]
-      .filter(Boolean)
-      .join(", ");
-
+export function mapUnit(u: any, propName: string, hasActiveLease: boolean) {
   return {
-    id: r.id ?? r.unit_id ?? r.doorloop_id,
+    id: u.id,
+    property: propName,
+    unit_label: u.unit_number || "—",
+    beds: u.beds ?? null,
+    baths: u.baths ?? null,
+    sq_ft: u.sq_ft ?? null,
+    status: u.status ?? (hasActiveLease ? "occupied" : "vacant"),
+    rent: u.rent_amount ?? null,
+  };
+}
+
+export function mapLease(l: any, propName: string, tenantName: string) {
+  return {
+    id: l.id,
+    tenant_names: l.tenant_names || tenantName || "—",
     property: propName || "—",
-    unit_number: r.unit_number ?? r.unit ?? r.number ?? "—",
-    beds,
-    baths,
-    sq_ft: sqft || "—",
-    status: r.status ?? r.unit_status ?? "—",
-    market_rent: rent == null ? "—" : money(rent),
+    rent: typeof l.rent_cents === "number" ? l.rent_cents / 100 : l.rent_amount ?? null,
+    start: l.start_date,
+    end: l.end_date,
+    status: l.status ?? "—",
   };
 }
 
-export function mapLease(r: any) {
-  const rent =
-    r.rent ??
-    (r.rent_cents != null ? Number(r.rent_cents) / 100 : null);
-
-  const tenants =
-    r.tenant_names ??
-    r.tenants?.join(", ") ??
-    r.tenant ??
-    r.tenant_name ??
-    [r.first_name, r.last_name].filter(Boolean).join(" ");
-
-  const propName =
-    r.property ??
-    r.property_name ??
-    [r.property_street1 ?? r.address_street1 ?? r.address1, r.property_city ?? r.city, r.property_state ?? r.state]
-      .filter(Boolean)
-      .join(", ");
-
+export function mapTenant(t: any, propName: string, unitLabel: string) {
+  const name = t.display_name || t.full_name || [t.first_name, t.last_name].filter(Boolean).join(" ");
   return {
-    id: r.id ?? r.lease_id ?? r.doorloop_id,
-    tenant_names: tenants || "—",
+    id: t.id,
+    name: name || "—",
     property: propName || "—",
-    rent: rent == null ? "—" : money(rent),
-    start: shortDate(r.start ?? r.start_date),
-    end: shortDate(r.end ?? r.end_date),
-    status: r.status ?? "—",
+    unit: unitLabel || "—",
+    email: t.email || "—",
+    phone: t.phone || "—",
+    status: t.type || "—",
+    balance: 0,
   };
 }
 
-export function mapTenant(r: any) {
+export function mapOwner(o: any, propertyCount = 0) {
   const name =
-    r.name ??
-    r.display_name ??
-    r.full_name ??
-    [r.first_name, r.last_name].filter(Boolean).join(" ");
-
-  const prop =
-    r.property ??
-    r.property_name ??
-    [r.property_street1 ?? r.address_street1 ?? r.address1, r.property_city ?? r.city, r.property_state ?? r.state]
-      .filter(Boolean)
-      .join(", ");
-
-  const unit =
-    r.unit ??
-    r.unit_number ??
-    [r.unit_street1 ?? r.address_street1 ?? r.address1, r.unit_city ?? r.city, r.unit_state ?? r.state]
-      .filter(Boolean)
-      .join(", ");
-
+    o.display_name ||
+    o.company_name ||
+    o.full_name ||
+    [o.first_name, o.last_name].filter(Boolean).join(" ");
   return {
-    id: r.id ?? r.tenant_id ?? r.doorloop_id,
+    id: o.id,
     name: name || "—",
-    property: prop || "—",
-    unit: unit || "—",
-    email: r.email ?? r.email_address ?? "—",
-    phone: r.phone ?? r.phone_number ?? "—",
-    status: r.status ?? r.type ?? "—",
-    balance:
-      r.balance == null
-        ? "—"
-        : money(Number(r.balance_cents ?? r.balance) / (r.balance_cents != null ? 100 : 1)),
-  };
-}
-
-export function mapOwner(r: any) {
-  const name =
-    r.name ??
-    r.display_name ??
-    r.company_name ??
-    r.full_name ??
-    [r.first_name, r.last_name].filter(Boolean).join(" ");
-
-  return {
-    id: r.id ?? r.owner_id ?? r.doorloop_id,
-    name: name || "—",
-    email: r.email ?? "—",
-    phone: r.phone ?? "—",
-    property_count: Number(r.property_count ?? r.props ?? 0) || 0,
-    active: Boolean(r.active ?? r.is_active ?? true),
+    email: o.email || "—",
+    phone: o.phone || "—",
+    property_count: propertyCount,
+    active: !!o.active,
   };
 }
