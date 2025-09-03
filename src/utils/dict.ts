@@ -1,14 +1,15 @@
-export function indexBy<T extends Record<string, any>>(rows: T[], key: keyof T) {
-  const m = new Map<any, T>();
-  for (const r of rows || []) m.set(r?.[key], r);
-  return m;
+export function indexBy<T, K extends string | number>(rows: T[], key: (r: T) => K): Record<K, T> {
+  const out = {} as Record<K, T>;
+  for (const r of rows) out[key(r)] = r;
+  return out;
 }
-export function groupBy<T extends Record<string, any>>(rows: T[], key: keyof T) {
-  const m = new Map<any, T[]>();
-  for (const r of rows || []) {
-    const k = r?.[key];
-    if (!m.has(k)) m.set(k, []);
-    m.get(k)!.push(r);
+export function groupBy<T, K extends string | number>(rows: T[], key: (r: T) => K): Record<K, T[]> {
+  const out = {} as Record<K, T[]>;
+  for (const r of rows) {
+    const k = key(r);
+    (out[k] ||= []).push(r);
   }
-  return m;
+  return out;
 }
+/* Re-export for compatibility: some pages do `import { money } from "@/utils/dict"` */
+export { money, percent, shortDate, boolText } from "./format";

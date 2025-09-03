@@ -1,17 +1,19 @@
-export const money = (v: any) => {
-  if (typeof v === "number") return v.toLocaleString(undefined, { style: "currency", currency: "USD" });
-  if (typeof v === "string" && v.trim() !== "" && !isNaN(Number(v))) {
-    return Number(v).toLocaleString(undefined, { style: "currency", currency: "USD" });
-  }
-  return "—";
-};
-export const percent = (v: any, digits = 1) => {
-  const n = typeof v === "number" ? v : Number(v);
-  return isFinite(n) ? `${n.toFixed(digits)}%` : "—";
-};
-export const shortDate = (v: any) => {
-  if (!v) return "—";
-  const d = new Date(v);
-  return isNaN(+d) ? "—" : d.toISOString().slice(0,10);
-};
-export const boolText = (v: any) => (v ? "true" : "false");
+export function money(n: any): string {
+  const num = Number(n ?? 0);
+  return isFinite(num) ? num.toLocaleString(undefined, { style: "currency", currency: "USD" }) : "—";
+}
+export function percent(n: any, digits = 1): string {
+  if (n == null || n === "") return "—";
+  let v = Number(n);
+  if (!isFinite(v)) return "—";
+  if (v > 1.000001) return `${v.toFixed(digits)}%`;
+  return `${(v * 100).toFixed(digits)}%`;
+}
+export function shortDate(s: any): string {
+  if (!s) return "—";
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? "—" : d.toISOString().slice(0,10);
+}
+export function boolText(v: any): string {
+  return String(!!v);
+}
