@@ -1,29 +1,30 @@
-/* Generic table styling used by current Table.tsx */
-.table{
-  width:100%;
-  border-collapse:collapse;
-  background:var(--panel-2);
-  border:1px solid var(--border);
-  border-radius:12px;
-  overflow:hidden;
+/* ECC — Tables (brand-safe, token-only) */
+.table {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  border-collapse: separate;
+  border-spacing: 0;
 }
-
-.table thead th{
-  text-align:left;
-  font-weight:600;
-  font-size:12px;
-  letter-spacing:.02em;
-  color:var(--ink-3);
-  border-bottom:1px solid var(--border);
-  padding:10px 12px;
+.table thead th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-subtle);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
 }
-
-.table tbody td{
-  padding:10px 12px;
-  color:var(--ink-1);
-  border-bottom:1px solid var(--border);
+.table tbody td {
+  padding: 10px 12px;
+  color: var(--text);
+  border-top: 1px solid var(--border);
 }
-
-.table tbody tr:hover{
-  background:rgba(214,179,106,.06);
+.table tbody tr:hover {
+  background: color-mix(in srgb, var(--gold) 6%, var(--surface));
+}
+.table .pill {
+  display:inline-flex; align-items:center; height:22px; padding:0 8px;
+  border:1px solid var(--border); border-radius: 999px;
+  color: var(--text-subtle); font-size: 12px;
+  background: #0B0F14; /* acceptable exception: aligns with --bg for contrast */
 }
