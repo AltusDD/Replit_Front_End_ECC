@@ -1,21 +1,21 @@
 import React, { useMemo } from "react";
-import { SimpleTable } from "@/components/Table";
-import { TENANT_COLUMNS, mapTenant } from "../columns";
+import { DataTable, Col } from "@/components/DataTable";
+import { TENANT_COLUMNS } from "../columns";
 import { useCollection } from "@/features/data/useCollection";
 import { indexBy } from "@/utils/dict";
-import { money } from "@/utils/dict";
+import { money } from "@/utils/format";
 
+type Row = { id:any; doorloop_id?:any; name:string; property:string; unit:string; email:string; phone:string; status:any; balance:any };
 export default function TenantsPage() {
   const tenants = useCollection<any>("tenants");
   const leases = useCollection<any>("leases");
   const units = useCollection<any>("units");
   const props = useCollection<any>("properties");
 
-  const rows = useMemo(() => {
+  const rows = useMemo<Row[]>(() => {
     const uById = indexBy(units.data, "id");
     const pById = indexBy(props.data, "id");
 
-    // Build latest lease per-tenant by updated_at/start_date
     const latest = new Map<any, any>();
     for (const l of leases.data || []) {
       const tids = [l.primary_tenant_id, l.tenant_id].filter(Boolean);
@@ -42,20 +42,32 @@ export default function TenantsPage() {
         email: t.primary_email ?? t.email ?? "",
         phone: t.primary_phone ?? t.phone ?? "",
         status: l?.status ?? t.status ?? t.type ?? "",
-        balance: money(t.balance),
+        balance: t.balance,
       };
     });
   }, [tenants.data, leases.data, units.data, props.data]);
 
+  const cols: Col<Row>[] = [
+    { key: "name", header: "Name" },
+    { key: "property", header: "Property" },
+    { key: "unit", header: "Unit" },
+    { key: "email", header: "Email" },
+    { key: "phone", header: "Phone" },
+    { key: "status", header: "Status", render: (r)=> <span className={`badge ${String(r.status).toLowerCase().includes("lease")?"ok":""}`}>{r.status || "—"}</span> },
+    { key: "balance", header: "Balance", align: "right", render: (r)=> <span className="mono">{money(r.balance)}</span> },
+  ];
+
   return (
-    <>
-      <h1>Tenants</h1>
-      {tenants.error && <div style={{ color: "tomato" }}>{String(tenants.error)}</div>}
-      <SimpleTable
-        columns={TENANT_COLUMNS}
-        rows={rows.map(mapTenant)}
-        empty={tenants.loading ? "Loading…" : "No tenants"}
-      />
-    </>
+    <DataTable
+      title="Tenants"
+      columns={cols}
+      rows={rows}
+      loading={tenants.loading}
+      error={tenants.error ?? undefined}
+      searchKeys={TENANT_COLUMNS.map(c => c.key as keyof Row & string)}
+      pageSize={50}
+      rowKey={(r)=>r.id}
+      emptyText="No tenants"
+    />
   );
 }

@@ -12,7 +12,3 @@ export function groupBy<T extends Record<string, any>>(rows: T[], key: keyof T) 
   }
   return m;
 }
-export const money = (v: any) =>
-  typeof v === "number"
-    ? v.toLocaleString(undefined, { style: "currency", currency: "USD" })
-    : v == null ? "" : String(v);

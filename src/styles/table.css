@@ -5,48 +5,50 @@
   --text-1: var(--fg-strong, #ffffff);
   --text-2: var(--fg-muted, #c7c9d1);
   --gold: var(--brand-gold, #f7c948);
+  --ok: var(--accent-okay, #3fb950);
+  --warn: var(--accent-warn, #f7c948);
+  --bad: var(--accent-bad, #ff6a69);
 }
 
-.table-wrap {
-  background: var(--ink-1);
-  border: 1px solid var(--ink-3);
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
+.table-card { background: var(--ink-1); border: 1px solid var(--ink-3); border-radius: 14px; overflow: hidden; }
+.table-toolbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 14px; border-bottom:1px solid var(--ink-3); background: var(--ink-2);
+}
+.table-title { color: var(--text-1); font-weight:700; letter-spacing:.2px; }
+.table-title .muted { color: var(--text-2); font-weight:400; margin-left:6px; }
+.table-tools { display:flex; gap:8px; }
+.table-search {
+  background: var(--ink-1); color: var(--text-1); border:1px solid var(--ink-3);
+  border-radius:10px; padding:8px 10px; min-width:220px;
 }
 
-.ecc-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 14px;
-  background: var(--ink-1);
-  color: var(--text-1);
-}
+.table-error { color: var(--bad); padding:10px 14px; }
 
+.table-wrap { max-width: 100%; overflow:auto; }
+.ecc-table { width:100%; border-collapse:separate; border-spacing:0; color: var(--text-1); font-size:14px; }
 .ecc-table thead th {
-  background: var(--ink-2);
-  color: var(--text-2);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 600;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--ink-3);
-  white-space: nowrap;
+  position: sticky; top: 0; z-index: 1;
+  background: var(--ink-2); color: var(--text-2);
+  text-transform: uppercase; letter-spacing:.04em; font-weight:600;
+  padding:10px 12px; border-bottom:1px solid var(--ink-3); white-space:nowrap; user-select:none;
 }
-.ecc-table thead th.grow { width: 100%; }
-
-.ecc-table tbody td {
-  padding: 12px;
-  border-bottom: 1px solid var(--ink-3);
+.ecc-table thead th.sorted.asc::after { content:" ▲"; color: var(--gold); }
+.ecc-table thead th.sorted.desc::after { content:" ▼"; color: var(--gold); }
+.ecc-table tbody td { padding:12px; border-bottom:1px solid var(--ink-3); }
+.ecc-table tbody tr:nth-child(2n) { background: color-mix(in oklab, var(--ink-2) 90%, black); }
+.ecc-table tbody tr:hover { background: color-mix(in oklab, var(--ink-2) 85%, var(--gold)); }
+.ecc-table td.empty { text-align:center; color: var(--text-2); padding: 32px 12px; }
+.table-pager { display:flex; align-items:center; gap:12px; padding:10px 14px; color: var(--text-2); }
+.table-pager button {
+  background: var(--ink-2); color: var(--text-1); border:1px solid var(--ink-3); border-radius:10px; padding:6px 10px;
 }
-
-.ecc-table tbody tr:hover {
-  background: color-mix(in oklab, var(--ink-2) 90%, var(--gold));
+.badge {
+  font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--ink-3);
+  background: var(--ink-2); color: var(--text-2);
 }
-
-.ecc-table td.empty {
-  text-align: center;
-  color: var(--text-2);
-  padding: 32px 12px;
-}
+.badge.ok { color:#fff; background: color-mix(in oklab, var(--ok) 70%, black); }
+.badge.warn { color:#000; background: var(--warn); }
+.badge.bad { color:#fff; background: color-mix(in oklab, var(--bad) 70%, black); }
+.mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.right { text-align:right; }
