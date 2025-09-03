@@ -1,0 +1,31 @@
+:root {
+  /* Altus tokens (fallbacks in case theme.css is not loaded) */
+  --ink-0: var(--surface-bg, #0b0b0d);
+  --ink-1: var(--surface-1, #111214);
+  --ink-2: var(--surface-2, #15161a);
+  --ink-3: var(--surface-3, #1b1d22);
+  --text-1: var(--fg-strong, #ffffff);
+  --text-2: var(--fg-muted, #c7c9d1);
+  --gold: var(--brand-gold, #f7c948);
+}
+
+.ecc-app {
+  background: var(--ink-0);
+  color: var(--text-1);
+  min-height: 100vh;
+}
+
+/* Main content area, shifted to the right of sidebar */
+.ecc-main {
+  position: relative;
+  min-height: 100vh;
+  transition: padding-left 160ms ease;
+  z-index: 0; /* sidebar flyouts sit above this */
+}
+
+/* Inner wrapper for content spacing */
+.ecc-main-inner {
+  max-width: 1920px;
+  margin: 0 auto;
+  padding: 16px clamp(12px, 2vw, 24px);
+}

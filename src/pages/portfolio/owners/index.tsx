@@ -1,12 +1,21 @@
-import React, { useMemo } from "react";
-import { useCollection } from "../../../lib/useApi";
-import Table from "../../../components/ui/Table";
+import React from "react";
+import { SimpleTable } from "@/components/Table";
+import { mapOwner, OWNER_COLUMNS } from "../columns";
+import { useCollection } from "@/features/data/useCollection";
 
-function pick(obj: any, keys: string[], fallback: any = "—") {
-  for (const k of keys) {
-    const v = obj?.[k];
-    if (v !== undefined && v !== null && v !== "") return v;
-  }
-  return fallback;
+export default function OwnersPage() {
+  const { data = [], loading, error } = useCollection("owners");
+  const rows = (data || []).map(mapOwner);
+
+  return (
+    <>
+      <h1>Owners</h1>
+      {error && <div style={{ color: "tomato" }}>Error: {String(error)}</div>}
+      <SimpleTable
+        columns={OWNER_COLUMNS}
+        rows={rows}
+        empty={loading ? "Loading…" : "No owners"}
+      />
+    </>
+  );
 }
-

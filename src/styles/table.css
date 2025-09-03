@@ -1,39 +1,52 @@
-/* ECC — Tables (brand-safe, token-only) */
-.table {
-  width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-.table thead th {
-  text-align: left;
-  font-weight: 600;
-  color: var(--text-subtle);
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
-}
-.table tbody td {
-  padding: 10px 12px;
-  color: var(--text);
-  border-top: 1px solid var(--border);
-}
-.table tbody tr:hover {
-  background: color-mix(in srgb, var(--gold) 6%, var(--surface));
-}
-.table .pill {
-  display:inline-flex; align-items:center; height:22px; padding:0 8px;
-  border:1px solid var(--border); border-radius: 999px;
-  color: var(--text-subtle); font-size: 12px;
-  background: #0B0F14; /* acceptable exception: aligns with --bg for contrast */
+:root{
+  --ink-1: var(--surface-1, #111214);
+  --ink-2: var(--surface-2, #15161a);
+  --ink-3: var(--surface-3, #1b1d22);
+  --text-1: var(--fg-strong, #ffffff);
+  --text-2: var(--fg-muted, #c7c9d1);
+  --gold: var(--brand-gold, #f7c948);
 }
 
-/* === Alias legacy table tokens to Altus theme tokens (non-destructive) === */
-:root {
-  --color-text-secondary: var(--muted-1, #98a2b3);
-  --color-text-muted: var(--muted-1, #98a2b3);
-  --ink-3: var(--border, #2b2f36);
+.table-wrap {
+  background: var(--ink-1);
+  border: 1px solid var(--ink-3);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
 }
-.table thead th { color: var(--color-text-secondary); }
-.table .empty, .ecc-table-empty { color: var(--color-text-muted); }
+
+.ecc-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+  background: var(--ink-1);
+  color: var(--text-1);
+}
+
+.ecc-table thead th {
+  background: var(--ink-2);
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--ink-3);
+  white-space: nowrap;
+}
+.ecc-table thead th.grow { width: 100%; }
+
+.ecc-table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid var(--ink-3);
+}
+
+.ecc-table tbody tr:hover {
+  background: color-mix(in oklab, var(--ink-2) 90%, var(--gold));
+}
+
+.ecc-table td.empty {
+  text-align: center;
+  color: var(--text-2);
+  padding: 32px 12px;
+}
