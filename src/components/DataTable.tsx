@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import "@/styles/table.css";
+import { toCSV, downloadCSV } from "@/utils/csv";
 
 type Align = "left" | "right" | "center";
 export type Col<T> = {
@@ -18,8 +19,13 @@ export function DataTable<T extends Record<string, any>>({
   error,
   emptyText = "No data",
   searchKeys,
-  pageSize = 50,
+  defaultPageSize = 50,
+  pageSizeOptions = [25,50,100,200],
   rowKey,
+  toolbarRight,
+  enableExport = true,
+  csvFileName = "export.csv",
+  maxRows = 5000, // hard cap to keep UI snappy
 }: {
   title?: string;
   columns: Col<T>[];
@@ -28,31 +34,34 @@ export function DataTable<T extends Record<string, any>>({
   error?: string | null;
   emptyText?: string;
   searchKeys?: (keyof T & string)[];
-  pageSize?: number;
+  defaultPageSize?: number;
+  pageSizeOptions?: number[];
   rowKey?: (row: T, index: number) => React.Key;
+  toolbarRight?: React.ReactNode;
+  enableExport?: boolean;
+  csvFileName?: string;
+  maxRows?: number;
 }) {
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(defaultPageSize);
 
   const keys = searchKeys || (columns.map(c => c.key) as (keyof T & string)[]);
+  const capped = useMemo(() => rows.slice(0, maxRows), [rows, maxRows]);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return rows;
+    if (!query.trim()) return capped;
     const q = query.toLowerCase();
-    return rows.filter(r =>
-      keys.some(k => (r?.[k] ?? "").toString().toLowerCase().includes(q))
-    );
-  }, [rows, query, keys]);
+    return capped.filter(r => keys.some(k => (r?.[k] ?? "").toString().toLowerCase().includes(q)));
+  }, [capped, query, keys]);
 
   const sorted = useMemo(() => {
     if (!sortKey) return filtered;
     const copy = filtered.slice();
     copy.sort((a, b) => {
-      const av = a?.[sortKey as keyof T];
-      const bv = b?.[sortKey as keyof T];
-      // number first, then string
+      const av = a?.[sortKey as keyof T]; const bv = b?.[sortKey as keyof T];
       const an = typeof av === "number" ? av : Number(av);
       const bn = typeof bv === "number" ? bv : Number(bv);
       if (isFinite(an) && isFinite(bn)) return sortDir === "asc" ? an - bn : bn - an;
@@ -68,28 +77,26 @@ export function DataTable<T extends Record<string, any>>({
 
   function onSort(k: string) {
     setPage(0);
-    if (sortKey !== k) {
-      setSortKey(k);
-      setSortDir("asc");
-    } else {
-      setSortDir(sortDir === "asc" ? "desc" : "asc");
-    }
+    if (sortKey !== k) { setSortKey(k); setSortDir("asc"); }
+    else { setSortDir(sortDir === "asc" ? "desc" : "asc"); }
   }
+  function doExport() { downloadCSV(csvFileName, toCSV(sorted, columns.map(c => ({ key: c.key, header: c.header })))); }
 
   return (
     <div className="table-card">
       <div className="table-toolbar">
         <div className="table-title">
           {title ?? "Table"}
-          <span className="muted"> {loading ? "Loading…" : `(${filtered.length})`}</span>
+          <span className="muted"> {loading ? "Loading…" : `(${sorted.length})`}</span>
         </div>
         <div className="table-tools">
-          <input
-            className="table-search"
-            placeholder="Search…"
-            value={query}
-            onChange={(e) => { setQuery(e.target.value); setPage(0); }}
-          />
+          {toolbarRight}
+          <input className="table-search" placeholder="Search…" value={query}
+            onChange={(e)=>{ setQuery(e.target.value); setPage(0); }} />
+          <select className="table-select" value={pageSize} onChange={(e)=>{ setPageSize(Number(e.target.value)); setPage(0); }}>
+            {pageSizeOptions.map(n => <option key={n} value={n}>{n}/page</option>)}
+          </select>
+          {enableExport && <button className="btn" onClick={doExport}>Export CSV</button>}
         </div>
       </div>
 
@@ -100,13 +107,8 @@ export function DataTable<T extends Record<string, any>>({
           <thead>
             <tr>
               {columns.map((c) => (
-                <th
-                  key={c.key}
-                  style={{ width: c.width, textAlign: c.align ?? "left" }}
-                  onClick={() => onSort(c.key)}
-                  className={sortKey === c.key ? `sorted ${sortDir}` : undefined}
-                  role="button"
-                >
+                <th key={c.key} style={{ width: c.width, textAlign: c.align ?? "left" }}
+                    onClick={() => onSort(c.key)} className={sortKey === c.key ? `sorted ${sortDir}` : undefined} role="button">
                   {c.header}
                 </th>
               ))}
@@ -144,7 +146,6 @@ export function DataTable<T extends Record<string, any>>({
     </div>
   );
 }
-
 function display(v: any) {
   if (v == null || v === "") return "—";
   if (Array.isArray(v)) return v.join(", ");
