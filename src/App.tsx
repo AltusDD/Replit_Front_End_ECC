@@ -1,42 +1,68 @@
 import React from "react";
-// 1. Import `Router` from wouter along with the others
-import { Router, Route, Switch, Redirect } from "wouter";
+import { Route, Switch, Redirect } from "wouter";
 import Sidebar from "./components/Sidebar";
 
-import "./styles/theme.css";
-import "./styles/app.css";
+/**
+ * IMPORTANT:
+ * These imports point at the V3 pages that already exist as folders with index.tsx.
+ * Example tree:
+ *   src/pages/portfolio/properties/index.tsx
+ *   src/pages/portfolio/units/index.tsx
+ *   src/pages/portfolio/leases/index.tsx
+ *   src/pages/portfolio/tenants/index.tsx
+ *   src/pages/portfolio/owners/index.tsx
+ */
+import PropertiesPage from "./pages/portfolio/properties";
+import UnitsPage from "./pages/portfolio/units";
+import LeasesPage from "./pages/portfolio/leases";
+import TenantsPage from "./pages/portfolio/tenants";
+import OwnersPage from "./pages/portfolio/owners";
+
+/**
+ * If you already have a real Dashboard page component, swap this import in:
+ *   import DashboardPage from "./pages/dashboard";
+ * …and remove the inline fallback below.
+ */
+function DashboardFallback() {
+  return (
+    <section className="ecc-page">
+      <h1 className="ecc-page-title">Dashboard</h1>
+    </section>
+  );
+}
 
 export default function App() {
   return (
-    // 2. Wrap your entire application layout in <Router>
-    <Router>
-      <div className="ecc-shell">
-        <Sidebar />
-        <main className="ecc-main">
-          <Switch>
-            {/* Primary */}
-            <Route path="/dashboard"><h1 className="ecc-page-title">Dashboard</h1></Route>
+    <div className="ecc-app">
+      <Sidebar />
 
-            {/* Portfolio */}
-            <Route path="/portfolio/properties"><h1 className="ecc-page-title">Properties</h1></Route>
-            <Route path="/portfolio/units"><h1 className="ecc-page-title">Units</h1></Route>
-            <Route path="/portfolio/leases"><h1 className="ecc-page-title">Leases</h1></Route>
-            <Route path="/portfolio/tenants"><h1 className="ecc-page-title">Tenants</h1></Route>
-            <Route path="/portfolio/owners"><h1 className="ecc-page-title">Owners</h1></Route>
+      {/* Main content area */}
+      <main className="ecc-main" role="main" id="main">
+        <Switch>
+          {/* Home -> Dashboard */}
+          <Route path="/" component={() => <Redirect to="/dashboard" />} />
+          <Route path="/dashboard" component={DashboardFallback} />
 
-            {/* Operations (selected) */}
-            <Route path="/ops/reports"><h1 className="ecc-page-title">Reports</h1></Route>
-            <Route path="/ops/reports/create"><h1 className="ecc-page-title">Create Report</h1></Route>
-            <Route path="/ops/reports/saved"><h1 className="ecc-page-title">Saved Reports</h1></Route>
+          {/* -------- Portfolio V3 (ACTIVE) -------- */}
+          <Route path="/portfolio/properties" component={PropertiesPage} />
+          <Route path="/portfolio/units" component={UnitsPage} />
+          <Route path="/portfolio/leases" component={LeasesPage} />
+          <Route path="/portfolio/tenants" component={TenantsPage} />
+          <Route path="/portfolio/owners" component={OwnersPage} />
+          {/* -------------------------------------- */}
 
-            {/* … keep your other existing routes … */}
+          {/* Keep any other existing routes you have here.
+             Do NOT route to the old mock pages (Properties.tsx, etc.). */}
 
-            {/* Redirect & Fallback */}
-            <Route path="/"><Redirect to="/dashboard" /></Route>
-            <Route><h1 className="ecc-page-title">Not Found</h1></Route>
-          </Switch>
-        </main>
-      </div>
-    </Router>
+          {/* 404 */}
+          <Route>
+            <section className="ecc-page">
+              <h1 className="ecc-page-title">Not Found</h1>
+              <p>That page doesn’t exist.</p>
+            </section>
+          </Route>
+        </Switch>
+      </main>
+    </div>
   );
 }

@@ -28,3 +28,12 @@
   color: var(--text-subtle); font-size: 12px;
   background: #0B0F14; /* acceptable exception: aligns with --bg for contrast */
 }
+
+/* === Alias legacy table tokens to Altus theme tokens (non-destructive) === */
+:root {
+  --color-text-secondary: var(--muted-1, #98a2b3);
+  --color-text-muted: var(--muted-1, #98a2b3);
+  --ink-3: var(--border, #2b2f36);
+}
+.table thead th { color: var(--color-text-secondary); }
+.table .empty, .ecc-table-empty { color: var(--color-text-muted); }

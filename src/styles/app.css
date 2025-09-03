@@ -192,3 +192,31 @@ button { background: transparent; border: 0; padding: 0; cursor: pointer; color:
 .ecc-table td { padding: 10px; border-bottom: 1px solid var(--border); color: var(--text); }
 .ecc-table tr:hover td { background: color-mix(in srgb, var(--gold) 5%, var(--surface)); }
 .ecc-table-empty { text-align: center; color: var(--muted-1, #98a2b3); padding: 26px 10px; }
+
+/* ==== Keep main content beside the fixed sidebar ==== */
+
+/* Sidebar is fixed; main must offset by the rail width */
+.ecc-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;            /* top:0; left:0; bottom:0; */
+  width: var(--rail-expanded);  /* 320px */
+}
+.ecc-sidebar.is-collapsed { width: var(--rail-collapsed); } /* 64px */
+
+/* Main gets a left margin equal to the current rail width */
+.ecc-main {
+  margin-left: var(--rail-expanded);
+  min-height: 100vh;
+  display: block;
+}
+
+/* When the rail collapses, shrink the offset */
+.ecc-sidebar.is-collapsed + .ecc-main { margin-left: var(--rail-collapsed); }
+
+/* Safety: if anything wraps .ecc-main later, keep the offset using general sibling */
+.ecc-sidebar.is-collapsed ~ .ecc-main { margin-left: var(--rail-collapsed); }
+
+/* Optional: small screens default to collapsed offset */
+@media (max-width: 1024px) {
+  .ecc-main { margin-left: var(--rail-collapsed); }
+}
