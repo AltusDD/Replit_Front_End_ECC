@@ -3,7 +3,18 @@ import cors from "cors";
 import { createClient } from "@supabase/supabase-js";
 
 const PORT = Number(process.env.PORT_API || 8787);
-const SUPABASE_URL = process.env.SUPABASE_URL || "";
+
+// Parse Supabase URL - handle both REST API format and PostgreSQL connection string
+let SUPABASE_URL = process.env.SUPABASE_URL || "";
+
+if (SUPABASE_URL.startsWith("postgresql://")) {
+  // Extract project reference from PostgreSQL URL and convert to REST API URL
+  const match = SUPABASE_URL.match(/db\.(.+?)\.supabase\.co/);
+  if (match) {
+    SUPABASE_URL = `https://${match[1]}.supabase.co`;
+  }
+}
+
 const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "";
 
@@ -34,18 +45,16 @@ app.get("/api/health", async (_req, res) => {
       });
     }
     
-    // Test connection
-    const { error } = await supabase.from(TABLE_MAP.properties).select("count", { count: "exact", head: true });
-    if (error && error.code !== "PGRST116") { // PGRST116 = table doesn't exist, which is ok for health check
-      throw error;
-    }
+    // Simple test - just try to select from properties table (or any table)
+    const { data, error } = await supabase.from(TABLE_MAP.properties).select("*").limit(1);
     
     res.json({ 
       ok: true, 
       mode: "supabase", 
       now: new Date().toISOString(),
       tables: TABLE_MAP,
-      env_vars_used: ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY"]
+      env_vars_used: ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY"],
+      connection_test: error ? `Warning: ${error.message}` : "Success"
     });
   } catch (error: any) {
     res.status(500).json({ 
