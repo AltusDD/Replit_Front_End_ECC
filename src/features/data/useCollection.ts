@@ -1,86 +1,49 @@
 import { useEffect, useState } from "react";
-import { getApiBase } from "../../lib/config";
 
-type JsonValue = unknown;
-type FetchOpts = {
-  /** Optional query params (e.g., { limit: 100 }) */
-  params?: Record<string, string | number | boolean | null | undefined>;
-  /** Override base (rare) */
-  baseUrl?: string;
-};
-
-function toQuery(params?: Record<string, any>) {
-  if (!params) return "";
-  const usp = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null) usp.set(k, String(v));
-  });
-  const s = usp.toString();
-  return s ? `?${s}` : "";
-}
-
-async function parseSmart(res: Response) {
-  const ct = res.headers.get("content-type") || "";
-  const text = await res.text();
-  if (ct.includes("application/json")) {
-    try {
-      return JSON.parse(text);
-    } catch (e) {
-      throw new Error(`JSON parse error: ${(e as Error).message}`);
-    }
-  }
-  // Not JSON: include first 160 chars so we can see if it's <!doctype ...>
-  const head = text.slice(0, 160).replace(/\s+/g, " ").trim();
-  throw new Error(`Non-JSON response (${res.status} ${res.statusText}): ${head}`);
-}
-
-/**
- * Generic collection fetcher for ECC Portfolio v3.
- * GET {base}/portfolio/{collection}
- */
-export function useCollection<T = JsonValue>(
-  collection:
-    | "properties"
-    | "units"
-    | "leases"
-    | "tenants"
-    | "owners"
-    | (string & {}),
-  opts: FetchOpts = {}
+export function useCollection<T = any>(
+  collection: "properties" | "units" | "leases" | "tenants" | "owners"
 ) {
   const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
-    const base = (opts.baseUrl || getApiBase()).replace(/\/+$/, "");
-    const url = `${base}/portfolio/${collection}${toQuery(opts.params)}`;
-
+    const ac = new AbortController();
     setLoading(true);
     setError(null);
 
-    fetch(url, { signal: controller.signal })
-      .then(async (res) => {
-        const body = await parseSmart(res);
-        if (!res.ok) {
-          throw new Error(`API Error ${res.status}: ${JSON.stringify(body)}`);
-        }
-        const rows = Array.isArray(body) ? body : (body as any)?.data ?? [];
-        setData(rows as T[]);
-      })
-      .catch((e) => {
-        if (!controller.signal.aborted) {
-          setError(e instanceof Error ? e.message : String(e));
-          setData([]);
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
+    (async () => {
+      try {
+        const res = await fetch(`/api/portfolio/${collection}`, {
+          signal: ac.signal,
+          headers: { Accept: "application/json" },
+        });
 
-    return () => controller.abort();
-  }, [collection, JSON.stringify(opts.params), opts.baseUrl]);
+        const text = await res.text();
+        let json: any;
+        try {
+          json = text ? JSON.parse(text) : null;
+        } catch {
+          throw new Error(`Non-JSON from /api/portfolio/${collection}: ${text.slice(0,160)}…`);
+        }
+
+        if (!res.ok) {
+          const msg = json?.message || json?.error || res.statusText || "Unknown API error";
+          const extra = [json?.code, json?.details, json?.hint].filter(Boolean).join(" · ");
+          throw new Error(extra ? `${msg} — ${extra}` : msg);
+        }
+
+        const rows = Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
+        setData(rows);
+      } catch (e: any) {
+        if (!ac.signal.aborted) setError(String(e?.message || e));
+      } finally {
+        if (!ac.signal.aborted) setLoading(false);
+      }
+    })();
+
+    return () => ac.abort();
+  }, [collection]);
 
   return { data, loading, error };
 }

@@ -5,11 +5,20 @@ import tsconfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   server: {
+    port: 5173,
     proxy: {
       "/api": {
-        target: "http://localhost:8787", // our tiny dev API
+        target: "http://localhost:8787",
         changeOrigin: true,
-        secure: false,
+      },
+    },
+  },
+  preview: {
+    port: 5173,
+    proxy: {
+      "/api": {
+        target: "http://localhost:8787",
+        changeOrigin: true,
       },
     },
   },

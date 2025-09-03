@@ -1,14 +1,32 @@
-export function indexBy<T extends Record<string, any>>(rows: T[], key: keyof T) {
-  const m = new Map<any, T>();
-  for (const r of rows || []) m.set(r?.[key], r);
-  return m;
+type Keyer<T> = keyof T | ((r: T) => string | number);
+
+function toKey<T>(key: Keyer<T>) {
+  return typeof key === "function"
+    ? key
+    : (r: T) => (r as any)[key] as string | number;
 }
-export function groupBy<T extends Record<string, any>>(rows: T[], key: keyof T) {
-  const m = new Map<any, T[]>();
+
+export function indexBy<T>(rows: T[], key: Keyer<T>): Map<string | number, T> {
+  const k = toKey(key);
+  const out = new Map<string | number, T>();
   for (const r of rows || []) {
-    const k = r?.[key];
-    if (!m.has(k)) m.set(k, []);
-    m.get(k)!.push(r);
+    const kk = k(r);
+    if (kk != null) out.set(kk, r);
   }
-  return m;
+  return out;
 }
+
+export function groupBy<T>(rows: T[], key: Keyer<T>): Map<string | number, T[]> {
+  const k = toKey(key);
+  const out = new Map<string | number, T[]>();
+  for (const r of rows || []) {
+    const kk = k(r);
+    if (kk == null) continue;
+    if (!out.has(kk)) out.set(kk, []);
+    out.get(kk)!.push(r);
+  }
+  return out;
+}
+
+/* Keep old imports working: some pages import money from "@/utils/dict" */
+export { money, percent, shortDate, boolText } from "./format";

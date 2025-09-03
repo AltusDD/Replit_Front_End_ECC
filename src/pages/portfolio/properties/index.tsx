@@ -5,6 +5,7 @@ import { PROPERTY_COLUMNS } from "../columns";
 import { useCollection } from "../../../features/data/useCollection";
 import { groupBy } from "../../../utils/dict";
 import { percent } from "../../../utils/format";
+// Force recompile after fixing Map/Record issue
 
 type Row = {
   id: any; doorloop_id?: any;

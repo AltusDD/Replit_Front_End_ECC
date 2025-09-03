@@ -1,9 +1,7 @@
 import React from "react";
-import { money, percent, shortDate } from "@/utils/format";
+import { money, percent, shortDate } from "../../utils/format";
 
-/** Column descriptors kept simple: key + header.
- *  Pages may add local renderers if needed.
- */
+/** Column descriptors kept simple: key + header. */
 export const PROPERTY_COLUMNS = [
   { key: "name",       header: "PROPERTY" },
   { key: "type",       header: "TYPE" },
@@ -54,24 +52,19 @@ export const OWNER_COLUMNS = [
 
 /* ────────────────────────────────────────────────────────────
    Mappers: normalize raw API rows to the keys used above
-   (Very defensive: handle multiple possible field names.)
    ──────────────────────────────────────────────────────────── */
-
 export function mapProperty(r: any) {
-  const unitCount =
-    Number(r.unit_count ?? r.units ?? r.total_units ?? 0) || 0;
-
+  const unitCount = Number(r.unit_count ?? r.units ?? r.total_units ?? 0) || 0;
   let occ = r.occupancy ?? r.occupancy_rate ?? r.occ_percent;
+
   if (occ == null) {
-    // try to derive from occupied/vacant counts if present
     const occUnits = Number(r.occupied_unit_count ?? r.occ_units ?? 0);
     const totUnits = unitCount || Number(r.total_units ?? 0);
     if (totUnits > 0) occ = (occUnits / totUnits) * 100;
   }
-  // Normalize percent representation
   if (occ != null) {
-    let v = Number(occ);
-    if (isFinite(v)) occ = v <= 1.000001 ? v * 100 : v;
+    const v = Number(occ);
+    if (Number.isFinite(v)) occ = v <= 1.000001 ? v * 100 : v;
     else occ = null;
   }
 
@@ -102,7 +95,6 @@ export function mapUnit(r: any) {
     r.rent_amount ??
     (r.rent_cents != null ? Number(r.rent_cents) / 100 : null);
 
-  // human property name fallback
   const propName =
     r.property ??
     r.property_name ??
