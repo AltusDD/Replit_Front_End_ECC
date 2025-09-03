@@ -62,15 +62,10 @@ export function useCollection<T = JsonValue>(
 
     fetch(url, { signal: controller.signal })
       .then(async (res) => {
-        if (!res.ok) {
-          // try to parse body for a better message
-          try {
-            await parseSmart(res);
-          } catch (e) {
-            throw e;
-          }
-        }
         const body = await parseSmart(res);
+        if (!res.ok) {
+          throw new Error(`API Error ${res.status}: ${JSON.stringify(body)}`);
+        }
         const rows = Array.isArray(body) ? body : (body as any)?.data ?? [];
         setData(rows as T[]);
       })
