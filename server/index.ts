@@ -1,19 +1,17 @@
 import express from "express";
 import cors from "cors";
-import { createClient } from "@supabase/supabase-js";
+import { Pool } from "pg";
 
 const PORT = Number(process.env.PORT_API || 8787);
-const SUPABASE_URL = process.env.SUPABASE_URL || "";
-const SUPABASE_SERVICE_ROLE_KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "";
 
 const app = express();
 app.use(cors());
 
-const supabase =
-  SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
-    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
-    : null;
+// PostgreSQL connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.PGSSL_DISABLE ? false : { rejectUnauthorized: false }
+});
 
 const TABLE_MAP: Record<string, string> = {
   properties: process.env.TBL_PROPERTIES || "properties",
@@ -23,22 +21,63 @@ const TABLE_MAP: Record<string, string> = {
   owners: process.env.TBL_OWNERS || "owners",
 };
 
-app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, ts: new Date().toISOString(), tables: TABLE_MAP });
+// Validate table name (letters, numbers, _, . only)
+function isValidTableName(name: string): boolean {
+  return /^[a-zA-Z0-9_.]+$/.test(name);
+}
+
+app.get("/api/health", async (_req, res) => {
+  try {
+    const client = await pool.connect();
+    await client.query('SELECT 1');
+    client.release();
+    res.json({ 
+      ok: true, 
+      mode: "postgres", 
+      now: new Date().toISOString(),
+      tables: TABLE_MAP,
+      env_vars_used: ["DATABASE_URL", "PGHOST", "PGPORT", "PGUSER", "PGPASSWORD", "PGDATABASE"]
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      ok: false, 
+      mode: "postgres", 
+      error: error.message 
+    });
+  }
 });
 
 app.get("/api/portfolio/:entity", async (req, res) => {
   try {
-    if (!supabase) return res.status(500).json({ error: "Supabase not configured" });
-    const table = TABLE_MAP[req.params.entity];
-    if (!table) return res.status(400).json({ error: `Unknown collection ${req.params.entity}` });
+    const entity = req.params.entity;
+    const table = TABLE_MAP[entity];
+    
+    if (!table) {
+      return res.status(400).json({ error: `Unknown collection: ${entity}` });
+    }
+    
+    if (!isValidTableName(table)) {
+      return res.status(400).json({ error: `Invalid table name: ${table}` });
+    }
 
-    const { data, error } = await supabase.from(table).select("*").limit(1000);
-    if (error) return res.status(500).json({ error: error.message, table });
-    res.json(Array.isArray(data) ? data : []);
-  } catch (e: any) {
-    res.status(500).json({ error: String(e?.message || e) });
+    const client = await pool.connect();
+    try {
+      const result = await client.query(`SELECT * FROM ${table} LIMIT 1000`);
+      res.json(result.rows);
+    } finally {
+      client.release();
+    }
+  } catch (error: any) {
+    console.error(`Error fetching ${req.params.entity}:`, error);
+    res.status(500).json({ 
+      error: error.message,
+      table: TABLE_MAP[req.params.entity],
+      entity: req.params.entity
+    });
   }
 });
 
-app.listen(PORT, () => console.log(`[Dev API] http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`[Dev API] PostgreSQL mode - http://localhost:${PORT}`);
+  console.log(`[Dev API] Tables mapped:`, TABLE_MAP);
+});

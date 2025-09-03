@@ -29,13 +29,6 @@ export default defineConfig({
       ".replit.dev",
       ".replit.co"
     ],
-    proxy: {
-      "/api": {
-        target: "http://localhost:8787",
-        changeOrigin: true,
-        secure: false
-      }
-    },
     watch: {
       usePolling: true,
       interval: 400,
