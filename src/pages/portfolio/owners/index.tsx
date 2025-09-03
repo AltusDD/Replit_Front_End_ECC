@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
-import { DataTable, Col } from "@/components/DataTable";
-import KPIBar from "@/components/KPIBar";
+import { DataTable, Col } from "../../../components/DataTable";
+import KPIBar from "../../../components/KPIBar";
 import { OWNER_COLUMNS } from "../columns";
-import { useCollection } from "@/features/data/useCollection";
+import { useCollection } from "../../../features/data/useCollection";
 
 type Row = { id:any; doorloop_id?:any; name:string; email:string; phone:string; property_count:number; active:any };
 

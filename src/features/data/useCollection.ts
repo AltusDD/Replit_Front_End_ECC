@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getApiBase } from "@/lib/config";
+import { getApiBase } from "../../lib/config";
 
 type JsonValue = unknown;
 type FetchOpts = {

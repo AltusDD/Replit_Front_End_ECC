@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from "react";
-import { DataTable, Col } from "@/components/DataTable";
-import KPIBar from "@/components/KPIBar";
+import { DataTable, Col } from "../../../components/DataTable";
+import KPIBar from "../../../components/KPIBar";
 import { UNIT_COLUMNS } from "../columns";
-import { useCollection } from "@/features/data/useCollection";
-import { indexBy } from "@/utils/dict";
-import { money } from "@/utils/format";
+import { useCollection } from "../../../features/data/useCollection";
+import { indexBy } from "../../../utils/dict";
+import { money } from "../../../utils/format";
 
 type Row = {
   id:any; doorloop_id?:any; property:string; unit_number:string;

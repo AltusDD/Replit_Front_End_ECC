@@ -1,5 +1,5 @@
 import React from "react";
-import "@/styles/table.css";
+import "../styles/table.css";
 
 export type KPI = { label: string; value: React.ReactNode; sub?: string; tone?: "ok"|"warn"|"bad"|"muted" };
 export default function KPIBar({ items }: { items: KPI[] }) {
