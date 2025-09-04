@@ -67,6 +67,7 @@ export default function UnitsPage() {
         error={error}
         csvName="units"
         drawerTitle={(row) => `${row.property_name} - Unit ${row.unit_number}`}
+        rowHref={(row) => `/card/unit/${row.id}`}
       />
     </section>
   );

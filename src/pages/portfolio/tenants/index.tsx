@@ -77,6 +77,7 @@ export default function TenantsPage() {
         error={error}
         csvName="tenants"
         drawerTitle={(row) => row.display_name || `Tenant ${row.id}`}
+        rowHref={(row) => `/card/tenant/${row.id}`}
       />
     </section>
   );

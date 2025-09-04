@@ -69,6 +69,7 @@ export default function LeasesPage() {
         error={error}
         csvName="leases"
         drawerTitle={(row) => `${row.property_name} - ${row.tenant_name}`}
+        rowHref={(row) => `/card/lease/${row.id}`}
       />
     </section>
   );

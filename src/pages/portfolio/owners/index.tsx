@@ -61,6 +61,7 @@ export default function OwnersPage() {
         error={error}
         csvName="owners"
         drawerTitle={(row) => row.name || `Owner ${row.id}`}
+        rowHref={(row) => `/card/owner/${row.id}`}
       />
     </section>
   );

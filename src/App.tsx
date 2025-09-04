@@ -18,6 +18,13 @@ import LeasesPage from "./pages/portfolio/leases";
 import TenantsPage from "./pages/portfolio/tenants";
 import OwnersPage from "./pages/portfolio/owners";
 
+// Card Pages
+import PropertyCardPage from "./pages/card/property";
+import UnitCardPage from "./pages/card/unit";
+import LeaseCardPage from "./pages/card/lease";
+import TenantCardPage from "./pages/card/tenant";
+import OwnerCardPage from "./pages/card/owner";
+
 /**
  * If you already have a real Dashboard page component, swap this import in:
  *   import DashboardPage from "./pages/dashboard";
@@ -50,6 +57,14 @@ export default function App() {
           <Route path="/portfolio/tenants" component={TenantsPage} />
           <Route path="/portfolio/owners" component={OwnersPage} />
           {/* -------------------------------------- */}
+
+          {/* -------- Card Pages -------- */}
+          <Route path="/card/property/:id" component={PropertyCardPage} />
+          <Route path="/card/unit/:id" component={UnitCardPage} />
+          <Route path="/card/lease/:id" component={LeaseCardPage} />
+          <Route path="/card/tenant/:id" component={TenantCardPage} />
+          <Route path="/card/owner/:id" component={OwnerCardPage} />
+          {/* ---------------------------- */}
 
           {/* Keep any other existing routes you have here.
              Do NOT route to the old mock pages (Properties.tsx, etc.). */}
