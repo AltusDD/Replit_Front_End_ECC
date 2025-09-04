@@ -44,6 +44,14 @@ function DashboardFallback() {
 }
 
 export default function App() {
+  // Dev auditor for ?debug=1
+  React.useEffect(() => {
+    if (typeof location !== 'undefined' && 
+        new URLSearchParams(location.search).get('debug') === '1') {
+      import('./dev/auditPortfolio').then(m => m.runPortfolioAudit()).catch(() => {});
+    }
+  }, []);
+
   return (
     <div className="ecc-shell">
       <Sidebar />

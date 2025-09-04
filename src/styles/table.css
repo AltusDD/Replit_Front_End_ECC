@@ -9,20 +9,26 @@
 :root{
   /* Altus Genesis Branding */
   --altus-black: #0b0e12;
-  --altus-gold: #d6b36a;
-  --altus-dark-gray: #1a1d21;
-  --altus-light-gray: #a0a0a0;
-  --altus-text: #e2e2e2;
+  --altus-panel: #1a1d21;            /* existing panels */
+  --altus-grey-600: #2a2d31;         /* APPROVED LIGHT GREY for chips/cards */
+  --altus-grey-700: #2f353d;         /* alt zebra / chip hover */
+  --altus-gold: #d6b36a;             /* keep for accents and progress */
+  --altus-text: #d7dae0;
+  --altus-muted: #a0a0a0;
+  
+  /* Legacy aliases */
+  --altus-dark-gray: var(--altus-panel);
+  --altus-light-gray: var(--altus-muted);
 
   /* Legacy mappings for compatibility */
   --ink-1: var(--altus-text);
   --ink-2: #c9cbd0;
-  --ink-3: var(--altus-light-gray);
+  --ink-3: var(--altus-muted);
   --surface-0: var(--altus-black);
-  --surface-1: var(--altus-dark-gray);
+  --surface-1: var(--altus-panel);
   --surface-2: #1f2226;
   --surface-3: #242831;
-  --line-1: #2a2d31;
+  --line-1: var(--altus-grey-600);
   --accent: var(--altus-gold);
 
   /* Status Colors */
@@ -132,15 +138,21 @@
 
 /* ---------- Body ---------- */
 .ecc-table tbody tr:nth-child(odd){ background: var(--surface-2); }
-.ecc-table tbody tr:nth-child(even){ background: var(--surface-3); }
+.ecc-table tbody tr:nth-child(even){ background: #171b20; /* slightly lighter for contrast */ }
 .ecc-table tbody tr{
   cursor: pointer;
   transition: all 0.2s ease;
 }
 .ecc-table tbody tr:hover{ 
-  background: var(--surface-3);
+  background: #1e232a; /* subtle hover */
   transform: translateY(-1px);
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+}
+.ecc-row:nth-child(even) { 
+  background: #171b20; 
+}
+.ecc-row:hover { 
+  background: #1e232a; 
 }
 .ecc-table td{
   padding: 14px;
@@ -166,7 +178,7 @@
 .ecc-pager{ display:flex; align-items:center; gap:10px; }
 
 /* ---------- Genesis Status Tags ---------- */
-.ecc-badge{
+.ecc-badge {
   display: inline-flex;
   align-items: center;
   padding: 4px 12px;
@@ -175,21 +187,22 @@
   font-size: 0.75rem;
   letter-spacing: 0.025em;
   text-transform: uppercase;
+  background: var(--altus-grey-600);
+  color: var(--altus-text);
+  border: 1px solid rgba(255,255,255,0.06);
 }
-.ecc-badge--ok{ 
-  background: var(--status-active-bg); 
-  color: var(--status-active); 
-  border: 1px solid var(--status-active-border);
+.ecc-badge--good { 
+  background: #1f6f4a; /* green for positive */
 }
-.ecc-badge--warn{ 
-  background: var(--status-warning-bg); 
-  color: var(--status-warning); 
-  border: 1px solid var(--status-warning-border);
+.ecc-badge--warn { 
+  background: var(--altus-gold); 
+  color: #111; /* keep gold for ATTENTION states */
 }
-.ecc-badge--bad{ 
-  background: var(--status-litigation-bg); 
-  color: var(--status-litigation); 
-  border: 1px solid var(--status-litigation-border);
+.ecc-badge--bad { 
+  background: #80343a; /* red for negative */
+}
+.ecc-badge:hover { 
+  background: var(--altus-grey-700); 
 }
 
 /* ---------- Progress Bars ---------- */
@@ -199,15 +212,28 @@
   gap: 8px;
   min-width: 120px;
 }
+.ecc-progress {
+  background: #21262c; /* darker neutral track */
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  flex: 1;
+}
+.ecc-progress__fill {
+  background: var(--altus-gold); /* keep gold fill */
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
 .ecc-progress-bg {
-  background-color: #374151;
+  background: #21262c;
   height: 6px;
   border-radius: 3px;
   overflow: hidden;
   flex: 1;
 }
 .ecc-progress-fg {
-  background-color: var(--altus-gold);
+  background: var(--altus-gold);
   height: 100%;
   border-radius: 3px;
   transition: width 0.3s ease;
@@ -262,9 +288,10 @@
   margin-bottom: 24px;
 }
 
-.ecc-kpi {
-  background: var(--altus-dark-gray);
-  border: 1px solid #2a2d31;
+.ecc-kpi,
+.ecc-card {
+  background: var(--altus-grey-600);
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 12px;
   padding: 20px;
   text-align: center;

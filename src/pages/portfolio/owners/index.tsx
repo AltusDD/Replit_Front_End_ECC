@@ -1,28 +1,45 @@
 import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
 import useCollection from "../../../features/data/useCollection";
-import { OWNER_COLUMNS } from "../columns";
+import { OWNER_COLUMNS, mapOwner } from "../columns";
 import "../../../styles/table.css";
 
 export default function OwnersPage() {
   const owners = useCollection<any>("/api/portfolio/owners");
+  const properties = useCollection<any>("/api/portfolio/properties");
 
   const { rows, loading, error } = useMemo(() => {
-    // Backend now provides all structured data
+    const mapped = (owners.data || []).map((o) => {
+      // Expand contact field fallbacks
+      const email = o.email || o.primary_email || o.contact_email || o.owner_email || 
+                    (o.emails?.[0]?.address) || (o.contacts?.[0]?.email) || null;
+      const phone = o.phone || o.phone_number || o.phoneNumber || o.primary_phone || 
+                    o.mobile || (o.phones?.[0]?.number) || (o.contacts?.[0]?.phone) || null;
+      
+      const enriched = {
+        ...o,
+        email,
+        phone,
+      };
+      
+      return mapOwner(enriched);
+    });
+
     return {
-      rows: owners.data || [],
-      loading: owners.loading,
-      error: owners.error,
+      rows: mapped,
+      loading: owners.loading || properties.loading,
+      error: owners.error || properties.error,
     };
-  }, [owners]);
+  }, [owners, properties]);
 
 
   const kpis = useMemo(() => {
     const total = rows.length;
     const active = rows.filter((o) => o.active).length;
-    const totalProps = 0; // Properties count from backend if needed
+    // Count properties by owner_id if available, else use total
+    const totalProps = properties.data?.length || 0;
     return { total, active, totalProps };
-  }, [rows, properties]);
+  }, [rows, properties.data]);
 
   return (
     <section className="ecc-page">

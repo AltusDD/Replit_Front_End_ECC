@@ -9,12 +9,18 @@ export function getPath<T = any>(obj: any, path: string, d?: T): T | undefined {
   } catch { return d; }
 }
 
-/** Format a number as currency. */
-export function money(n?: number | null): string {
+/** Format a number as currency with optional decimals. */
+export function money(n?: number | null, opts?: { decimals?: 0 | 2 }): string {
   if (n == null || Number.isNaN(n as number)) return "—";
   if (n === 0) return "$0";
   const v = typeof n === "number" ? n : Number(n);
-  return v.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  const decimals = opts?.decimals ?? 0;
+  return v.toLocaleString(undefined, { 
+    style: "currency", 
+    currency: "USD", 
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals 
+  });
 }
 
 /** Format a number as a percent, default 1 decimal. */
@@ -23,11 +29,12 @@ export function percent(n?: number | null, digits = 1): string {
   return `${Math.round(n || 0)}%`;
 }
 
-/** Format ISO-ish date to YYYY-MM-DD. */
-export function shortDate(iso?: string | null): string {
-  if (!iso) return dash;
-  const d = new Date(iso);
-  return Number.isNaN(+d) ? dash : d.toISOString().slice(0,10);
+/** Format date to Mon D, YYYY (e.g., Sep 4, 2025). */
+export function shortDate(v?: string | number | Date | null): string {
+  if (!v) return "—";
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 export type BadgeKind = "ok" | "warn" | "bad" | "muted";
