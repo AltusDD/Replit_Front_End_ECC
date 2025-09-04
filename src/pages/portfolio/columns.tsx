@@ -1,15 +1,6 @@
 import React from "react";
 import { money, percent, shortDate, boolBadge } from "../../utils/format";
-
-// Genesis Column interface - matches DataTable spec
-interface Column {
-  key: string;
-  header: string;
-  align?: "left" | "right";
-  type?: "text" | "enum" | "number" | "date";
-  enumValues?: string[];
-  render?: (row: any) => React.ReactNode;
-}
+import { DataColumn } from "../../components/DataTable";
 
 // Badge helper for status/boolean displays
 function statusBadge(text: string, isActive: boolean) {
@@ -18,7 +9,7 @@ function statusBadge(text: string, isActive: boolean) {
 }
 
 // PROPERTY COLUMNS & MAPPER
-export const PROPERTY_COLUMNS: Column[] = [
+export const PROPERTY_COLUMNS: DataColumn[] = [
   { key: "name", header: "PROPERTY", type: "text" },
   { key: "type", header: "TYPE", type: "enum" },
   { key: "class", header: "CLASS", type: "enum" },
@@ -30,7 +21,7 @@ export const PROPERTY_COLUMNS: Column[] = [
     header: "OCCUPANCY", 
     align: "right", 
     type: "number",
-    render: (row) => {
+    render: (value, row) => {
       const occ = row.occupancy || 0;
       const color = occ >= 90 ? "ok" : occ >= 70 ? "warn" : "bad";
       return <span className={`ecc-badge ecc-badge--${color}`}>{percent(occ, 1)}</span>;
@@ -40,7 +31,7 @@ export const PROPERTY_COLUMNS: Column[] = [
     key: "active", 
     header: "ACTIVE", 
     type: "enum",
-    render: (row) => statusBadge(row.active ? "Active" : "Inactive", row.active)
+    render: (value, row) => statusBadge(row.active ? "Active" : "Inactive", row.active)
   }
 ];
 
@@ -59,7 +50,7 @@ export function mapProperty(raw: any, enrichment: any = {}) {
 }
 
 // UNIT COLUMNS & MAPPER
-export const UNIT_COLUMNS: Column[] = [
+export const UNIT_COLUMNS: DataColumn[] = [
   { key: "property_name", header: "PROPERTY", type: "text" },
   { key: "unit_number", header: "UNIT", type: "text" },
   { key: "beds", header: "BEDS", align: "right", type: "number" },
@@ -71,7 +62,7 @@ export const UNIT_COLUMNS: Column[] = [
     header: "MARKET RENT", 
     align: "right", 
     type: "number",
-    render: (row) => money(row.market_rent)
+    render: (value, row) => money(row.market_rent)
   }
 ];
 
@@ -89,19 +80,19 @@ export function mapUnit(raw: any, propertyName: string = "—", occupied: boolea
 }
 
 // LEASE COLUMNS & MAPPER
-export const LEASE_COLUMNS: Column[] = [
+export const LEASE_COLUMNS: DataColumn[] = [
   { key: "property_name", header: "PROPERTY", type: "text" },
   { key: "unit_number", header: "UNIT", type: "text" },
   { key: "tenant_name", header: "TENANT", type: "text" },
   { key: "status", header: "STATUS", type: "enum" },
-  { key: "start_date", header: "START DATE", type: "date", render: (row) => shortDate(row.start_date) },
-  { key: "end_date", header: "END DATE", type: "date", render: (row) => shortDate(row.end_date) },
+  { key: "start_date", header: "START DATE", type: "date", render: (value, row) => shortDate(row.start_date) },
+  { key: "end_date", header: "END DATE", type: "date", render: (value, row) => shortDate(row.end_date) },
   { 
     key: "rent", 
     header: "RENT", 
     align: "right", 
     type: "number",
-    render: (row) => money(row.rent)
+    render: (value, row) => money(row.rent)
   }
 ];
 
@@ -119,7 +110,7 @@ export function mapLease(raw: any, propertyName: string = "—", tenantName: str
 }
 
 // TENANT COLUMNS & MAPPER
-export const TENANT_COLUMNS: Column[] = [
+export const TENANT_COLUMNS: DataColumn[] = [
   { key: "display_name", header: "TENANT", type: "text" },
   { key: "email", header: "EMAIL", type: "text" },
   { key: "phone", header: "PHONE", type: "text" },
@@ -131,7 +122,7 @@ export const TENANT_COLUMNS: Column[] = [
     header: "BALANCE", 
     align: "right", 
     type: "number",
-    render: (row) => {
+    render: (value, row) => {
       const balance = row.balance || 0;
       const color = balance > 0 ? "warn" : "ok";
       return <span className={`ecc-badge ecc-badge--${color}`}>{money(balance)}</span>;
@@ -153,7 +144,7 @@ export function mapTenant(raw: any, propertyName: string = "—", unitLabel: str
 }
 
 // OWNER COLUMNS & MAPPER
-export const OWNER_COLUMNS: Column[] = [
+export const OWNER_COLUMNS: DataColumn[] = [
   { key: "name", header: "OWNER", type: "text" },
   { key: "email", header: "EMAIL", type: "text" },
   { key: "phone", header: "PHONE", type: "text" },
@@ -162,7 +153,7 @@ export const OWNER_COLUMNS: Column[] = [
     key: "active", 
     header: "ACTIVE", 
     type: "enum",
-    render: (row) => statusBadge(row.active ? "Active" : "Inactive", row.active)
+    render: (value, row) => statusBadge(row.active ? "Active" : "Inactive", row.active)
   }
 ];
 

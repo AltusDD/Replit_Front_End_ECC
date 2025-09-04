@@ -6,9 +6,9 @@ import { PROPERTY_COLUMNS, mapProperty } from "../columns";
 import "../../../styles/table.css";
 
 export default function PropertiesPage() {
-  const props = useCollection<any>("properties");
-  const units = useCollection<any>("units");
-  const leases = useCollection<any>("leases");
+  const props = useCollection<any>("/api/portfolio/properties");
+  const units = useCollection<any>("/api/portfolio/units");
+  const leases = useCollection<any>("/api/portfolio/leases");
 
   const { rows, loading, error } = useMemo(() => {
     const byPropUnits = groupBy(units.data || [], (u) => u.property_id);

@@ -6,9 +6,9 @@ import { LEASE_COLUMNS, mapLease } from "../columns";
 import "../../../styles/table.css";
 
 export default function LeasesPage() {
-  const leases = useCollection<any>("leases");
-  const tenants = useCollection<any>("tenants");
-  const props = useCollection<any>("properties");
+  const leases = useCollection<any>("/api/portfolio/leases");
+  const tenants = useCollection<any>("/api/portfolio/tenants");
+  const props = useCollection<any>("/api/portfolio/properties");
 
   const { rows, loading, error } = useMemo(() => {
     const pById = indexBy(props.data || [], "id");

@@ -6,8 +6,8 @@ import { OWNER_COLUMNS, mapOwner } from "../columns";
 import "../../../styles/table.css";
 
 export default function OwnersPage() {
-  const owners = useCollection<any>("owners");
-  const properties = useCollection<any>("properties");
+  const owners = useCollection<any>("/api/portfolio/owners");
+  const properties = useCollection<any>("/api/portfolio/properties");
 
   const { rows, loading, error } = useMemo(() => {
     // If you later add a property_owners link table, replace this logic.

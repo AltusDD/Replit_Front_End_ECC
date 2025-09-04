@@ -6,9 +6,9 @@ import { UNIT_COLUMNS, mapUnit } from "../columns";
 import "../../../styles/table.css";
 
 export default function UnitsPage() {
-  const units = useCollection<any>("units");
-  const props = useCollection<any>("properties");
-  const leases = useCollection<any>("leases");
+  const units = useCollection<any>("/api/portfolio/units");
+  const props = useCollection<any>("/api/portfolio/properties");
+  const leases = useCollection<any>("/api/portfolio/leases");
 
   const { rows, loading, error } = useMemo(() => {
     const pById = indexBy(props.data || [], "id");

@@ -6,10 +6,10 @@ import { TENANT_COLUMNS, mapTenant } from "../columns";
 import "../../../styles/table.css";
 
 export default function TenantsPage() {
-  const tenants = useCollection<any>("tenants");
-  const leases = useCollection<any>("leases");
-  const units = useCollection<any>("units");
-  const props = useCollection<any>("properties");
+  const tenants = useCollection<any>("/api/portfolio/tenants");
+  const leases = useCollection<any>("/api/portfolio/leases");
+  const units = useCollection<any>("/api/portfolio/units");
+  const props = useCollection<any>("/api/portfolio/properties");
 
   const { rows, loading, error } = useMemo(() => {
     const uById = indexBy(units.data || [], "id");
