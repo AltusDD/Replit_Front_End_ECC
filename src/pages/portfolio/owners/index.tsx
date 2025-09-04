@@ -15,15 +15,7 @@ export default function OwnersPage() {
     const byOwnerProps = groupBy(properties.data || [], (p) => p.owner_id ?? "__none__");
 
     const mapped = (owners.data || []).map((o) => {
-      const count = (byOwnerProps.get(o.id)?.length || 0);
-      
-      // Enrich owner data before mapping
-      const enriched = {
-        ...o,
-        properties_count: count
-      };
-      
-      return mapOwner(enriched);
+      return mapOwner(o);
     });
 
     return {
@@ -33,12 +25,13 @@ export default function OwnersPage() {
     };
   }, [owners, properties]);
 
+
   const kpis = useMemo(() => {
     const total = rows.length;
     const active = rows.filter((o) => o.active).length;
-    const totalProps = rows.reduce((s, o) => s + (o.properties || 0), 0);
+    const totalProps = properties.data?.length || 0;
     return { total, active, totalProps };
-  }, [rows]);
+  }, [rows, properties]);
 
   return (
     <section className="ecc-page">
@@ -67,7 +60,7 @@ export default function OwnersPage() {
         loading={loading}
         error={error}
         csvName="owners"
-        drawerTitle={(row) => row.owner || `Owner ${row.id}`}
+        drawerTitle={(row) => row.company || `Owner ${row.id}`}
         rowHref={(row) => `/card/owner/${row.id}`}
       />
     </section>

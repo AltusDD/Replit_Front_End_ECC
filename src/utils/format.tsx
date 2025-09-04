@@ -1,29 +1,33 @@
 // src/utils/format.tsx
 import * as React from "react";
 
+export const dash = "—";
+
+// Safe getter by path: get(obj, "a.b.c", default)
+export function getPath<T = any>(obj: any, path: string, d?: T): T | undefined {
+  try {
+    return path.split(".").reduce<any>((v, k) => (v == null ? v : v[k]), obj) ?? d;
+  } catch { return d; }
+}
+
 /** Format a number as currency. */
 export function money(n?: number | null): string {
   if (n == null || Number.isNaN(n)) return "—";
-  const sign = n < 0 ? "-" : "";
-  const abs = Math.abs(n);
-  return `${sign}$${abs.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  const v = typeof n === "number" ? n : 0;
+  return v.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
 /** Format a number as a percent, default 1 decimal. */
 export function percent(n?: number | null, digits = 1): string {
-  if (n == null || Number.isNaN(n)) return "—";
-  return `${Number(n).toFixed(digits)}%`;
+  if (n == null || Number.isNaN(n)) return "0%";
+  return `${Math.round(n || 0)}%`;
 }
 
 /** Format ISO-ish date to YYYY-MM-DD. */
-export function shortDate(s?: string | null): string {
-  if (!s) return "—";
-  const d = new Date(s);
-  if (isNaN(d.getTime())) return "—";
-  return d.toISOString().slice(0, 10);
+export function shortDate(iso?: string | null): string {
+  if (!iso) return dash;
+  const d = new Date(iso);
+  return Number.isNaN(+d) ? dash : d.toISOString().slice(0,10);
 }
 
 export type BadgeKind = "ok" | "warn" | "bad" | "muted";
@@ -42,8 +46,8 @@ export function badge(text: string, kind: BadgeKind = "muted") {
 }
 
 /** True/false pill with your badge styling. */
-export function boolBadge(value: unknown, truthy = "true", falsy = "false") {
-  const isTrue = !!value;
+export function boolBadge(ok?: boolean | null, truthy = "ACTIVE", falsy = "INACTIVE") {
+  const isTrue = !!ok;
   const cls = isTrue ? "ecc-badge ecc-badge--ok" : "ecc-badge ecc-badge--bad";
   return <span className={cls}>{isTrue ? truthy : falsy}</span>;
 }

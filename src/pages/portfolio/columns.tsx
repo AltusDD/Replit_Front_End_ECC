@@ -1,188 +1,212 @@
 import React from "react";
-import { money, percent, shortDate, boolBadge, progressBar, statusBadge as genesisStatusBadge } from "../../utils/format";
+import { money, percent, shortDate, boolBadge, progressBar, getPath, dash } from "../../utils/format";
 import { DataColumn } from "../../components/DataTable";
 
-// Type alias for requirement compatibility
+// Type alias for requirement compatibility  
 export type ColumnDef = DataColumn;
 
-// Helper utilities for robust data mapping
-const get = (o: any, ...paths: string[]) => {
-  for (const p of paths) {
-    const v = p.split(".").reduce((x, k) => (x ? x[k] : undefined), o);
-    if (v !== undefined && v !== null && v !== "") return v;
-  }
-  return undefined;
+// PROPERTIES
+export type PropertyRow = {
+  id: string;
+  name: string;
+  type: string;
+  class: string;
+  state: string;
+  city: string;
+  zip: string;
+  units: number;
+  occPct: number; // 0..100
+  active: boolean;
 };
 
-const coerceInt = (v: any) => Number.isFinite(+v) ? +v : 0;
-const coercePct = (v: any) => {
-  if (v == null) return 0;
-  const n = +v;
-  return n > 1 ? n : Math.round(n * 100);
-};
+export function mapProperty(src: any): PropertyRow {
+  const units = Number(getPath(src, "units.total", 0)) || Number(getPath(src, "units", 0)) || 0;
+  const occupied = Number(getPath(src, "units.occupied", 0)) || 0;
+  const occPctFromFields = Number(getPath(src, "occupancyPct", NaN));
+  const occPct = Number.isFinite(occPctFromFields)
+    ? Math.max(0, Math.min(100, occPctFromFields))
+    : (units > 0 ? Math.round((occupied / units) * 100) : 0);
 
-// PROPERTY COLUMNS & MAPPER
-export const PROPERTY_COLUMNS: ColumnDef[] = [
-  { key: "property", header: "PROPERTY", type: "text" },
-  { key: "type", header: "TYPE", type: "enum" },
-  { key: "class", header: "CLASS", type: "enum" },
-  { key: "state", header: "STATE", type: "enum" },
-  { key: "city", header: "CITY", type: "text" },
-  { key: "zip", header: "ZIP", type: "text" },
-  { key: "units", header: "UNITS", align: "right", type: "number" },
-  { 
-    key: "occ", 
-    header: "OCCUPANCY", 
-    align: "right", 
-    type: "number",
-    render: (value, row) => progressBar(row.occ || 0, 100)
+  return {
+    id: String(getPath(src, "id") ?? getPath(src, "_id")),
+    name: String(getPath(src, "displayName") ?? getPath(src, "address.line1") ?? getPath(src, "name") ?? dash),
+    type: String(getPath(src, "type") ?? dash),
+    class: String(getPath(src, "class") ?? dash),
+    state: String(getPath(src, "address.state") ?? getPath(src, "state") ?? dash),
+    city: String(getPath(src, "address.city") ?? getPath(src, "city") ?? dash),
+    zip: String(getPath(src, "address.zip") ?? getPath(src, "zip") ?? dash),
+    units,
+    occPct,
+    active: !!getPath(src, "active"),
+  };
+}
+
+export const PROPERTY_COLUMNS = [
+  { key: "name",  header: "PROPERTY", type: "text", minWidth: 260 },
+  { key: "type",  header: "TYPE",     type: "text" },
+  { key: "class", header: "CLASS",    type: "text" },
+  { key: "state", header: "STATE",    type: "text" },
+  { key: "city",  header: "CITY",     type: "text" },
+  { key: "zip",   header: "ZIP",      type: "text" },
+  { key: "units", header: "UNITS",    align: "right", type: "number" },
+  {
+    key: "occPct", header: "OCCUPANCY", type: "number",
+    render: (r: any) => (
+      <div className="ecc-occ">
+        <div className="ecc-occ-bar"><div style={{width: `${r.occPct}%`}} /></div>
+        <span className="ecc-occ-label">{percent(r.occPct)}</span>
+      </div>
+    ),
   },
-  { 
-    key: "active", 
-    header: "ACTIVE", 
-    type: "enum",
-    render: (value, row) => boolBadge(row.active, "Active", "Inactive")
-  }
+  {
+    key: "active", header: "ACTIVE", type: "enum",
+    render: (r:any)=> boolBadge(!!r.active),
+  },
 ];
 
-export function mapProperty(d: any) {
+// UNITS
+export type UnitRow = {
+  id: string;
+  property: string;
+  unit: string;
+  beds: number;
+  baths: number;
+  sqft: number;
+  status: string;
+  marketRent: number;
+};
+
+export function mapUnit(src:any): UnitRow {
   return {
-    id: get(d, "id", "uid", "_id"),
-    property: get(d, "name", "displayName", "address.line1", "address1", "fullAddress") || "—",
-    type: get(d, "type") || "—",
-    class: get(d, "class") || "—",
-    state: get(d, "address.state", "addr.state", "state") || "—",
-    city: get(d, "address.city", "addr.city", "city") || "—",
-    zip: get(d, "address.zip", "addr.zip", "postal_code", "zip") || "—",
-    units: coerceInt(get(d, "units", "units_count", "unitCount")),
-    occ: coercePct(get(d, "occupancy", "occupancy_percent", "occPct")),
-    active: !!get(d, "active", "isActive", "status.active")
+    id: String(getPath(src,"id") ?? getPath(src,"_id")),
+    property: String(getPath(src,"property.displayName") ?? getPath(src,"property.name") ?? dash),
+    unit: String(getPath(src,"label") ?? getPath(src,"unit") ?? dash),
+    beds: Number(getPath(src,"beds",0)),
+    baths: Number(getPath(src,"baths",0)),
+    sqft: Number(getPath(src,"sqft",0)),
+    status: String(getPath(src,"status") ?? dash),
+    marketRent: Number(getPath(src,"marketRent",0)),
   };
 }
 
-// UNIT COLUMNS & MAPPER
-export const UNIT_COLUMNS: ColumnDef[] = [
-  { key: "property", header: "PROPERTY", type: "text" },
-  { key: "unit", header: "UNIT", type: "text" },
-  { key: "bd", header: "BEDS", align: "right", type: "number" },
-  { key: "ba", header: "BATHS", align: "right", type: "number" },
-  { key: "sqft", header: "SQFT", align: "right", type: "number" },
-  { key: "status", header: "STATUS", type: "enum", render: (value, row) => boolBadge(value === "Occupied", "Occupied", value || "Vacant") },
-  { 
-    key: "market_rent", 
-    header: "MARKET RENT", 
-    align: "right", 
-    type: "number",
-    render: (value, row) => money(row.market_rent)
-  }
+export const UNIT_COLUMNS = [
+  { key:"property", header:"PROPERTY", type:"text", minWidth:260 },
+  { key:"unit", header:"UNIT", type:"text" },
+  { key:"beds", header:"BEDS", align:"right", type:"number" },
+  { key:"baths", header:"BATHS", align:"right", type:"number" },
+  { key:"sqft", header:"SQFT", align:"right", type:"number" },
+  { key:"status", header:"STATUS", type:"enum"},
+  { key:"marketRent", header:"MARKET RENT", align:"right", type:"number",
+    render:(r:any)=>money(r.marketRent) },
 ];
 
-export function mapUnit(d: any) {
+// LEASES
+export type LeaseRow = {
+  id: string;
+  property: string;
+  unit: string;
+  tenants: string; // joined
+  status: string;
+  start: string;
+  end: string;
+  rent: number;
+};
+
+export function mapLease(src:any): LeaseRow {
+  const names = (getPath<any[]>(src,"tenants") ?? [])
+    .map(t => String(getPath(t,"fullName") ?? getPath(t,"name") ?? ""))
+    .filter(Boolean)
+    .join(", ");
   return {
-    id: get(d, "id", "uid", "_id"),
-    property: get(d, "property.name", "propertyAddress", "property.address.line1", "property.address1") || "—",
-    unit: get(d, "unit", "unit_label", "address.line1", "unitAddress") || "—",
-    bd: coerceInt(get(d, "beds", "bd")),
-    ba: +get(d, "baths", "ba") || 0,
-    sqft: coerceInt(get(d, "sqft", "square_feet")),
-    status: get(d, "status", "occupancy_status") || "—",
-    market_rent: +get(d, "market_rent", "rent.market", "asking_rent") || 0
+    id: String(getPath(src,"id") ?? getPath(src,"_id")),
+    property: String(getPath(src,"property.displayName") ?? getPath(src,"property.name") ?? dash),
+    unit: String(getPath(src,"unit.label") ?? getPath(src,"unit") ?? dash),
+    tenants: names || dash,
+    status: String(getPath(src,"status") ?? dash),
+    start: String(getPath(src,"startDate") ?? getPath(src,"start") ?? ""),
+    end: String(getPath(src,"endDate") ?? getPath(src,"end") ?? ""),
+    rent: Number(getPath(src,"rent",0)),
   };
 }
 
-// LEASE COLUMNS & MAPPER
-export const LEASE_COLUMNS: ColumnDef[] = [
-  { key: "tenant", header: "TENANT(S)", type: "text" },
-  { key: "property", header: "PROPERTY", type: "text" },
-  { key: "unit", header: "UNIT", type: "text" },
-  { key: "status", header: "STATUS", type: "enum", render: (value, row) => boolBadge(value === "active", value || "—", value || "—") },
-  { key: "start", header: "START", type: "date", render: (value, row) => shortDate(row.start) },
-  { key: "end", header: "END", type: "date", render: (value, row) => shortDate(row.end) },
-  { 
-    key: "rent", 
-    header: "RENT", 
-    align: "right", 
-    type: "number",
-    render: (value, row) => money(row.rent)
-  }
+export const LEASE_COLUMNS = [
+  { key:"property", header:"PROPERTY", type:"text", minWidth:260 },
+  { key:"unit", header:"UNIT", type:"text" },
+  { key:"tenants", header:"TENANT(S)", type:"text", minWidth:220 },
+  { key:"status", header:"STATUS", type:"enum"},
+  { key:"start", header:"START", type:"text", render:(r:any)=>shortDate(r.start) },
+  { key:"end", header:"END", type:"text", render:(r:any)=>shortDate(r.end) },
+  { key:"rent", header:"RENT", align:"right", type:"number", render:(r:any)=>money(r.rent) },
 ];
 
-export function mapLease(d: any) {
-  const tenants = get(d, "tenants") || get(d, "household.members") || [];
-  const primary = Array.isArray(tenants) && tenants.length ? (tenants[0].name || tenants[0].fullName || tenants[0].firstName && tenants[0].lastName ? `${tenants[0].firstName} ${tenants[0].lastName}`.trim() : tenants[0]) : get(d, "tenant.name", "tenant");
-  const extra = Array.isArray(tenants) && tenants.length > 1 ? ` +${tenants.length-1}` : "";
-  
+// TENANTS
+export type TenantRow = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  property: string;
+  unit: string;
+  type: "primary" | "secondary" | "prospect" | string;
+  balance: number;
+};
+
+export function mapTenant(src:any): TenantRow {
+  const type =
+    (getPath(src,"type") ?? getPath(src,"role") ?? "").toString().toLowerCase() ||
+    (!getPath(src,"leaseId") ? "prospect" : "primary");
   return {
-    id: get(d, "id", "uid", "_id"),
-    tenant: (primary || "—") + extra,
-    property: get(d, "property.name", "propertyAddress", "unit.property.name") || "—",
-    unit: get(d, "unit.label", "unit", "unitAddress") || "—",
-    status: get(d, "status") || "—",
-    start: get(d, "start", "start_date", "dates.start"),
-    end: get(d, "end", "end_date", "dates.end"),
-    rent: +get(d, "rent", "monthly_rent") || 0
+    id: String(getPath(src,"id") ?? getPath(src,"_id")),
+    name: String(getPath(src,"fullName") ?? getPath(src,"name") ?? dash),
+    email: String(getPath(src,"email") ?? dash),
+    phone: String(getPath(src,"phone") ?? getPath(src,"phoneNumber") ?? dash),
+    property: String(getPath(src,"property.displayName") ?? getPath(src,"property.name") ?? dash),
+    unit: String(getPath(src,"unit.label") ?? getPath(src,"unit") ?? dash),
+    type: type as any,
+    balance: Number(getPath(src,"balance",0)),
   };
 }
 
-// TENANT COLUMNS & MAPPER
-export const TENANT_COLUMNS: ColumnDef[] = [
-  { key: "tenant", header: "TENANT", type: "text" },
-  { key: "email", header: "EMAIL", type: "text" },
-  { key: "phone", header: "PHONE", type: "text" },
-  { key: "property", header: "PROPERTY", type: "text" },
-  { key: "unit", header: "UNIT", type: "text" },
-  { key: "type", header: "TYPE", type: "enum", render: (value, row) => boolBadge(value === "Lease_Tenant", value || "—", value || "—") },
-  { 
-    key: "balance", 
-    header: "BALANCE", 
-    align: "right", 
-    type: "number",
-    render: (value, row) => {
-      const balance = row.balance || 0;
-      const color = balance > 0 ? "warn" : "ok";
-      return <span className={`ecc-badge ecc-badge--${color}`}>{money(balance)}</span>;
-    }
-  }
+export const TENANT_COLUMNS = [
+  { key:"name", header:"TENANT", type:"text", minWidth:200 },
+  { key:"email", header:"EMAIL", type:"text" },
+  { key:"phone", header:"PHONE", type:"text" },
+  { key:"property", header:"PROPERTY", type:"text", minWidth:220 },
+  { key:"unit", header:"UNIT", type:"text" },
+  { key:"type", header:"TYPE", type:"enum"},
+  { key:"balance", header:"BALANCE", align:"right", type:"number",
+    render:(r:any)=>money(r.balance) },
 ];
 
-export function mapTenant(d: any) {
-  const type = get(d, "type") || (get(d, "leaseId", "lease.id") ? "Lease_Tenant" : (get(d, "status") === "prospect" ? "Prospect" : "Lease_Tenant"));
-  const hh = coerceInt(get(d, "householdSize", "members_count"));
-  const extra = hh > 1 ? ` +${hh-1}` : "";
-  
+// OWNERS
+export type OwnerRow = {
+  id: string;
+  company: string;
+  email: string;
+  phone: string;
+  active: boolean;
+};
+
+export function mapOwner(src:any): OwnerRow {
+  const company = String(
+    getPath(src,"company") ??
+    getPath(src,"companyName") ??
+    getPath(src,"name") ??
+    getPath(src,"ownerName") ??
+    dash
+  );
   return {
-    id: get(d, "id", "uid", "_id"),
-    tenant: (get(d, "name", "fullName", "firstName") || "—") + extra,
-    email: get(d, "email") || "—",
-    phone: get(d, "phone", "phone_number") || "—",
-    property: get(d, "property.name", "propertyAddress") || "—",
-    unit: get(d, "unit.label", "unit", "unitAddress") || "—",
-    type,
-    balance: +get(d, "balance", "ledger.balance", "account.balance") || 0
+    id: String(getPath(src,"id") ?? getPath(src,"_id")),
+    company,
+    email: String(getPath(src,"email") ?? dash),
+    phone: String(getPath(src,"phone") ?? getPath(src,"phoneNumber") ?? dash),
+    active: !!getPath(src,"active"),
   };
 }
 
-// OWNER COLUMNS & MAPPER
-export const OWNER_COLUMNS: ColumnDef[] = [
-  { key: "owner", header: "OWNER", type: "text" },
-  { key: "email", header: "EMAIL", type: "text" },
-  { key: "phone", header: "PHONE", type: "text" },
-  { key: "properties", header: "PROPERTIES", align: "right", type: "number" },
-  { 
-    key: "active", 
-    header: "ACTIVE", 
-    type: "enum",
-    render: (value, row) => boolBadge(row.active, "Active", "Inactive")
-  }
+export const OWNER_COLUMNS = [
+  { key:"company", header:"COMPANY", type:"text", minWidth:200 },
+  { key:"email", header:"EMAIL", type:"text" },
+  { key:"phone", header:"PHONE", type:"text" },
+  { key:"active", header:"ACTIVE", type:"enum", render:(r:any)=>boolBadge(!!r.active) },
 ];
-
-export function mapOwner(d: any) {
-  return {
-    id: get(d, "id", "uid", "_id"),
-    owner: get(d, "company", "name", "displayName") || "—",
-    email: get(d, "email") || "—",
-    phone: get(d, "phone") || "—",
-    properties: coerceInt(get(d, "properties_count", "propertyCount", "stats.properties")),
-    active: !!get(d, "active", "isActive")
-  };
-}

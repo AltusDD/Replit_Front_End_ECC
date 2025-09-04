@@ -37,8 +37,8 @@ export default function TenantsPage() {
       // Enrich tenant data before mapping
       const enriched = {
         ...t,
-        property: { name: propName },
-        unit: { label: unitLabel },
+        "property.name": propName,
+        "unit.label": unitLabel,
         leaseId: l?.id
       };
       
@@ -51,6 +51,7 @@ export default function TenantsPage() {
       error: tenants.error || leases.error || units.error || props.error,
     };
   }, [tenants, leases, units, props]);
+
 
   const kpis = useMemo(() => {
     const total = rows.length;
@@ -87,7 +88,7 @@ export default function TenantsPage() {
         loading={loading}
         error={error}
         csvName="tenants"
-        drawerTitle={(row) => row.tenant || `Tenant ${row.id}`}
+        drawerTitle={(row) => row.name || `Tenant ${row.id}`}
         rowHref={(row) => `/card/tenant/${row.id}`}
       />
     </section>

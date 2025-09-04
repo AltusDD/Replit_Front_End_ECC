@@ -21,14 +21,12 @@ export default function PropertiesPage() {
       const occCount = u.filter((x) => byUnitActiveLease.has(String(x.id))).length;
       const occPct = unitCount ? (occCount / unitCount) * 100 : 0;
       
-      // Enrich property data before mapping
+      // Enrich property data with calculated values
       const enriched = {
         ...p,
-        units: unitCount,
-        occupancy: occPct,
-        address_city: p.address_city,
-        address_state: p.address_state,
-        address_zip: p.address_zip || p.zip
+        "units.total": unitCount,
+        "units.occupied": occCount,
+        occupancyPct: occPct
       };
       
       return mapProperty(enriched);
@@ -41,12 +39,13 @@ export default function PropertiesPage() {
     };
   }, [props, units, leases]);
 
+
   // KPIs for display
   const kpis = useMemo(() => {
     const total = rows.length;
     const active = rows.filter(r => r.active).length;
     const totalUnits = rows.reduce((s, r) => s + (r.units || 0), 0);
-    const avgOcc = total ? rows.reduce((s, r) => s + (r.occ || 0), 0) / total : 0;
+    const avgOcc = total ? rows.reduce((s, r) => s + (r.occPct || 0), 0) / total : 0;
     return { total, active, totalUnits, avgOcc };
   }, [rows]);
 
@@ -78,7 +77,7 @@ export default function PropertiesPage() {
         loading={loading}
         error={error}
         csvName="properties"
-        drawerTitle={(row) => row.property || `Property ${row.id}`}
+        drawerTitle={(row) => row.name || `Property ${row.id}`}
         rowHref={(row) => `/card/property/${row.id}`}
       />
     </section>

@@ -26,7 +26,7 @@ export default function UnitsPage() {
       // Enrich unit data before mapping
       const enriched = {
         ...u,
-        property: { name: propName },
+        "property.name": propName,
         status: occupied ? "Occupied" : (u.status || "Vacant")
       };
       
@@ -40,11 +40,12 @@ export default function UnitsPage() {
     };
   }, [units, props, leases]);
 
+
   const kpis = useMemo(() => {
     const total = rows.length;
     const occupied = rows.filter((r) => String(r.status).toLowerCase() === "occupied").length;
     const vacant = total - occupied;
-    const avgRent = rows.length > 0 ? rows.reduce((s, r) => s + (Number(r.market_rent) || 0), 0) / rows.length : 0;
+    const avgRent = rows.length > 0 ? rows.reduce((s, r) => s + (Number(r.marketRent) || 0), 0) / rows.length : 0;
     return { total, occupied, vacant, avgRent };
   }, [rows]);
 
