@@ -27,7 +27,11 @@ export const PROPERTY_COLUMNS = [
     align: "right" as const,
     sort: "numeric",
     filter: "numberRange",
-    render: (r: PropertyRow) => <Format.OccupancyPill value={r.occupancy ?? null} />,
+    render: (r: PropertyRow) => {
+      const occ = r.occupancy ?? 0;
+      const kind = occ >= 90 ? "ok" : occ >= 70 ? "warn" : "bad";
+      return badge(kind, `${occ.toFixed(1)}%`);
+    },
     accessor: (r: PropertyRow) => r.occupancy ?? 0,
   },
   {
@@ -36,7 +40,7 @@ export const PROPERTY_COLUMNS = [
     align: "center" as const,
     filter: "boolean",
     sort: true,
-    render: (r: PropertyRow) => <Format.Badge kind={r.active ? "ok" : "bad"}>{r.active ? "ok" : "no"}</Format.Badge>,
+    render: (r: PropertyRow) => badge(r.active ? "ok" : "bad", r.active ? "Active" : "Inactive"),
   },
 ];
 
@@ -64,7 +68,7 @@ export const UNIT_COLUMNS = [
     align: "right" as const,
     sort: "numeric",
     filter: "numberRange",
-    render: (r: UnitRow) => Format.money(r.market_rent),
+    render: (r: UnitRow) => money(r.market_rent),
   },
 ];
 
@@ -81,9 +85,9 @@ export type LeaseRow = {
 export const LEASE_COLUMNS = [
   { key: "tenants", header: "TENANT(S)", filter: "text", sort: "string" },
   { key: "property", header: "PROPERTY", filter: "text", sort: "string" },
-  { key: "rent", header: "RENT", align: "right" as const, sort: "numeric", filter: "numberRange", render: (r: LeaseRow) => Format.money(r.rent) },
-  { key: "start", header: "START", sort: "string", filter: "text", render: (r: LeaseRow) => Format.date(r.start) },
-  { key: "end", header: "END", sort: "string", filter: "text", render: (r: LeaseRow) => Format.date(r.end) },
+  { key: "rent", header: "RENT", align: "right" as const, sort: "numeric", filter: "numberRange", render: (r: LeaseRow) => money(r.rent) },
+  { key: "start", header: "START", sort: "string", filter: "text", render: (r: LeaseRow) => shortDate(r.start) },
+  { key: "end", header: "END", sort: "string", filter: "text", render: (r: LeaseRow) => shortDate(r.end) },
   { key: "status", header: "STATUS", align: "center" as const, filter: "select", sort: "string" },
 ];
 
@@ -105,7 +109,7 @@ export const TENANT_COLUMNS = [
   { key: "email", header: "EMAIL", filter: "text", sort: "string" },
   { key: "phone", header: "PHONE", filter: "text", sort: "string" },
   { key: "status", header: "STATUS", align: "center" as const, filter: "select", sort: "string" },
-  { key: "balance", header: "BALANCE", align: "right" as const, sort: "numeric", filter: "numberRange", render: (r: TenantRow) => Format.money(r.balance) },
+  { key: "balance", header: "BALANCE", align: "right" as const, sort: "numeric", filter: "numberRange", render: (r: TenantRow) => money(r.balance) },
 ];
 
 /** Owners table */
@@ -128,7 +132,7 @@ export const OWNER_COLUMNS = [
     align: "center" as const,
     filter: "boolean",
     sort: true,
-    render: (r: OwnerRow) => <Format.Badge kind={r.active ? "ok" : "bad"}>{r.active ? "ok" : "no"}</Format.Badge>,
+    render: (r: OwnerRow) => badge(r.active ? "ok" : "bad", r.active ? "Active" : "Inactive"),
   },
 ];
 

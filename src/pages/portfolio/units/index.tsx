@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import DataTable from "../../../components/DataTable";
 import { useCollection } from "../../../features/data/useCollection";
 import { indexBy } from "../../../utils/dict";
