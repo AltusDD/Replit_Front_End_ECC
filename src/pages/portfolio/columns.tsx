@@ -160,6 +160,7 @@ export const TENANT_COLUMNS = [
 export type OwnerRow = {
   id: string;
   company: string;
+  name: string;
   email: string;
   phone: string;
   active: string | boolean;
@@ -170,6 +171,7 @@ export function mapOwner(src:any): OwnerRow {
   return {
     id: String(src.id),
     company: src.company || src.company_name || "—",
+    name: src.name || src.display_name || src.full_name || "—",
     email: src.email || src.primary_email || src.contact_email || "—",
     phone: src.phone || src.phone_number || src.primary_phone || "—", 
     active: src.active,
@@ -178,6 +180,7 @@ export function mapOwner(src:any): OwnerRow {
 
 export const OWNER_COLUMNS = [
   { key:"company", header:"COMPANY", type:"text", render:(_v: any, r: any) => <strong>{r.company ?? ""}</strong> },
+  { key:"name", header:"OWNER", type:"text" },
   { key:"email", header:"EMAIL", type:"text" },
   { key:"phone", header:"PHONE", type:"text" },
   { key:"active", header:"ACTIVE", type:"enum", render:(value:any, r:OwnerRow)=><StatusTag value={String(r.active)} /> },

@@ -302,12 +302,13 @@ app.get("/api/portfolio/tenants", async (req, res) => {
         id: tenant.id,
         name: tenant.display_name || tenant.full_name || 
               (tenant.first_name && tenant.last_name ? `${tenant.first_name} ${tenant.last_name}` : "—"),
-        email: tenant.email,
-        phone: null, // Not available in current schema
+        email: tenant.primary_email || tenant.email || (tenant.emails_json?.[0]?.address) || null,
+        phone: tenant.primary_phone || tenant.phone || tenant.phone_number || 
+               (tenant.phones_json?.[0]?.number) || null,
         propertyName,
         unitLabel,
-        type: tenant.type || "PROSPECT_TENANT",
-        balance: 0 // Not available in current schema
+        type: tenant.type || "LEASE_TENANT",
+        balance: tenant.balance || 0
       };
     }));
 
@@ -330,9 +331,12 @@ app.get("/api/portfolio/owners", async (req, res) => {
 
     const owners: OwnerOut[] = (data || []).map((row: any) => ({
       id: row.id,
-      company: row.company_name || row.display_name || row.full_name || "—",
-      email: null, // Not available in current schema
-      phone: null, // Not available in current schema  
+      company: row.company_name || row.business_name || "—",
+      name: row.display_name || row.full_name || 
+            (row.first_name && row.last_name ? `${row.first_name} ${row.last_name}` : "—"),
+      email: row.primary_email || row.email || (row.emails_json?.[0]?.address) || null,
+      phone: row.primary_phone || row.phone || row.phone_number || 
+             (row.phones_json?.[0]?.number) || null,
       active: Boolean(row.active)
     }));
 

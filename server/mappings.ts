@@ -48,6 +48,7 @@ export interface TenantOut {
 export interface OwnerOut {
   id: number;
   company: string;
+  name: string;
   email: string | null;
   phone: string | null;
   active: boolean;

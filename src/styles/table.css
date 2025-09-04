@@ -111,7 +111,15 @@
   text-align: left;
   padding: 16px 14px;
   border-bottom: 1px solid var(--line-1);
+  border-left: 1px solid var(--altus-grey-600);
+  border-right: 1px solid var(--altus-grey-600);
   white-space: nowrap;
+}
+.ecc-table thead th:first-child{
+  border-left: none;
+}
+.ecc-table thead th:last-child{
+  border-right: none;
 }
 .ecc-table thead th.is-clickable{ 
   cursor: pointer; 
@@ -131,7 +139,15 @@
   z-index: 1;
   background: var(--surface-1);
   border-bottom: 1px solid var(--line-1);
+  border-left: 1px solid var(--altus-grey-600);
+  border-right: 1px solid var(--altus-grey-600);
   padding: 8px 14px;
+}
+.ecc-filter-row th:first-child{
+  border-left: none;
+}
+.ecc-filter-row th:last-child{
+  border-right: none;
 }
 .ecc-range{ display:flex; gap:8px; }
 .ecc-input--min, .ecc-input--max{ width: 90px; min-width: 90px; }
@@ -157,9 +173,17 @@
 .ecc-table td{
   padding: 14px;
   border-bottom: 1px solid var(--line-1);
+  border-left: 1px solid var(--altus-grey-600);
+  border-right: 1px solid var(--altus-grey-600);
   color: var(--altus-text);
   font-weight: 500;
   vertical-align: middle;
+}
+.ecc-table td:first-child{
+  border-left: none;
+}
+.ecc-table td:last-child{
+  border-right: none;
 }
 .ecc-table td.is-right{ text-align:right; }
 .ecc-table td.is-empty{ 
