@@ -3,7 +3,7 @@ import * as React from "react";
 
 export const dash = "—";
 
-// Safe getter by path: get(obj, "a.b.c", default)
+// Safe deep getter
 export function getPath<T = any>(obj: any, path: string, d?: T): T | undefined {
   try {
     return path.split(".").reduce<any>((v, k) => (v == null ? v : v[k]), obj) ?? d;
