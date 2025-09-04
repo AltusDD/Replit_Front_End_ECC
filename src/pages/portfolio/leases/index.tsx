@@ -43,13 +43,6 @@ export default function LeasesPage() {
     };
   }, [leases, tenants, props]);
 
-  // TEMPORARY DEBUG
-  if (leases.data && leases.data.length) {
-    console.debug("AUDIT/leases RAW", leases.data[0]);
-  }
-  if (rows && rows.length) {
-    console.debug("AUDIT/leases MAPPED", rows[0]);
-  }
 
   const kpis = useMemo(() => {
     const total = rows.length;
