@@ -1,451 +1,370 @@
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import React, { useMemo, useState, useRef } from "react";
+import "./../styles/table.css";
 
-/** Column definition */
-export type Column<Row> = {
-  key: keyof Row | string;
-  header: string;
+/** ---------- Types ---------- */
+export type SortKind = "string" | "numeric" | ((a: any, b: any) => number) | boolean;
+export type FilterKind = "text" | "select" | "numberRange" | "boolean";
+
+export type Column<T> = {
+  key: keyof T | string;
+  header: React.ReactNode;
   width?: number | string;
   align?: "left" | "right" | "center";
-  /** "text" | "numeric" | custom comparator */
-  sort?: "text" | "numeric" | ((a: Row, b: Row) => number);
-  /** "text" | "select" | "numberRange" */
-  filter?: "text" | "select" | "numberRange";
-  /** predefined options for select filter (otherwise inferred from rows) */
-  options?: Array<string | number>;
-  /** custom cell renderer */
-  render?: (row: Row) => React.ReactNode;
+  /** If omitted, sorting is disabled for this column */
+  sort?: SortKind;
+  /** Cell renderer. If omitted, uses value from `key`. */
+  render?: (row: T) => React.ReactNode;
+  /** For filtering UI. If omitted, no filter shown for the column. */
+  filter?: FilterKind;
+  /** Options for `select` kind. If omitted, options are inferred from data. */
+  options?: { value: any; label: string }[];
+  /** Accessor for raw value used by sort/filter. Defaults to row[key]. */
+  accessor?: (row: T) => any;
 };
 
-type PageSize = 25 | 50 | 100 | 200;
-type NumberRange = { min?: number; max?: number };
-type FilterState = Record<string, string | number | NumberRange | undefined>;
-
-export type DataTableProps<Row> = {
-  rows: Row[];
-  columns: Column<Row>[];
-  loading?: boolean;
-  getRowId?: (row: Row, index: number) => string | number;
-  enableGlobalSearch?: boolean;
-  globalSearchPlaceholder?: string;
-  onRowClick?: (row: Row) => void;
-  actions?: (row: Row) => React.ReactNode;
-  initialSort?: { key: string; dir: "asc" | "desc" };
-  pageSizeOptions?: PageSize[];
-  defaultPageSize?: PageSize;
-  csvName?: string;
+export type DataTableProps<T> = {
+  rows: T[];
+  columns: Column<T>[];
+  /** Page size choices in footer */
+  pageSizeOptions?: number[];
+  /** Initial page size */
+  initialPageSize?: number;
+  /** Make whole row clickable (optional) */
+  rowHref?: (row: T) => string | undefined;
+  onRowClick?: (row: T) => void;
+  /** Render trailing actions cell (three dots, etc.) */
+  rowActions?: (row: T) => React.ReactNode;
+  /** Stable unique id for each row (optional but recommended) */
+  getRowId?: (row: T, index: number) => string | number;
+  /** Extra className */
+  className?: string;
 };
 
-function toCSV(rows: any[], cols: Column<any>[]) {
-  const headers = cols.map((c) => c.header);
-  const lines = rows.map((r) =>
-    cols
-      .map((c) => {
-        const k = c.key as string;
-        const v = (r as any)[k];
-        const text =
-          typeof v === "string" || typeof v === "number"
-            ? String(v)
-            : v == null
-            ? ""
-            : JSON.stringify(v);
-        return `"${text.replace(/"/g, '""')}"`;
-      })
-      .join(",")
+/** ---------- Little helpers ---------- */
+const fmtMoney = (n: any) =>
+  typeof n === "number"
+    ? n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 2 })
+    : "—";
+const fmtPercent = (n: any) =>
+  typeof n === "number" ? `${(n as number).toFixed(1)}%` : "—";
+const fmtDate = (s: any) =>
+  s ? new Date(s).toISOString().slice(0, 10) : "—";
+
+const Badge: React.FC<{ kind?: "ok" | "warn" | "bad" | "muted"; children?: React.ReactNode }> = ({
+  kind = "muted",
+  children,
+}) => <span className={`ecc-badge ${kind ? `ecc-badge--${kind}` : ""}`}>{children}</span>;
+
+const OccupancyPill: React.FC<{ value?: number | null }> = ({ value }) => {
+  if (value == null || isNaN(value)) return <span>—</span>;
+  const pct = Math.max(0, Math.min(100, value));
+  return (
+    <div className="ecc-occ">
+      <div className="ecc-occ__bar" style={{ width: `${pct}%` }} />
+      <span className="ecc-occ__label">{pct.toFixed(1)}%</span>
+    </div>
   );
-  return [headers.join(","), ...lines].join("\n");
-}
+};
 
-function download(filename: string, content: string) {
-  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename.endsWith(".csv") ? filename : `${filename}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
+/** ---------- Component ---------- */
+export default function DataTable<T>(props: DataTableProps<T>) {
+  const {
+    rows,
+    columns,
+    pageSizeOptions = [25, 50, 100, 200],
+    initialPageSize = 25,
+    rowHref,
+    onRowClick,
+    rowActions,
+    getRowId,
+    className,
+  } = props;
 
-function getCell(row: any, key: string) {
-  const parts = key.split(".");
-  let cur = row;
-  for (const p of parts) cur = cur?.[p];
-  return cur;
-}
-
-export function DataTable<Row extends Record<string, any>>({
-  rows,
-  columns,
-  loading = false,
-  getRowId,
-  enableGlobalSearch = true,
-  globalSearchPlaceholder = "Search…",
-  onRowClick,
-  actions,
-  initialSort,
-  pageSizeOptions = [25, 50, 100, 200],
-  defaultPageSize = 25,
-  csvName = "export",
-}: DataTableProps<Row>) {
-  const [sortKey, setSortKey] = useState<string | null>(initialSort?.key ?? null);
-  const [sortDir, setSortDir] = useState<"asc" | "desc">(initialSort?.dir ?? "asc");
-
-  const [q, setQ] = useState("");
-  const [filters, setFilters] = useState<FilterState>({});
-
-  const [pageSize, setPageSize] = useState<PageSize>(defaultPageSize);
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(initialPageSize);
 
-  useEffect(() => setPage(0), [q, pageSize, rows.length, JSON.stringify(filters)]);
+  // filter state per column
+  type FilterState =
+    | { kind: "text"; v: string }
+    | { kind: "select"; v: string }
+    | { kind: "numberRange"; min?: string; max?: string }
+    | { kind: "boolean"; v: "all" | "true" | "false" };
+  const [filters, setFilters] = useState<Record<string, FilterState>>({});
 
-  const selectOptionsByKey = useMemo(() => {
-    const map: Record<string, Array<string | number>> = {};
+  // infer options for select filters when not provided
+  const inferredOptions = useMemo(() => {
+    const map: Record<string, { value: any; label: string }[]> = {};
     columns.forEach((c) => {
-      if (c.filter === "select") {
-        if (c.options?.length) map[c.key as string] = c.options;
-        else {
-          const vals = new Set<string | number>();
-          rows.forEach((r) => {
-            const v = getCell(r, c.key as string);
-            if (v != null && v !== "") vals.add(v);
-          });
-          map[c.key as string] = Array.from(vals).sort((a, b) =>
-            String(a).localeCompare(String(b))
-          );
-        }
+      if (c.filter === "select" && !c.options) {
+        const key = String(c.key);
+        const set = new Set<any>();
+        rows.forEach((r) => {
+          const val = (c.accessor ? c.accessor(r) : (r as any)[key]);
+          if (val != null && val !== "") set.add(val);
+        });
+        map[key] = Array.from(set).slice(0, 1000).map((v) => ({ value: v, label: String(v) }));
       }
     });
     return map;
-  }, [rows, columns]);
+  }, [columns, rows]);
 
+  // filtering
   const filtered = useMemo(() => {
-    const lc = q.trim().toLowerCase();
-    return rows.filter((r) => {
-      if (enableGlobalSearch && lc) {
-        const hit = columns.some((c) => {
-          const v = getCell(r, c.key as string);
-          if (v == null) return false;
-          return String(v).toLowerCase().includes(lc);
-        });
-        if (!hit) return false;
-      }
-      for (const c of columns) {
-        const k = c.key as string;
-        const f = filters[k];
-        if (f == null || f === "") continue;
+    return rows.filter((row) => {
+      for (const col of columns) {
+        const f = filters[String(col.key)];
+        if (!f) continue;
+        const raw = col.accessor ? col.accessor(row) : (row as any)[String(col.key)];
 
-        const cell = getCell(r, k);
-
-        if (c.filter === "text") {
-          const s = String(cell ?? "").toLowerCase();
-          if (!s.includes(String(f).toLowerCase())) return false;
-        } else if (c.filter === "select") {
-          if (String(cell ?? "") !== String(f)) return false;
-        } else if (c.filter === "numberRange") {
-          const { min, max } = (f as NumberRange) || {};
-          const n = Number(cell ?? NaN);
-          if (!Number.isFinite(n)) return false;
-          if (min != null && n < min) return false;
-          if (max != null && n > max) return false;
+        if (f.kind === "text") {
+          if (!String(raw ?? "").toLowerCase().includes(f.v.toLowerCase())) return false;
+        } else if (f.kind === "select") {
+          if (f.v && f.v !== "all" && String(raw ?? "") !== f.v) return false;
+        } else if (f.kind === "numberRange") {
+          const n = typeof raw === "number" ? raw : raw == null || raw === "" ? NaN : Number(raw);
+          if (f.min && !isNaN(Number(f.min)) && !(n >= Number(f.min))) return false;
+          if (f.max && !isNaN(Number(f.max)) && !(n <= Number(f.max))) return false;
+        } else if (f.kind === "boolean") {
+          if (f.v === "true" && !raw) return false;
+          if (f.v === "false" && !!raw) return false;
         }
       }
       return true;
     });
-  }, [rows, columns, q, filters, enableGlobalSearch]);
+  }, [rows, columns, filters]);
 
+  // sorting
   const sorted = useMemo(() => {
     if (!sortKey) return filtered;
-    const col = columns.find((c) => (c.key as string) === sortKey);
-    if (!col) return filtered;
+    const col = columns.find((c) => String(c.key) === sortKey);
+    if (!col || !col.sort) return filtered;
+
+    const kind = col.sort;
+    const acc = (r: T) => (col.accessor ? col.accessor(r) : (r as any)[sortKey]);
 
     const cmp =
-      typeof col.sort === "function"
-        ? (a: Row, b: Row) => col.sort!(a, b)
-        : col.sort === "numeric"
-        ? (a: Row, b: Row) =>
-            Number(getCell(a, sortKey)) - Number(getCell(b, sortKey))
-        : (a: Row, b: Row) =>
-            String(getCell(a, sortKey) ?? "").localeCompare(
-              String(getCell(b, sortKey) ?? "")
-            );
+      kind === "numeric"
+        ? (a: T, b: T) => (Number(acc(a)) || 0) - (Number(acc(b)) || 0)
+        : kind === "string" || kind === true
+        ? (a: T, b: T) => String(acc(a) ?? "").localeCompare(String(acc(b) ?? ""))
+        : typeof kind === "function"
+        ? kind
+        : () => 0;
 
-    const out = [...filtered].sort(cmp);
+    const out = [...filtered].sort(cmp as any);
     return sortDir === "asc" ? out : out.reverse();
-  }, [filtered, sortKey, sortDir, columns]);
+  }, [filtered, columns, sortKey, sortDir]);
 
-  const pageCount = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const curPage = Math.min(page, pageCount - 1);
-  const start = curPage * pageSize;
-  const end = start + pageSize;
-  const pageRows = sorted.slice(start, end);
+  // pagination
+  const total = sorted.length;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(page, pageCount - 1);
+  const paged = useMemo(
+    () => sorted.slice(currentPage * pageSize, currentPage * pageSize + pageSize),
+    [sorted, currentPage, pageSize]
+  );
 
-  function toggleSort(key: string, allowSort: boolean) {
-    if (!allowSort) return;
+  // header handlers
+  const onClickHeader = (key: string, sortable: SortKind | undefined) => {
+    if (!sortable) return;
     if (sortKey !== key) {
       setSortKey(key);
       setSortDir("asc");
     } else {
-      setSortDir(sortDir === "asc" ? "desc" : "asc");
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     }
-  }
+  };
 
-  function handleExport() {
-    download(csvName, toCSV(sorted, columns));
-  }
+  // filter inputs
+  const renderFilter = (col: Column<T>) => {
+    const key = String(col.key);
+    if (!col.filter) return <span />;
 
-  const tableRef = useRef<HTMLTableElement>(null);
-  useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      if (!tableRef.current) return;
-      const open = tableRef.current.querySelectorAll("details[open]");
-      open.forEach((d) => {
-        if (!d.contains(e.target as Node)) (d as HTMLDetailsElement).open = false;
-      });
-    };
-    document.addEventListener("click", onDoc);
-    return () => document.removeEventListener("click", onDoc);
-  }, []);
+    if (col.filter === "text") {
+      const v = (filters[key] as any)?.v ?? "";
+      return (
+        <input
+          className="ecc-filter ecc-input"
+          placeholder="Filter…"
+          value={v}
+          onChange={(e) => setFilters((s) => ({ ...s, [key]: { kind: "text", v: e.target.value } }))}
+        />
+      );
+    }
+    if (col.filter === "select") {
+      const v = (filters[key] as any)?.v ?? "all";
+      const opts = col.options ?? inferredOptions[key] ?? [];
+      return (
+        <select
+          className="ecc-filter ecc-select"
+          value={v}
+          onChange={(e) => setFilters((s) => ({ ...s, [key]: { kind: "select", v: e.target.value } }))}
+        >
+          <option value="all">All</option>
+          {opts.map((o) => (
+            <option key={String(o.value)} value={String(o.value)}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      );
+    }
+    if (col.filter === "numberRange") {
+      const st = (filters[key] as any) ?? {};
+      return (
+        <div className="ecc-range">
+          <input
+            className="ecc-filter ecc-input"
+            placeholder="Min"
+            value={st.min ?? ""}
+            onChange={(e) =>
+              setFilters((s) => ({ ...s, [key]: { kind: "numberRange", min: e.target.value, max: st.max } }))
+            }
+          />
+          <input
+            className="ecc-filter ecc-input"
+            placeholder="Max"
+            value={st.max ?? ""}
+            onChange={(e) =>
+              setFilters((s) => ({ ...s, [key]: { kind: "numberRange", min: st.min, max: e.target.value } }))
+            }
+          />
+        </div>
+      );
+    }
+    if (col.filter === "boolean") {
+      const v = (filters[key] as any)?.v ?? "all";
+      return (
+        <select
+          className="ecc-filter ecc-select"
+          value={v}
+          onChange={(e) => setFilters((s) => ({ ...s, [key]: { kind: "boolean", v: e.target.value as any } }))}
+        >
+          <option value="all">All</option>
+          <option value="true">True</option>
+          <option value="false">False</option>
+        </select>
+      );
+    }
+    return <span />;
+  };
+
+  const onClickRow = (row: T) => {
+    if (onRowClick) onRowClick(row);
+    const href = rowHref?.(row);
+    if (href) window.location.assign(href);
+  };
 
   return (
-    <div className="ecc-table-wrap">
-      <div className="ecc-table-toolbar">
-        {enableGlobalSearch && (
-          <input
-            className="ecc-input"
-            placeholder={globalSearchPlaceholder}
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-        )}
-        <div className="ecc-toolbar-spacer" />
-        <button className="ecc-btn" onClick={handleExport}>
-          Export CSV
-        </button>
-      </div>
-
-      <table className="ecc-table" ref={tableRef}>
+    <div className={`ecc-table-wrap ${className || ""}`}>
+      <table className="ecc-table">
         <thead>
           <tr>
             {columns.map((c) => {
-              const k = c.key as string;
-              const canSort = !!c.sort;
-              const thClass =
-                "is-" +
-                (c.align ?? "left") +
-                (canSort ? " is-clickable" : "") +
-                (sortKey === k ? ` ${sortDir}` : "");
+              const key = String(c.key);
+              const sortable = !!c.sort;
+              const cls =
+                "th" +
+                (sortable ? " is-clickable" : "") +
+                (sortKey === key ? ` ${sortDir === "asc" ? "asc" : "desc"}` : "");
               return (
                 <th
-                  key={k}
-                  style={{ width: c.width }}
-                  className={thClass}
-                  onClick={() => toggleSort(k, canSort)}
+                  key={key}
+                  className={cls}
+                  style={{ width: c.width, textAlign: c.align ?? "left" }}
+                  onClick={() => onClickHeader(key, c.sort)}
                 >
                   {c.header}
                 </th>
               );
             })}
-            {actions && <th className="is-right" style={{ width: 44 }} />}
+            {rowActions && <th className="th" style={{ width: 40, textAlign: "center" }}>⋯</th>}
           </tr>
-
-          <tr className="ecc-filterRow">
-            {columns.map((c) => {
-              const k = c.key as string;
-              if (!c.filter) return <th key={k} />;
-              if (c.filter === "text") {
-                return (
-                  <th key={k}>
-                    <input
-                      className="ecc-input ecc-input--sm"
-                      placeholder="Filter…"
-                      value={(filters[k] as string) ?? ""}
-                      onChange={(e) =>
-                        setFilters((fs) => ({ ...fs, [k]: e.target.value }))
-                      }
-                    />
-                  </th>
-                );
-              }
-              if (c.filter === "select") {
-                const opts = selectOptionsByKey[k] || [];
-                return (
-                  <th key={k}>
-                    <select
-                      className="ecc-select ecc-select--sm"
-                      value={(filters[k] as string) ?? ""}
-                      onChange={(e) =>
-                        setFilters((fs) => ({
-                          ...fs,
-                          [k]: e.target.value || undefined,
-                        }))
-                      }
-                    >
-                      <option value="">All</option>
-                      {opts.map((o) => (
-                        <option key={String(o)} value={String(o)}>
-                          {String(o)}
-                        </option>
-                      ))}
-                    </select>
-                  </th>
-                );
-              }
-              const val = (filters[k] as NumberRange) || {};
-              return (
-                <th key={k}>
-                  <div className="ecc-range">
-                    <input
-                      className="ecc-input ecc-input--xs"
-                      type="number"
-                      placeholder="Min"
-                      value={val.min ?? ""}
-                      onChange={(e) =>
-                        setFilters((fs) => ({
-                          ...fs,
-                          [k]: {
-                            ...((fs[k] as NumberRange) || {}),
-                            min:
-                              e.target.value === ""
-                                ? undefined
-                                : Number(e.target.value),
-                          },
-                        }))
-                      }
-                    />
-                    <span className="ecc-range-sep">–</span>
-                    <input
-                      className="ecc-input ecc-input--xs"
-                      type="number"
-                      placeholder="Max"
-                      value={val.max ?? ""}
-                      onChange={(e) =>
-                        setFilters((fs) => ({
-                          ...fs,
-                          [k]: {
-                            ...((fs[k] as NumberRange) || {}),
-                            max:
-                              e.target.value === ""
-                                ? undefined
-                                : Number(e.target.value),
-                          },
-                        }))
-                      }
-                    />
-                  </div>
-                </th>
-              );
-            })}
-            {actions && <th />}
+          {/* filter row */}
+          <tr>
+            {columns.map((c) => (
+              <th key={`f-${String(c.key)}`} className="th-filter" style={{ textAlign: c.align ?? "left" }}>
+                {renderFilter(c)}
+              </th>
+            ))}
+            {rowActions && <th />}
           </tr>
         </thead>
-
         <tbody>
-          {loading &&
-            Array.from({ length: 8 }).map((_, i) => (
-              <tr key={`sk-${i}`} className="ecc-skeleton-row">
-                {columns.map((c, j) => (
-                  <td key={String(c.key) + "-" + j}>
-                    <div className="ecc-skeleton" />
-                  </td>
-                ))}
-                {actions && (
-                  <td>
-                    <div className="ecc-skeleton ecc-skeleton--sm" />
-                  </td>
-                )}
+          {paged.map((row, i) => {
+            const rid = getRowId ? getRowId(row, i) : i;
+            const clickable = !!rowHref || !!onRowClick;
+            return (
+              <tr
+                key={rid}
+                className={clickable ? "is-clickable" : undefined}
+                onClick={() => clickable && onClickRow(row)}
+              >
+                {columns.map((c) => {
+                  const key = String(c.key);
+                  const raw = c.accessor ? c.accessor(row) : (row as any)[key];
+                  const content = c.render ? c.render(row) : raw ?? "—";
+                  const align = c.align ?? "left";
+                  return (
+                    <td key={`${rid}-${key}`} className={align === "right" ? "is-right" : align === "center" ? "is-center" : ""}>
+                      {content}
+                    </td>
+                  );
+                })}
+                {rowActions && <td className="is-center" onClick={(e) => e.stopPropagation()}>{rowActions(row)}</td>}
               </tr>
-            ))}
-
-          {!loading && pageRows.length === 0 && (
+            );
+          })}
+          {paged.length === 0 && (
             <tr>
-              <td className="is-empty" colSpan={columns.length + (actions ? 1 : 0)}>
+              <td className="is-empty" colSpan={columns.length + (rowActions ? 1 : 0)}>
                 No results
               </td>
             </tr>
           )}
-
-          {!loading &&
-            pageRows.map((row, idx) => {
-              const rid = getRowId?.(row, start + idx) ?? start + idx;
-              const clickable = !!onRowClick;
-              return (
-                <tr
-                  key={String(rid)}
-                  className={clickable ? "ecc-row--clickable" : undefined}
-                  onClick={() => onRowClick?.(row)}
-                >
-                  {columns.map((c) => {
-                    const k = c.key as string;
-                    const content =
-                      typeof c.render === "function"
-                        ? c.render(row)
-                        : (getCell(row, k) ?? "—") as React.ReactNode;
-                    const tdClass = c.align ? `is-${c.align}` : undefined;
-                    return (
-                      <td key={k} className={tdClass}>
-                        {content}
-                      </td>
-                    );
-                  })}
-                  {actions && (
-                    <td className="is-right" onClick={(e) => e.stopPropagation()}>
-                      <details className="ecc-menu">
-                        <summary aria-label="Row actions">⋯</summary>
-                        <div className="ecc-menu-pop">{actions(row)}</div>
-                      </details>
-                    </td>
-                  )}
-                </tr>
-              );
-            })}
         </tbody>
       </table>
 
+      {/* Footer / Pager */}
       <div className="ecc-table-footer">
-        <div className="ecc-footer-left">
-          <label className="ecc-page">
-            Per page{" "}
-            <select
-              className="ecc-select ecc-select--sm"
-              value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value) as PageSize)}
-            >
-              {pageSizeOptions.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </label>
-          <span>
-            Showing <strong>{Math.min(sorted.length, end)}</strong> of{" "}
-            <strong>{sorted.length}</strong>
-          </span>
-        </div>
-
-        <div className="ecc-footer-right">
-          <button
-            className="ecc-btn"
-            disabled={curPage <= 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-          >
+        <div className="ecc-page">
+          <button className="ecc-btn" disabled={currentPage === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
             Prev
           </button>
-          <span className="ecc-page">
-            {curPage + 1} / {pageCount}
+          <span style={{ margin: "0 8px" }}>
+            Page {currentPage + 1} / {pageCount} • {total} results
           </span>
           <button
             className="ecc-btn"
-            disabled={curPage >= pageCount - 1}
+            disabled={currentPage >= pageCount - 1}
             onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
           >
             Next
           </button>
+        </div>
+        <div>
+          <label style={{ marginRight: 6, color: "var(--ink-3)" }}>Rows/page</label>
+          <select
+            className="ecc-select"
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setPage(0);
+            }}
+          >
+            {pageSizeOptions.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
     </div>
   );
 }
 
-export default DataTable;
+/** Re-export simple helpers in case pages want them */
+export const Format = { money: fmtMoney, percent: fmtPercent, date: fmtDate, Badge, OccupancyPill };

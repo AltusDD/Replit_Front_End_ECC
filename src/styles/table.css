@@ -1,5 +1,5 @@
 :root{
-  /* Genesis-grade dark tokens */
+  /* Genesis dark palette */
   --ink-1: #e6e6e6;
   --ink-2: #c8c8c8;
   --ink-3: #9aa0a6;
@@ -13,33 +13,27 @@
   --row-hover: #1a1b1f;
 
   --line-1: #2a2a2a;
-  --accent: #d4af37;
+  --accent: #d4af37; /* gold */
   --ok: #15b77e;
   --warn: #f5a524;
   --bad: #e5484d;
 }
 
-/* Toolbar */
-.ecc-table-toolbar{
-  display:flex; align-items:center; gap:10px;
-  margin: 8px 0 12px;
-}
+/* ---- Inputs / toolbar ---- */
 .ecc-input, .ecc-select{
   background: var(--surface-2); color: var(--ink-1);
-  border: 1px solid var(--line-1); border-radius: 8px;
-  padding: 8px 10px; min-width: 220px;
+  border: 1px solid var(--line-1); border-radius: 6px;
+  padding: 6px 8px; min-width: 120px;
 }
-.ecc-input--sm, .ecc-select--sm{ padding:6px 8px; min-width: 160px; font-size: 13px; }
-.ecc-input--xs{ padding:6px 8px; width: 96px; font-size: 13px; }
-.ecc-select{ min-width: 120px; }
+.ecc-select { height: 32px; }
 .ecc-btn{
   background: var(--surface-2); color: var(--ink-1);
-  border: 1px solid var(--line-1); border-radius: 8px; padding: 8px 10px;
+  border: 1px solid var(--line-1); border-radius: 6px; padding: 6px 10px;
 }
 .ecc-btn:disabled{ opacity: .5; cursor: not-allowed; }
-.ecc-toolbar-spacer{ flex:1; }
+.ecc-range{ display:flex; gap:6px; }
 
-/* Table shell */
+/* ---- Table ---- */
 .ecc-table-wrap{ width:100%; }
 .ecc-table{
   width: 100%;
@@ -53,62 +47,38 @@
 
 /* Headers */
 .ecc-table thead th{
-  top: 0;
-  position: sticky;
-  z-index: 1;
-  background: var(--surface-0);
-  color: var(--ink-2);
-  font-weight: 600;
-  text-align: left;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--line-1);
+  position: sticky; top: 0; z-index: 2;
+  background: #101113; color: var(--ink-2);
+  font-weight: 600; text-align: left;
+  padding: 10px 12px; border-bottom: 1px solid var(--line-1);
 }
-.ecc-table thead th.is-left{ text-align:left; }
-.ecc-table thead th.is-right{ text-align:right; }
-.ecc-table thead th.is-center{ text-align:center; }
-
+.ecc-table thead th.th-filter{
+  background: #0e0f11; position: sticky; top: 38px; z-index: 1;
+  padding: 8px 12px;
+}
 .ecc-table thead th.is-clickable{ cursor: pointer; }
 .ecc-table thead th.asc::after{ content: " ▲"; color: var(--ink-3); }
 .ecc-table thead th.desc::after{ content: " ▼"; color: var(--ink-3); }
 
-/* Column filter row under headers */
-.ecc-filterRow th{
-  position: sticky;
-  top: 40px; /* below header row height */
-  background: var(--surface-0);
-  border-bottom: 1px solid var(--line-1);
-  padding: 8px 12px;
-  z-index: 1;
-}
-.ecc-range{ display:flex; align-items:center; gap:6px; }
-.ecc-range-sep{ color: var(--ink-3); }
-
-/* Body: zebra banding (Genesis black/grey) */
-.ecc-table tbody tr{ background: var(--row-bg); }
+/* Body banding */
+.ecc-table tbody tr:nth-child(odd){ background: var(--row-bg); }
 .ecc-table tbody tr:nth-child(even){ background: var(--row-alt-bg); }
 .ecc-table tbody tr:hover{ background: var(--row-hover); }
-
+.ecc-table tbody tr.is-clickable { cursor: pointer; }
 .ecc-table td{
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--line-1);
-  color: var(--ink-1);
+  padding: 10px 12px; border-bottom: 1px solid var(--line-1); color: var(--ink-1);
 }
 .ecc-table td.is-right{ text-align:right; }
 .ecc-table td.is-center{ text-align:center; }
-.ecc-table td.is-empty{ text-align:center; color: var(--ink-3); }
+.ecc-table td.is-empty{ text-align:center; color: var(--ink-3); padding: 16px; }
 
-.ecc-row--clickable{ cursor: pointer; }
-.ecc-row--clickable:hover{ background: color-mix(in srgb, var(--row-hover), white 2%); }
-
-/* Footer (pager + per-page moved here) */
+/* Footer */
 .ecc-table-footer{
   display:flex; align-items:center; justify-content:space-between;
-  padding: 12px 8px; color: var(--ink-3);
+  padding: 10px 8px; color: var(--ink-3);
 }
-.ecc-footer-left, .ecc-footer-right{ display:flex; align-items:center; gap:10px; }
-.ecc-page{ padding: 0 10px; }
 
-/* Badges / Pills */
+/* Badges */
 .ecc-badge{
   display:inline-block; font-size: 12px; line-height: 1;
   padding: 6px 8px; border-radius: 999px; border: 1px solid var(--line-1);
@@ -117,59 +87,23 @@
 .ecc-badge--ok{ background: color-mix(in oklab, var(--ok) 25%, black); }
 .ecc-badge--warn{ background: color-mix(in oklab, var(--warn) 25%, black); }
 .ecc-badge--bad{ background: color-mix(in oklab, var(--bad) 25%, black); }
+.ecc-badge--muted{ background: var(--surface-2); }
 
-/* Progress (for OCC%) */
-.ecc-progress{
-  position: relative;
-  height: 10px;
-  background: #202226;
-  border: 1px solid var(--line-1);
-  border-radius: 999px;
+/* Occupancy pill */
+.ecc-occ{
+  position: relative; height: 18px; background: #0e0f11; border:1px solid var(--line-1);
+  border-radius: 999px; overflow: hidden; min-width: 110px;
 }
-.ecc-progress-bar{
-  position:absolute; top:0; left:0; bottom:0;
-  background: color-mix(in srgb, var(--accent), white 8%);
-  border-radius: 999px;
+.ecc-occ__bar{
+  position:absolute; left:0; top:0; bottom:0;
+  background: color-mix(in oklab, var(--accent) 40%, black);
 }
-.ecc-progress-label{
-  position:absolute; right:8px; top:50%; transform: translateY(-50%);
-  font-size: 11px; color: var(--ink-2);
+.ecc-occ__label{
+  position: relative; font-size: 12px; color: var(--ink-1);
+  display:inline-block; width:100%; text-align:center; line-height:18px;
 }
 
-/* Actions menu (three dots) */
-.ecc-menu{ position: relative; }
-.ecc-menu > summary{
-  list-style:none; outline:none; cursor:pointer;
-  width: 30px; height: 28px; border-radius: 6px;
-  border: 1px solid var(--line-1); background: var(--surface-2);
-  color: var(--ink-1); font-size: 16px; line-height: 26px; text-align:center;
-}
-.ecc-menu[open] > summary{ background: var(--row-hover); }
-.ecc-menu-pop{
-  position: absolute; right: 0; top: 36px; min-width: 180px;
-  background: var(--surface-1); border:1px solid var(--line-1); border-radius: 8px;
-  box-shadow: 0 6px 24px rgba(0,0,0,.45); padding: 6px;
-}
-.ecc-menu-pop button, .ecc-menu-pop a{
-  display:block; width:100%; text-align:left; color: var(--ink-1);
-  background: transparent; border:0; padding:8px 10px; border-radius:6px;
-}
-.ecc-menu-pop button:hover, .ecc-menu-pop a:hover{ background: var(--row-hover); }
-
-/* Skeleton loading */
-.ecc-skeleton-row td{ height: 34px; }
-.ecc-skeleton{
-  height: 10px; border-radius: 6px; background: #26282c; position: relative; overflow: hidden;
-}
-.ecc-skeleton--sm{ height: 10px; width: 30px; }
-.ecc-skeleton:after{
-  content:""; position:absolute; inset:0;
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.06) 50%, rgba(255,255,255,0) 100%);
-  animation: ecc-shimmer 1.2s infinite;
-}
-@keyframes ecc-shimmer{ from{ transform: translateX(-100%);} to{ transform: translateX(100%);} }
-
-/* KPI strip (helper if you use it above tables) */
+/* KPI strip (helper if you want to use it) */
 .ecc-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 10px; }
 .ecc-kpi { background: var(--surface-1); border: 1px solid var(--line-1); border-radius: 12px; padding: 12px; }
 .ecc-kpi-n { font-weight: 700; font-size: 20px; color: var(--ink-1); }

@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { DataTable } from "/src/components/DataTable";
-import { UNIT_COLUMNS, mapUnit, UnitRow } from "../columns";
-
-const ENDPOINT = "/api/portfolio/units";
+import React, { useMemo, useState } from "react";
+import DataTable from "../../../components/DataTable";
+import { useCollection } from "../../../features/data/useCollection";
+import { indexBy } from "../../../utils/dict";
+import { UNIT_COLUMNS, mapUnit } from "../columns";
+import "../../../styles/table.css";
 
 async function fetchJSON(url: string) {
   const r = await fetch(url);

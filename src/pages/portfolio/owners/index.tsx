@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { DataTable } from "/src/components/DataTable";
-import { OWNER_COLUMNS, mapOwner, OwnerRow } from "../columns";
-
-const ENDPOINT = "/api/portfolio/owners";
+import React, { useMemo } from "react";
+import DataTable from "../../../components/DataTable";
+import { useCollection } from "../../../features/data/useCollection";
+import { indexBy, groupBy } from "../../../utils/dict";
+import { OWNER_COLUMNS, mapOwner } from "../columns";
+import "../../../styles/table.css";
 
 async function fetchJSON(url: string) {
   const r = await fetch(url);
