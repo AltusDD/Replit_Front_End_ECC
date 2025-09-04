@@ -62,9 +62,14 @@ export default function LeasesPage() {
     const total = rows.length;
     const active = rows.filter((r) => String(r.status).toLowerCase() === "active").length;
     const ended = rows.filter((r) => String(r.status).toLowerCase() === "ended").length;
-    const mrr = rows.reduce((s, r) => s + (Number(r.rent) || 0), 0) / 100;
-    return { total, active, ended, mrr };
-  }, [rows]);
+    const monthlyRevenue = (leases.data ?? [])
+      .filter(l => String(l?.status ?? "").toLowerCase() === "active")
+      .reduce((sum, l) => {
+        const cents = Number(l?.rent_cents ?? l?.rent ?? 0);
+        return sum + (Number.isFinite(cents) ? cents : 0);
+      }, 0) / 100;
+    return { total, active, ended, mrr: monthlyRevenue };
+  }, [rows, leases]);
 
   return (
     <section className="ecc-page">

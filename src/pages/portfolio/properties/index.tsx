@@ -7,46 +7,52 @@ import { PROPERTY_COLUMNS, mapProperty } from "../columns";
 import "../../../styles/table.css";
 
 export default function PropertiesPage() {
-  const props = useCollection<any>("/api/portfolio/properties");
+  const properties = useCollection<any>("/api/portfolio/properties");
   const units = useCollection<any>("/api/portfolio/units");
   const leases = useCollection<any>("/api/portfolio/leases");
 
   const { rows, loading, error } = useMemo(() => {
-    const byPropUnits = groupBy(units.data || [], (u) => normalizeId(u.property_id));
-    const activeLeases = (leases.data || []).filter((l) => String(l.status).toLowerCase() === "active");
-    const byUnitActiveLease = new Set(activeLeases.map((l) => normalizeId(l.unit_id)));
+    const props = properties.data ?? [];
+    const unitsArr = units.data ?? [];
 
-    const mapped = (props.data || []).map((p) => {
-      const u = byPropUnits.get(normalizeId(p.id)) || [];
-      const unitCount = u.length;
-      const occCount = u.filter((x) => byUnitActiveLease.has(normalizeId(x.id))).length;
-      const occPct = unitCount ? (occCount / unitCount) * 100 : 0;
-      
-      // Enrich property data with calculated values
-      const enriched = {
-        ...p,
-        units: unitCount,
-        occupancyPct: occPct
-      };
-      
-      return mapProperty(enriched);
+    const unitsByProp = new Map<string, number>();
+    const occByProp   = new Map<string, number>();
+
+    for (const u of unitsArr) {
+      const pid = normalizeId(u?.property_id ?? u?.propertyId ?? u?.property?.id);
+      if (!pid) continue;
+      const status = String(u?.status ?? "").toLowerCase();
+      unitsByProp.set(pid, (unitsByProp.get(pid) ?? 0) + 1);
+      if (status === "occupied" || status === "occ" || status === "active") {
+        occByProp.set(pid, (occByProp.get(pid) ?? 0) + 1);
+      }
+    }
+
+    const rows = (props || []).map((p: any) => {
+      const pid = normalizeId(p?.id);
+      const total = unitsByProp.get(pid) ?? 0;
+      const occ   = occByProp.get(pid) ?? 0;
+      const occPct = total > 0 ? Math.round((occ / total) * 100) : 0;
+      // Keep your existing mapProperty(p) call; just override units/occPct:
+      const base = mapProperty(p);
+      return { ...base, units: total, occPct };
     });
 
     return {
-      rows: mapped,
-      loading: props.loading || units.loading || leases.loading,
-      error: props.error || units.error || leases.error,
+      rows,
+      loading: properties.loading || units.loading || leases.loading,
+      error: properties.error || units.error || leases.error,
     };
-  }, [props, units, leases]);
+  }, [properties, units, leases]);
 
 
-  // KPIs for display
+  // KPIs: derive from rows (do NOT read units from API)
   const kpis = useMemo(() => {
     const total = rows.length;
     const active = rows.filter(r => r.active).length;
-    const totalUnits = rows.reduce((s, r) => s + (r.units || 0), 0);
+    const totalUnitsKpi = rows.reduce((sum, r) => sum + (r.units ?? 0), 0);
     const avgOcc = total ? rows.reduce((s, r) => s + (r.occPct || 0), 0) / total : 0;
-    return { total, active, totalUnits, avgOcc };
+    return { total, active, totalUnits: totalUnitsKpi, avgOcc };
   }, [rows]);
 
   return (

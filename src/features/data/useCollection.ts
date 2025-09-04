@@ -52,6 +52,14 @@ export function useCollection<T = any>(url?: string | null): UseCollectionResult
           ? json.data
           : [];
 
+        const debug = typeof location !== "undefined" &&
+          new URLSearchParams(location.search).get("debug") === "1";
+        
+        if (debug && Array.isArray(json) && json.length) {
+          // eslint-disable-next-line no-console
+          console.log(url, "sample", json[0]);
+        }
+
         setData(arr as T[]);
         setError(null);
       } catch (e: any) {
