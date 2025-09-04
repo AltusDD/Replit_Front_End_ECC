@@ -62,7 +62,7 @@ export default function LeasesPage() {
     const total = rows.length;
     const active = rows.filter((r) => String(r.status).toLowerCase() === "active").length;
     const ended = rows.filter((r) => String(r.status).toLowerCase() === "ended").length;
-    const mrr = rows.reduce((s, r) => s + (Number(r.rent) || 0), 0);
+    const mrr = rows.reduce((s, r) => s + (Number(r.rent) || 0), 0) / 100;
     return { total, active, ended, mrr };
   }, [rows]);
 

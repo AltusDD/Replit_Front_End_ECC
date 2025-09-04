@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
 import useCollection from "../../../features/data/useCollection";
 import { groupBy } from "../../../utils/dict";
+import { normalizeId } from "../../../utils/ids";
 import { PROPERTY_COLUMNS, mapProperty } from "../columns";
 import "../../../styles/table.css";
 
@@ -11,21 +12,20 @@ export default function PropertiesPage() {
   const leases = useCollection<any>("/api/portfolio/leases");
 
   const { rows, loading, error } = useMemo(() => {
-    const byPropUnits = groupBy(units.data || [], (u) => u.property_id);
+    const byPropUnits = groupBy(units.data || [], (u) => normalizeId(u.property_id));
     const activeLeases = (leases.data || []).filter((l) => String(l.status).toLowerCase() === "active");
-    const byUnitActiveLease = new Set(activeLeases.map((l) => String(l.unit_id)));
+    const byUnitActiveLease = new Set(activeLeases.map((l) => normalizeId(l.unit_id)));
 
     const mapped = (props.data || []).map((p) => {
-      const u = byPropUnits.get(p.id) || [];
-      const unitCount = p.unit_count ?? u.length ?? 0;
-      const occCount = u.filter((x) => byUnitActiveLease.has(String(x.id))).length;
+      const u = byPropUnits.get(normalizeId(p.id)) || [];
+      const unitCount = u.length;
+      const occCount = u.filter((x) => byUnitActiveLease.has(normalizeId(x.id))).length;
       const occPct = unitCount ? (occCount / unitCount) * 100 : 0;
       
       // Enrich property data with calculated values
       const enriched = {
         ...p,
-        "units.total": unitCount,
-        "units.occupied": occCount,
+        units: unitCount,
         occupancyPct: occPct
       };
       

@@ -30,7 +30,7 @@ export function mapProperty(src:any): PropertyRow {
     class: String(getPath(src,"class") ?? dash),
     state: String(getPath(src,"address.state") ?? getPath(src,"state") ?? dash),
     city: String(getPath(src,"address.city") ?? getPath(src,"city") ?? dash),
-    zip: String(getPath(src,"address.zip") ?? getPath(src,"address.zipCode") ?? getPath(src,"address.postal_code") ?? getPath(src,"zipcode") ?? getPath(src,"zip_code") ?? getPath(src,"postal_code") ?? getPath(src,"zip") ?? dash),
+    zip: String(getPath(src,"address_zip") ?? getPath(src,"address.zip") ?? getPath(src,"address.zipCode") ?? getPath(src,"address.postal_code") ?? getPath(src,"zipcode") ?? getPath(src,"zip_code") ?? getPath(src,"postal_code") ?? getPath(src,"zip") ?? dash),
     units,
     occPct: Math.max(0, Math.min(100, occPct)),
     active: getPath(src,"active") ?? dash,
