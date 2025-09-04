@@ -29,9 +29,20 @@ export default function TenantsPage() {
 
     const mapped = (tenants.data || []).map((t) => {
       const l = latestByTenant[String(t.id)];
-      const unitLabel = l ? (uById.get(l.unit_id)?.unit_number || "—") : "—";
-      const propName = l ? (pById.get(l.property_id)?.name || "—") : "—";
-      return mapTenant(t, propName, unitLabel);
+      const unit = l ? uById.get(l.unit_id) : null;
+      const prop = l ? pById.get(l.property_id) : null;
+      const unitLabel = unit?.unit_number || "—";
+      const propName = prop?.name || prop?.address_line1 || "—";
+      
+      // Enrich tenant data before mapping
+      const enriched = {
+        ...t,
+        property: { name: propName },
+        unit: { label: unitLabel },
+        leaseId: l?.id
+      };
+      
+      return mapTenant(enriched);
     });
 
     return {
@@ -76,7 +87,7 @@ export default function TenantsPage() {
         loading={loading}
         error={error}
         csvName="tenants"
-        drawerTitle={(row) => row.display_name || `Tenant ${row.id}`}
+        drawerTitle={(row) => row.tenant || `Tenant ${row.id}`}
         rowHref={(row) => `/card/tenant/${row.id}`}
       />
     </section>

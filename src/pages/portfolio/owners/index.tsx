@@ -16,7 +16,14 @@ export default function OwnersPage() {
 
     const mapped = (owners.data || []).map((o) => {
       const count = (byOwnerProps.get(o.id)?.length || 0);
-      return mapOwner(o, count);
+      
+      // Enrich owner data before mapping
+      const enriched = {
+        ...o,
+        properties_count: count
+      };
+      
+      return mapOwner(enriched);
     });
 
     return {
@@ -29,7 +36,7 @@ export default function OwnersPage() {
   const kpis = useMemo(() => {
     const total = rows.length;
     const active = rows.filter((o) => o.active).length;
-    const totalProps = rows.reduce((s, o) => s + (o.property_count || 0), 0);
+    const totalProps = rows.reduce((s, o) => s + (o.properties || 0), 0);
     return { total, active, totalProps };
   }, [rows]);
 
@@ -60,7 +67,7 @@ export default function OwnersPage() {
         loading={loading}
         error={error}
         csvName="owners"
-        drawerTitle={(row) => row.name || `Owner ${row.id}`}
+        drawerTitle={(row) => row.owner || `Owner ${row.id}`}
         rowHref={(row) => `/card/owner/${row.id}`}
       />
     </section>

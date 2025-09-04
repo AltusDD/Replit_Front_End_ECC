@@ -22,8 +22,18 @@ export default function LeasesPage() {
     };
 
     const mapped = (leases.data || []).map((l) => {
-      const propName = pById.get(l.property_id)?.name || "—";
-      return mapLease(l, propName, tenantsName(l));
+      const prop = pById.get(l.property_id);
+      const propName = prop?.name || prop?.address_line1 || "—";
+      const tenant = tenantsName(l);
+      
+      // Enrich lease data before mapping
+      const enriched = {
+        ...l,
+        property: { name: propName },
+        tenant: { name: tenant }
+      };
+      
+      return mapLease(enriched);
     });
 
     return {
@@ -68,7 +78,7 @@ export default function LeasesPage() {
         loading={loading}
         error={error}
         csvName="leases"
-        drawerTitle={(row) => `${row.property_name} - ${row.tenant_name}`}
+        drawerTitle={(row) => `${row.property} - ${row.tenant}`}
         rowHref={(row) => `/card/lease/${row.id}`}
       />
     </section>

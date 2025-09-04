@@ -19,9 +19,18 @@ export default function UnitsPage() {
     );
 
     const mapped = (units.data || []).map((u) => {
-      const propName = pById.get(u.property_id)?.name || "—";
+      const prop = pById.get(u.property_id);
+      const propName = prop?.name || prop?.address_line1 || "—";
       const occupied = activeLeaseUnits.has(String(u.id));
-      return mapUnit(u, propName, occupied);
+      
+      // Enrich unit data before mapping
+      const enriched = {
+        ...u,
+        property: { name: propName },
+        status: occupied ? "Occupied" : (u.status || "Vacant")
+      };
+      
+      return mapUnit(enriched);
     });
 
     return {
@@ -66,7 +75,7 @@ export default function UnitsPage() {
         loading={loading}
         error={error}
         csvName="units"
-        drawerTitle={(row) => `${row.property_name} - Unit ${row.unit_number}`}
+        drawerTitle={(row) => `${row.property} - Unit ${row.unit}`}
         rowHref={(row) => `/card/unit/${row.id}`}
       />
     </section>
