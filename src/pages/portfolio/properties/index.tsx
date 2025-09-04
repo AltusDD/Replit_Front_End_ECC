@@ -115,6 +115,6 @@ export default function PropertiesPage() {
           </>
         )}
       />
-    </div>
+    </section>
   );
 }
