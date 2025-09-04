@@ -5,7 +5,6 @@ import { groupBy } from "../../../utils/dict";
 import { PROPERTY_COLUMNS, mapProperty } from "../columns";
 
 export default function PropertiesPage() {
-  console.log("PropertiesPage loading...");
   const props = useCollection<any>("properties");
   const units = useCollection<any>("units");
   const leases = useCollection<any>("leases");

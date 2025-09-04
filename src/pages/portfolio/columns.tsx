@@ -1,6 +1,6 @@
 // src/pages/portfolio/columns.tsx
 import React from "react";
-import { money, percent, shortDate, boolText, badge } from "../../utils/format";
+import { money, percent, shortDate, boolBadge as boolText, badge } from "../../utils/format";
 import type { Column } from "../../components/DataTable";
 
 // ── Entity types (shape is tolerant to your live schema) ─────────────
