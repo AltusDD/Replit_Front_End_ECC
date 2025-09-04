@@ -85,37 +85,21 @@ export function statusBadge(text: string, isActive: boolean, type: "status" | "o
   return badge(text, kind);
 }
 
-// Row actions menu component
+// Simple row actions - just show the three dots for now
 export function rowActions(actions: Array<{label: string, onClick: () => void}>) {
-  const [isOpen, setIsOpen] = React.useState(false);
-  
   return (
-    <div className="ecc-row-actions">
-      <button 
-        className="ecc-actions-trigger"
-        onClick={(e) => {
-          e.stopPropagation();
-          setIsOpen(!isOpen);
-        }}
-      >
-        ⋯
-      </button>
-      {isOpen && (
-        <div className="ecc-actions-dropdown">
-          {actions.map((action, i) => (
-            <button 
-              key={i}
-              onClick={(e) => {
-                e.stopPropagation();
-                action.onClick();
-                setIsOpen(false);
-              }}
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <button 
+      className="ecc-actions-trigger"
+      onClick={(e) => {
+        e.stopPropagation();
+        // For now, just show the first action
+        if (actions.length > 0) {
+          actions[0].onClick();
+        }
+      }}
+      title="Actions"
+    >
+      ⋯
+    </button>
   );
 }

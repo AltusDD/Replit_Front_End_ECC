@@ -1,5 +1,5 @@
 import React from "react";
-import { money, percent, shortDate, boolBadge, progressBar, statusBadge, rowActions } from "../../utils/format";
+import { money, percent, shortDate, boolBadge, progressBar, statusBadge as genesisStatusBadge, rowActions } from "../../utils/format";
 import { DataColumn } from "../../components/DataTable";
 
 // Helper for portfolio entity row actions
@@ -68,7 +68,7 @@ export const PROPERTY_COLUMNS: DataColumn[] = [
     key: "active", 
     header: "ACTIVE", 
     type: "enum",
-    render: (value, row) => statusBadge(row.active ? "Active" : "Inactive", row.active)
+    render: (value, row) => genesisStatusBadge(row.active ? "Active" : "Inactive", row.active)
   },
   {
     key: "actions",
@@ -205,7 +205,7 @@ export const OWNER_COLUMNS: DataColumn[] = [
     key: "active", 
     header: "ACTIVE", 
     type: "enum",
-    render: (value, row) => statusBadge(row.active ? "Active" : "Inactive", row.active)
+    render: (value, row) => genesisStatusBadge(row.active ? "Active" : "Inactive", row.active)
   },
   {
     key: "actions",
