@@ -39,6 +39,13 @@ export default function PropertiesPage() {
     };
   }, [props, units, leases]);
 
+  // TEMPORARY DEBUG
+  if (props.data && props.data.length) {
+    console.debug("AUDIT/properties RAW", props.data[0]);
+  }
+  if (rows && rows.length) {
+    console.debug("AUDIT/properties MAPPED", rows[0]);
+  }
 
   // KPIs for display
   const kpis = useMemo(() => {

@@ -52,6 +52,13 @@ export default function TenantsPage() {
     };
   }, [tenants, leases, units, props]);
 
+  // TEMPORARY DEBUG
+  if (tenants.data && tenants.data.length) {
+    console.debug("AUDIT/tenants RAW", tenants.data[0]);
+  }
+  if (rows && rows.length) {
+    console.debug("AUDIT/tenants MAPPED", rows[0]);
+  }
 
   const kpis = useMemo(() => {
     const total = rows.length;

@@ -25,6 +25,13 @@ export default function OwnersPage() {
     };
   }, [owners, properties]);
 
+  // TEMPORARY DEBUG  
+  if (owners.data && owners.data.length) {
+    console.debug("AUDIT/owners RAW", owners.data[0]);
+  }
+  if (rows && rows.length) {
+    console.debug("AUDIT/owners MAPPED", rows[0]);
+  }
 
   const kpis = useMemo(() => {
     const total = rows.length;

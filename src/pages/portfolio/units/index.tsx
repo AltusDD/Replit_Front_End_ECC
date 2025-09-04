@@ -40,6 +40,13 @@ export default function UnitsPage() {
     };
   }, [units, props, leases]);
 
+  // TEMPORARY DEBUG
+  if (units.data && units.data.length) {
+    console.debug("AUDIT/units RAW", units.data[0]);
+  }
+  if (rows && rows.length) {
+    console.debug("AUDIT/units MAPPED", rows[0]);
+  }
 
   const kpis = useMemo(() => {
     const total = rows.length;
