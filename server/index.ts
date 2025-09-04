@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { PropertyOut, UnitOut, LeaseOut, TenantOut, OwnerOut } from "./mappings";
 
 /** ───────────────────────────────────────────────────────────────────
  *  ECC Dev API — resilient Supabase wiring
@@ -111,19 +112,254 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
-/** Generic portfolio collections */
-app.get("/api/portfolio/:collection", async (req, res) => {
+/** Properties with computed units & occupancy */
+app.get("/api/portfolio/properties", async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
 
-  const seg = String(req.params.collection || "").toLowerCase();
-  const table = TABLE[seg];
-  if (!table) return sendErr(res, 404, `Unknown collection: ${seg}`);
+  try {
+    // Get properties - use actual column names from the current database
+    const { data: propertiesData, error: propsError } = await supa.client
+      .from(TABLE.properties)
+      .select("*")
+      .limit(5000);
+
+    if (propsError) throw propsError;
+
+    // Get units data for occupancy calculation
+    const { data: unitsData, error: unitsError } = await supa.client
+      .from(TABLE.units)
+      .select(`
+        id,
+        property_id,
+        status
+      `);
+
+    if (unitsError) throw unitsError;
+
+    // Group units by property
+    const unitsByProperty = new Map();
+    const occupiedByProperty = new Map();
+
+    (unitsData || []).forEach((unit: any) => {
+      const propId = String(unit.property_id);
+      if (!unitsByProperty.has(propId)) {
+        unitsByProperty.set(propId, 0);
+        occupiedByProperty.set(propId, 0);
+      }
+      unitsByProperty.set(propId, unitsByProperty.get(propId) + 1);
+      
+      if (unit.status && ['occupied', 'occ', 'active'].includes(unit.status.toLowerCase())) {
+        occupiedByProperty.set(propId, occupiedByProperty.get(propId) + 1);
+      }
+    });
+
+    const properties: PropertyOut[] = (propertiesData || []).map((row: any) => {
+      const propId = String(row.id);
+      const totalUnits = unitsByProperty.get(propId) || 0;
+      const occupiedUnits = occupiedByProperty.get(propId) || 0;
+      const occPct = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
+
+      return {
+        id: row.id,
+        name: row.name || "—",
+        type: row.type || "—",
+        class: row.class || "—",
+        state: row.address_state || "—",
+        city: row.address_city || "—",
+        zip: row.address_zip || "—",
+        units: totalUnits,
+        occPct: occPct,
+        active: Boolean(row.active)
+      };
+    });
+
+    res.json(properties);
+  } catch (e: any) {
+    return sendErr(res, 500, e);
+  }
+});
+
+/** Units with property context */
+app.get("/api/portfolio/units", async (req, res) => {
+  if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
 
   try {
-    // Keep it simple & robust — the frontend maps/format the fields.
-    const { data, error } = await supa.client.from(table).select("*").limit(5000);
+    const { data, error } = await supa.client
+      .from(TABLE.units)
+      .select("*")
+      .limit(5000);
     if (error) throw error;
-    res.json(Array.isArray(data) ? data : []);
+
+    // Now get property names for the units
+    const propertyIds = [...new Set((data || []).map((u: any) => u.property_id).filter(Boolean))];
+    const { data: propertiesData } = await supa.client
+      .from(TABLE.properties)
+      .select("id, name")
+      .in('id', propertyIds);
+
+    const propertyMap = new Map((propertiesData || []).map((p: any) => [p.id, p.name || "—"]));
+
+    const units: UnitOut[] = (data || []).map((row: any) => ({
+      id: row.id,
+      propertyName: propertyMap.get(row.property_id) || "—",
+      unitLabel: row.unit_number || row.number || row.name || "—",
+      beds: row.beds || row.bedrooms,
+      baths: row.baths || row.bathrooms,
+      sqft: row.sq_ft || row.square_feet || row.sqft,
+      status: row.status,
+      marketRent: row.rent_amount || row.market_rent || 0
+    }));
+
+    res.json(units);
+  } catch (e: any) {
+    return sendErr(res, 500, e);
+  }
+});
+
+/** Leases with property, unit, and tenant context */
+app.get("/api/portfolio/leases", async (req, res) => {
+  if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
+
+  try {
+    // Get leases
+    const { data: leasesData, error } = await supa.client
+      .from(TABLE.leases)
+      .select("*")
+      .limit(5000);
+    if (error) throw error;
+
+    // Get related properties, units, and tenants
+    const propertyIds = [...new Set((leasesData || []).map((l: any) => l.property_id).filter(Boolean))];
+    const unitIds = [...new Set((leasesData || []).map((l: any) => l.unit_id).filter(Boolean))];
+    const tenantIds = [...new Set((leasesData || []).map((l: any) => l.primary_tenant_id || l.tenant_id).filter(Boolean))];
+
+    const [propertiesRes, unitsRes, tenantsRes] = await Promise.all([
+      supa.client!.from(TABLE.properties).select("id, name").in('id', propertyIds),
+      supa.client!.from(TABLE.units).select("id, unit_number").in('id', unitIds),
+      supa.client!.from(TABLE.tenants).select("id, display_name, full_name, first_name, last_name").in('id', tenantIds)
+    ]);
+
+    const propertyMap = new Map((propertiesRes.data || []).map((p: any) => [p.id, p.name || "—"]));
+    const unitMap = new Map((unitsRes.data || []).map((u: any) => [u.id, u.unit_number || "—"]));
+    const tenantMap = new Map((tenantsRes.data || []).map((t: any) => [
+      t.id, 
+      t.display_name || t.full_name || 
+      (t.first_name && t.last_name ? `${t.first_name} ${t.last_name}` : "—")
+    ]));
+
+    const leases: LeaseOut[] = (leasesData || []).map((row: any) => ({
+      id: row.id,
+      propertyName: propertyMap.get(row.property_id) || "—",
+      unitLabel: unitMap.get(row.unit_id) || "—",
+      tenants: tenantMap.get(row.primary_tenant_id || row.tenant_id) ? [tenantMap.get(row.primary_tenant_id || row.tenant_id)] : [],
+      status: row.status || "unknown",
+      start: row.start_date,
+      end: row.end_date,
+      rent: row.rent_cents ? row.rent_cents / 100 : 0
+    }));
+
+    res.json(leases);
+  } catch (e: any) {
+    return sendErr(res, 500, e);
+  }
+});
+
+/** Tenants with latest lease context */
+app.get("/api/portfolio/tenants", async (req, res) => {
+  if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
+
+  try {
+    const { data: tenantsData, error } = await supa.client
+      .from(TABLE.tenants)
+      .select("*")
+      .limit(5000);
+    if (error) throw error;
+
+    // Get latest lease info for each tenant
+    const tenants: TenantOut[] = await Promise.all((tenantsData || []).map(async (tenant: any) => {
+      const { data: leaseData } = await supa.client!
+        .from(TABLE.leases)
+        .select("property_id, unit_id")
+        .or(`primary_tenant_id.eq.${tenant.id},tenant_id.eq.${tenant.id}`)
+        .order('start_date', { ascending: false })
+        .limit(1);
+
+      let propertyName = null;
+      let unitLabel = null;
+
+      if (leaseData && leaseData.length > 0) {
+        const lease = leaseData[0];
+        // Get property and unit names
+        const [propRes, unitRes] = await Promise.all([
+          supa.client!.from(TABLE.properties).select("name").eq('id', lease.property_id).single(),
+          supa.client!.from(TABLE.units).select("unit_number").eq('id', lease.unit_id).single()
+        ]);
+        propertyName = propRes.data?.name;
+        unitLabel = unitRes.data?.unit_number;
+      }
+      
+      return {
+        id: tenant.id,
+        name: tenant.display_name || tenant.full_name || 
+              (tenant.first_name && tenant.last_name ? `${tenant.first_name} ${tenant.last_name}` : "—"),
+        email: tenant.email,
+        phone: null, // Not available in current schema
+        propertyName,
+        unitLabel,
+        type: tenant.type || "PROSPECT_TENANT",
+        balance: 0 // Not available in current schema
+      };
+    }));
+
+    res.json(tenants);
+  } catch (e: any) {
+    return sendErr(res, 500, e);
+  }
+});
+
+/** Owners */
+app.get("/api/portfolio/owners", async (req, res) => {
+  if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
+
+  try {
+    const { data, error } = await supa.client
+      .from(TABLE.owners)
+      .select("*")
+      .limit(5000);
+    if (error) throw error;
+
+    const owners: OwnerOut[] = (data || []).map((row: any) => ({
+      id: row.id,
+      company: row.company_name || row.display_name || row.full_name || "—",
+      email: null, // Not available in current schema
+      phone: null, // Not available in current schema  
+      active: Boolean(row.active)
+    }));
+
+    res.json(owners);
+  } catch (e: any) {
+    return sendErr(res, 500, e);
+  }
+});
+
+/** Debug endpoint for table samples */
+app.get("/api/portfolio/_debug/sample", async (req, res) => {
+  if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
+  
+  const table = String(req.query.table || "properties");
+  const limit = Math.min(parseInt(String(req.query.limit || "3")), 10);
+  
+  if (!TABLE[table]) {
+    return res.status(400).json({ error: `Unknown table: ${table}` });
+  }
+  
+  try {
+    const { data, error } = await supa.client
+      .from(TABLE[table])
+      .select("*")
+      .limit(limit);
+    if (error) throw error;
+    res.json({ table: TABLE[table], sample: data || [] });
   } catch (e: any) {
     return sendErr(res, 500, e);
   }

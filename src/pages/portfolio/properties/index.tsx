@@ -1,52 +1,23 @@
 import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
 import useCollection from "../../../features/data/useCollection";
-import { groupBy } from "../../../utils/dict";
-import { normalizeId } from "../../../utils/ids";
-import { PROPERTY_COLUMNS, mapProperty } from "../columns";
+import { PROPERTY_COLUMNS } from "../columns";
 import "../../../styles/table.css";
 
 export default function PropertiesPage() {
   const properties = useCollection<any>("/api/portfolio/properties");
-  const units = useCollection<any>("/api/portfolio/units");
-  const leases = useCollection<any>("/api/portfolio/leases");
 
   const { rows, loading, error } = useMemo(() => {
-    const props = properties.data ?? [];
-    const unitsArr = units.data ?? [];
-
-    const unitsByProp = new Map<string, number>();
-    const occByProp   = new Map<string, number>();
-
-    for (const u of unitsArr) {
-      const pid = normalizeId(u?.property_id ?? u?.propertyId ?? u?.property?.id);
-      if (!pid) continue;
-      const status = String(u?.status ?? "").toLowerCase();
-      unitsByProp.set(pid, (unitsByProp.get(pid) ?? 0) + 1);
-      if (status === "occupied" || status === "occ" || status === "active") {
-        occByProp.set(pid, (occByProp.get(pid) ?? 0) + 1);
-      }
-    }
-
-    const rows = (props || []).map((p: any) => {
-      const pid = normalizeId(p?.id);
-      const total = unitsByProp.get(pid) ?? 0;
-      const occ   = occByProp.get(pid) ?? 0;
-      const occPct = total > 0 ? Math.round((occ / total) * 100) : 0;
-      // Keep your existing mapProperty(p) call; just override units/occPct:
-      const base = mapProperty(p);
-      return { ...base, units: total, occPct };
-    });
-
+    // Backend now handles all relationships and calculations
+    const data = properties.data ?? [];
     return {
-      rows,
-      loading: properties.loading || units.loading || leases.loading,
-      error: properties.error || units.error || leases.error,
+      rows: data, // Use data directly from backend
+      loading: properties.loading,
+      error: properties.error,
     };
-  }, [properties, units, leases]);
+  }, [properties]);
 
-
-  // KPIs: derive from rows (do NOT read units from API)
+  // KPIs: derive from backend-calculated rows
   const kpis = useMemo(() => {
     const total = rows.length;
     const active = rows.filter(r => r.active).length;

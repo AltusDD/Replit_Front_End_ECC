@@ -19,29 +19,18 @@ export type PropertyRow = {
 };
 
 export function mapProperty(src:any): PropertyRow {
-  const units = Number(getPath(src,"units.total", getPath(src,"units",0))) || 0;
-  const occupied = Number(getPath(src,"units.occupied", 0)) || 0;
-  const occPctRaw = Number(getPath(src,"occupancyPct", NaN));
-  const occPct = Number.isFinite(occPctRaw) ? occPctRaw : (units ? Math.round((occupied/units)*100) : 0);
+  // Backend now provides clean, structured data - minimal mapping needed
   return {
-    id: String(getPath(src,"id") ?? getPath(src,"_id")),
-    name: String(getPath(src,"displayName") ?? getPath(src,"address.line1") ?? getPath(src,"name") ?? dash),
-    type: String(getPath(src,"type") ?? dash),
-    class: String(getPath(src,"class") ?? dash),
-    state: String(getPath(src,"address.state") ?? getPath(src,"state") ?? dash),
-    city: String(getPath(src,"address.city") ?? getPath(src,"city") ?? dash),
-    zip: String(
-      getPath(src, "address_zip") ??
-      getPath(src, "address.zipCode") ??
-      getPath(src, "zipcode") ??
-      getPath(src, "postal_code") ??
-      getPath(src, "address.zip") ??
-      getPath(src, "zip") ??
-      dash
-    ),
-    units,
-    occPct: Math.max(0, Math.min(100, occPct)),
-    active: getPath(src,"active") ?? dash,
+    id: String(src.id),
+    name: src.name || "—",
+    type: src.type || "—",
+    class: src.class || "—",
+    state: src.state || "—",
+    city: src.city || "—",
+    zip: src.zip || "—",
+    units: src.units || 0,
+    occPct: src.occPct || 0,
+    active: src.active ?? false,
   };
 }
 
@@ -70,21 +59,16 @@ export type UnitRow = {
 };
 
 export function mapUnit(src:any): UnitRow {
-  const property = getPath(src,"property.name") ?? getPath(src,"property.displayName") ?? getPath(src,"property") ?? dash;
-  const unit = getPath(src,"unit_number") ?? getPath(src,"label") ?? getPath(src,"unit.label") ?? getPath(src,"number") ?? getPath(src,"name") ?? dash;
-  const beds = Number(getPath(src,"beds") ?? getPath(src,"bedrooms") ?? 0);
-  const baths = Number(getPath(src,"baths") ?? getPath(src,"bathrooms") ?? 0);
-  const sqft = Number(getPath(src,"sq_ft") ?? getPath(src,"squareFeet") ?? getPath(src,"square_feet") ?? getPath(src,"sqft") ?? 0);
-  
+  // Backend now provides clean, structured data
   return {
-    id: String(getPath(src,"id") ?? getPath(src,"_id")),
-    property: String(property),
-    unit: String(unit),
-    beds,
-    baths,
-    sqft,
-    status: String(getPath(src,"status") ?? dash),
-    marketRent: Number(getPath(src,"rent_amount") ?? getPath(src,"marketRent") ?? 0),
+    id: String(src.id),
+    property: src.propertyName || "—",
+    unit: src.unitLabel || "—",
+    beds: src.beds || 0,
+    baths: src.baths || 0,
+    sqft: src.sqft || 0,
+    status: src.status || "—",
+    marketRent: src.marketRent || 0,
   };
 }
 
