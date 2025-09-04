@@ -1,11 +1,52 @@
 import React from "react";
-import { money, percent, shortDate, boolBadge } from "../../utils/format";
+import { money, percent, shortDate, boolBadge, progressBar, statusBadge, rowActions } from "../../utils/format";
 import { DataColumn } from "../../components/DataTable";
 
-// Badge helper for status/boolean displays
-function statusBadge(text: string, isActive: boolean) {
-  const className = isActive ? "ecc-badge ecc-badge--ok" : "ecc-badge ecc-badge--bad";
-  return <span className={className}>{text}</span>;
+// Helper for portfolio entity row actions
+function getPropertyActions(property: any) {
+  return [
+    { label: "View Details", onClick: () => console.log("View property:", property.name) },
+    { label: "View Units", onClick: () => console.log("View units for:", property.name) },
+    { label: "View Leases", onClick: () => console.log("View leases for:", property.name) },
+    { label: "Edit Property", onClick: () => console.log("Edit property:", property.name) },
+    { label: "Generate Report", onClick: () => console.log("Generate report for:", property.name) },
+  ];
+}
+
+function getUnitActions(unit: any) {
+  return [
+    { label: "View Details", onClick: () => console.log("View unit:", unit.unit_number) },
+    { label: "View Lease", onClick: () => console.log("View lease for:", unit.unit_number) },
+    { label: "Schedule Tour", onClick: () => console.log("Schedule tour:", unit.unit_number) },
+    { label: "Edit Unit", onClick: () => console.log("Edit unit:", unit.unit_number) },
+  ];
+}
+
+function getLeaseActions(lease: any) {
+  return [
+    { label: "View Details", onClick: () => console.log("View lease:", lease.id) },
+    { label: "View Tenant", onClick: () => console.log("View tenant:", lease.tenant_name) },
+    { label: "Renew Lease", onClick: () => console.log("Renew lease:", lease.id) },
+    { label: "Edit Lease", onClick: () => console.log("Edit lease:", lease.id) },
+  ];
+}
+
+function getTenantActions(tenant: any) {
+  return [
+    { label: "View Details", onClick: () => console.log("View tenant:", tenant.display_name) },
+    { label: "View Lease", onClick: () => console.log("View lease for:", tenant.display_name) },
+    { label: "Send Message", onClick: () => console.log("Message tenant:", tenant.display_name) },
+    { label: "Edit Tenant", onClick: () => console.log("Edit tenant:", tenant.display_name) },
+  ];
+}
+
+function getOwnerActions(owner: any) {
+  return [
+    { label: "View Details", onClick: () => console.log("View owner:", owner.name) },
+    { label: "View Properties", onClick: () => console.log("View properties for:", owner.name) },
+    { label: "Generate Report", onClick: () => console.log("Generate report for:", owner.name) },
+    { label: "Edit Owner", onClick: () => console.log("Edit owner:", owner.name) },
+  ];
 }
 
 // PROPERTY COLUMNS & MAPPER
@@ -21,17 +62,18 @@ export const PROPERTY_COLUMNS: DataColumn[] = [
     header: "OCCUPANCY", 
     align: "right", 
     type: "number",
-    render: (value, row) => {
-      const occ = row.occupancy || 0;
-      const color = occ >= 90 ? "ok" : occ >= 70 ? "warn" : "bad";
-      return <span className={`ecc-badge ecc-badge--${color}`}>{percent(occ, 1)}</span>;
-    }
+    render: (value, row) => progressBar(row.occupancy || 0, 100)
   },
   { 
     key: "active", 
     header: "ACTIVE", 
     type: "enum",
     render: (value, row) => statusBadge(row.active ? "Active" : "Inactive", row.active)
+  },
+  {
+    key: "actions",
+    header: "",
+    render: (value, row) => rowActions(getPropertyActions(row))
   }
 ];
 
@@ -93,6 +135,11 @@ export const LEASE_COLUMNS: DataColumn[] = [
     align: "right", 
     type: "number",
     render: (value, row) => money(row.rent)
+  },
+  {
+    key: "actions",
+    header: "",
+    render: (value, row) => rowActions(getLeaseActions(row))
   }
 ];
 
@@ -127,6 +174,11 @@ export const TENANT_COLUMNS: DataColumn[] = [
       const color = balance > 0 ? "warn" : "ok";
       return <span className={`ecc-badge ecc-badge--${color}`}>{money(balance)}</span>;
     }
+  },
+  {
+    key: "actions",
+    header: "",
+    render: (value, row) => rowActions(getTenantActions(row))
   }
 ];
 
@@ -154,6 +206,11 @@ export const OWNER_COLUMNS: DataColumn[] = [
     header: "ACTIVE", 
     type: "enum",
     render: (value, row) => statusBadge(row.active ? "Active" : "Inactive", row.active)
+  },
+  {
+    key: "actions",
+    header: "",
+    render: (value, row) => rowActions(getOwnerActions(row))
   }
 ];
 

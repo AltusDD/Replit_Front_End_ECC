@@ -50,3 +50,72 @@ export function boolBadge(value: unknown, truthy = "true", falsy = "false") {
 
 /** Alias for legacy imports. */
 export const boolText = boolBadge;
+
+// Genesis progress bar for occupancy
+export function progressBar(value: number, max: number = 100) {
+  const percentage = Math.min((value / max) * 100, 100);
+  const displayText = percent(percentage, 1);
+  
+  return (
+    <div className="ecc-progress-bar">
+      <div className="ecc-progress-bg">
+        <div 
+          className="ecc-progress-fg" 
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+      <span className="ecc-progress-text">{displayText}</span>
+    </div>
+  );
+}
+
+// Genesis status badge with enhanced styling
+export function statusBadge(text: string, isActive: boolean, type: "status" | "occupancy" = "status") {
+  let kind: BadgeKind = "muted";
+  
+  if (type === "occupancy") {
+    const value = parseFloat(text.replace('%', ''));
+    if (value >= 90) kind = "ok";
+    else if (value >= 70) kind = "warn";
+    else kind = "bad";
+  } else {
+    kind = isActive ? "ok" : "bad";
+  }
+  
+  return badge(text, kind);
+}
+
+// Row actions menu component
+export function rowActions(actions: Array<{label: string, onClick: () => void}>) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  
+  return (
+    <div className="ecc-row-actions">
+      <button 
+        className="ecc-actions-trigger"
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
+      >
+        ⋯
+      </button>
+      {isOpen && (
+        <div className="ecc-actions-dropdown">
+          {actions.map((action, i) => (
+            <button 
+              key={i}
+              onClick={(e) => {
+                e.stopPropagation();
+                action.onClick();
+                setIsOpen(false);
+              }}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

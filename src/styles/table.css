@@ -3,26 +3,43 @@
    polished paddings, hover cues, skeletons, and drawer.
 */
 
+/* Genesis Level Altus Branding */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 :root{
-  /* Ink */
-  --ink-1: #e8e8ea;
+  /* Altus Genesis Branding */
+  --altus-black: #0b0e12;
+  --altus-gold: #d6b36a;
+  --altus-dark-gray: #1a1d21;
+  --altus-light-gray: #a0a0a0;
+  --altus-text: #e2e2e2;
+
+  /* Legacy mappings for compatibility */
+  --ink-1: var(--altus-text);
   --ink-2: #c9cbd0;
-  --ink-3: #9aa0a6;
+  --ink-3: var(--altus-light-gray);
+  --surface-0: var(--altus-black);
+  --surface-1: var(--altus-dark-gray);
+  --surface-2: #1f2226;
+  --surface-3: #242831;
+  --line-1: #2a2d31;
+  --accent: var(--altus-gold);
 
-  /* Surfaces */
-  --surface-0: #0b0e12; /* page */
-  --surface-1: #12151b; /* table shell */
-  --surface-2: #171b22; /* row */
-  --surface-3: #1d222b; /* alt row */
+  /* Status Colors */
+  --status-active: #34d399;
+  --status-active-bg: rgba(52, 211, 153, 0.1);
+  --status-active-border: rgba(52, 211, 153, 0.3);
+  --status-litigation: #ef4444;
+  --status-litigation-bg: rgba(239, 68, 68, 0.1);
+  --status-litigation-border: rgba(239, 68, 68, 0.3);
+  --status-warning: #f59e0b;
+  --status-warning-bg: rgba(245, 158, 11, 0.1);
+  --status-warning-border: rgba(245, 158, 11, 0.3);
+}
 
-  /* Lines/accents */
-  --line-1: #2b313b;
-  --accent: #d6b36a;
-
-  /* Status */
-  --ok: #17c28a;
-  --warn: #f5a524;
-  --bad: #e5484d;
+/* ---------- Genesis Typography ---------- */
+* {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* ---------- Toolbar ---------- */
@@ -31,15 +48,32 @@
   margin: 10px 0 14px;
 }
 .ecc-input, .ecc-select{
-  background: var(--surface-2); color: var(--ink-1);
+  background: var(--surface-2); color: var(--altus-text);
   border: 1px solid var(--line-1); border-radius: 10px;
-  padding: 8px 10px; min-width: 220px; outline:none;
+  padding: 8px 12px; min-width: 220px; outline:none;
+  font-weight: 500;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 }
-.ecc-input::placeholder{ color: var(--ink-3); }
+.ecc-input:focus, .ecc-select:focus{
+  border-color: var(--altus-gold);
+  box-shadow: 0 0 0 2px rgba(214, 179, 106, 0.2);
+}
+.ecc-input::placeholder{ color: var(--altus-light-gray); }
 .ecc-select{ min-width: 120px; }
 .ecc-btn{
-  background: var(--surface-2); color: var(--ink-1);
-  border: 1px solid var(--line-1); border-radius: 10px; padding: 8px 12px;
+  background: var(--surface-2); color: var(--altus-text);
+  border: 1px solid var(--line-1); border-radius: 10px; 
+  padding: 8px 16px; font-weight: 600;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.ecc-btn:hover:not(:disabled){
+  background: var(--surface-3);
+  border-color: var(--altus-gold);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.2);
 }
 .ecc-btn:disabled{ opacity: .5; cursor: not-allowed; }
 .ecc-toolbar-spacer{ flex:1; }
@@ -54,6 +88,7 @@
   border: 1px solid var(--line-1);
   border-radius: 14px;
   overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* ---------- Header ---------- */
@@ -62,16 +97,26 @@
   position: sticky;
   z-index: 2;
   background: var(--surface-1);
-  color: var(--ink-2);
+  color: var(--altus-text);
   font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   text-align: left;
-  padding: 12px 14px;
+  padding: 16px 14px;
   border-bottom: 1px solid var(--line-1);
   white-space: nowrap;
 }
-.ecc-table thead th.is-clickable{ cursor: pointer; }
-.ecc-table thead th.asc::after{ content: " ▲"; color: var(--ink-3); }
-.ecc-table thead th.desc::after{ content: " ▼"; color: var(--ink-3); }
+.ecc-table thead th.is-clickable{ 
+  cursor: pointer; 
+  transition: all 0.2s ease;
+}
+.ecc-table thead th.is-clickable:hover{
+  color: var(--altus-gold);
+  background: var(--surface-2);
+}
+.ecc-table thead th.asc::after{ content: " ▲"; color: var(--altus-gold); font-weight: 900; }
+.ecc-table thead th.desc::after{ content: " ▼"; color: var(--altus-gold); font-weight: 900; }
 
 /* Sticky filter row under header */
 .ecc-filter-row th{
@@ -88,15 +133,29 @@
 /* ---------- Body ---------- */
 .ecc-table tbody tr:nth-child(odd){ background: var(--surface-2); }
 .ecc-table tbody tr:nth-child(even){ background: var(--surface-3); }
-.ecc-table tbody tr:hover{ background: #202633; }
+.ecc-table tbody tr{
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ecc-table tbody tr:hover{ 
+  background: var(--surface-3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+}
 .ecc-table td{
-  padding: 12px 14px;
+  padding: 14px;
   border-bottom: 1px solid var(--line-1);
-  color: var(--ink-1);
+  color: var(--altus-text);
+  font-weight: 500;
   vertical-align: middle;
 }
 .ecc-table td.is-right{ text-align:right; }
-.ecc-table td.is-empty{ text-align:center; color: var(--ink-3); padding: 24px; }
+.ecc-table td.is-empty{ 
+  text-align:center; 
+  color: var(--altus-light-gray); 
+  padding: 32px;
+  font-weight: 600;
+}
 
 /* ---------- Footer ---------- */
 .ecc-table-footer{
@@ -106,15 +165,59 @@
 .ecc-page{ padding: 0 10px; }
 .ecc-pager{ display:flex; align-items:center; gap:10px; }
 
-/* ---------- Badges (for your renderers if needed) ---------- */
+/* ---------- Genesis Status Tags ---------- */
 .ecc-badge{
-  display:inline-block; font-size: 12px; line-height: 1;
-  padding: 6px 8px; border-radius: 999px; border: 1px solid var(--line-1);
-  background: var(--surface-2); color: var(--ink-1);
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
 }
-.ecc-badge--ok{ background: color-mix(in oklab, var(--ok) 25%, black); }
-.ecc-badge--warn{ background: color-mix(in oklab, var(--warn) 25%, black); }
-.ecc-badge--bad{ background: color-mix(in oklab, var(--bad) 25%, black); }
+.ecc-badge--ok{ 
+  background: var(--status-active-bg); 
+  color: var(--status-active); 
+  border: 1px solid var(--status-active-border);
+}
+.ecc-badge--warn{ 
+  background: var(--status-warning-bg); 
+  color: var(--status-warning); 
+  border: 1px solid var(--status-warning-border);
+}
+.ecc-badge--bad{ 
+  background: var(--status-litigation-bg); 
+  color: var(--status-litigation); 
+  border: 1px solid var(--status-litigation-border);
+}
+
+/* ---------- Progress Bars ---------- */
+.ecc-progress-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+.ecc-progress-bg {
+  background-color: #374151;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  flex: 1;
+}
+.ecc-progress-fg {
+  background-color: var(--altus-gold);
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.ecc-progress-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--altus-text);
+  min-width: 40px;
+}
 
 /* ---------- Skeletons ---------- */
 .ecc-skel-row .ecc-skel{
@@ -147,5 +250,120 @@
 .ecc-drawer__title{ font-weight:800; color:var(--ink-1); }
 .ecc-drawer__body{ padding: 14px; overflow:auto; }
 .ecc-grid{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
-.ecc-field__label{ color: var(--ink-3); font-size: 12px; margin-bottom: 4px; }
-.ecc-field__value{ color: var(--ink-1); font-weight: 600; }
+.ecc-field__label{ color: var(--altus-light-gray); font-size: 12px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+.ecc-field__value{ color: var(--altus-text); font-weight: 600; }
+
+/* ---------- Genesis KPI Cards ---------- */
+.ecc-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 20px 0;
+  margin-bottom: 24px;
+}
+
+.ecc-kpi {
+  background: var(--altus-dark-gray);
+  border: 1px solid #2a2d31;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.ecc-kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.15);
+}
+
+.ecc-kpi-n {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--altus-gold);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.ecc-kpi-l {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--altus-light-gray);
+}
+
+/* ---------- Page Layout ---------- */
+.ecc-page {
+  padding: 24px;
+  background: var(--altus-black);
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+}
+
+.ecc-page-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--altus-text);
+  margin-bottom: 32px;
+  letter-spacing: -0.025em;
+}
+
+/* ---------- Row Actions Menu ---------- */
+.ecc-row-actions {
+  position: relative;
+  display: inline-block;
+}
+
+.ecc-actions-trigger {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--altus-light-gray);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.ecc-actions-trigger:hover {
+  background: var(--surface-3);
+  color: var(--altus-gold);
+}
+
+.ecc-actions-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--altus-dark-gray);
+  border: 1px solid var(--line-1);
+  border-radius: 8px;
+  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  min-width: 180px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.ecc-actions-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  color: var(--altus-text);
+  border: none;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ecc-actions-dropdown button:hover {
+  background: var(--surface-3);
+  color: var(--altus-gold);
+}
