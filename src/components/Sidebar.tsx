@@ -61,7 +61,15 @@ const NAV: NavParent[] = [
     title: "Construction & Repair", icon: "Hammer",
     children: [ { title: "Work Orders", path: "/ops/maintenance/work-orders", icon: "Hammer" } ],
   },
-  { title: "Reports", icon: "BarChart3", path: "/reports" },
+  { 
+    title: "Reports", 
+    icon: "BarChart3", 
+    children: [
+      { title: "Create", path: "/reports/create", icon: "FileText" },
+      { title: "Saved", path: "/reports/saved", icon: "FileText" },
+      { title: "Templates", path: "/reports/templates", icon: "FileText" },
+    ]
+  },
   { title: "Growth", icon: "PieChart", children: [{ title: "Marketing", path: "/growth/marketing", icon: "PieChart" }] },
   {
     title: "System", icon: "Settings",
