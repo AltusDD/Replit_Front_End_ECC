@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { DataTable } from "../../../components/DataTable";
+import DataTable from "../../../components/DataTable";
 import { useCollection } from "../../../features/data/useCollection";
 import { indexBy, groupBy } from "../../../utils/dict";
 import { OWNER_COLUMNS, mapOwner } from "../columns";

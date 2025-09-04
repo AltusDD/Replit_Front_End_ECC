@@ -1,29 +1,58 @@
 import * as React from "react";
 
 export type Column<T> = {
+  /** Object key to read when no custom render is provided */
   key: keyof T | string;
+  /** Table header text */
   header: string;
+  /** Optional cell className (e.g., "is-right") */
   className?: string;
-  /** Custom cell renderer (receive the full row) */
+  /** Custom cell renderer (receives the full row) */
   render?: (row: T) => React.ReactNode;
-  /** Custom sorter (a,b) -> number; if empty falls back to primitive compare */
+  /** Custom comparator; if omitted, primitive compare is used */
   sort?: (a: T, b: T) => number;
 };
 
 type Props<T> = {
   columns: Column<T>[];
   rows: T[];
+
+  /** Optional UX niceties */
+  toolbar?: React.ReactNode;
+  placeholder?: string;
   pageSizeOptions?: number[];
   defaultPageSize?: number;
-  placeholder?: string;
+
+  /** Optional status props (safe to omit) */
+  loading?: boolean;
+  error?: string | null;
 };
 
-export default function DataTable<T>({
+function textifyCell(v: unknown): string {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  // Try to pull children text from simple React elements
+  // @ts-expect-error runtime check only
+  const ch = v?.props?.children;
+  if (typeof ch === "string" || typeof ch === "number") return String(ch);
+  if (Array.isArray(ch)) return ch.map(textifyCell).join(" ");
+  try {
+    return JSON.stringify(v);
+  } catch {
+    return String(v);
+  }
+}
+
+export function DataTable<T>({
   columns,
   rows,
+  toolbar,
+  placeholder = "Search…",
   pageSizeOptions = [10, 25, 50, 100],
   defaultPageSize = 50,
-  placeholder = "Search…",
+  loading,
+  error,
 }: Props<T>) {
   const [q, setQ] = React.useState("");
   const [pageSize, setPageSize] = React.useState(defaultPageSize);
@@ -31,7 +60,7 @@ export default function DataTable<T>({
   const [sortKey, setSortKey] = React.useState<string | null>(null);
   const [sortDir, setSortDir] = React.useState<"asc" | "desc">("asc");
 
-  // Text filter (simple, fast)
+  // Text filter across stringified rows
   const filtered = React.useMemo(() => {
     if (!q) return rows;
     const needle = q.toLowerCase();
@@ -45,43 +74,41 @@ export default function DataTable<T>({
     if (!sortKey) return filtered;
     const col = columns.find((c) => String(c.key) === sortKey);
     const arr = [...filtered];
-    arr.sort((a, b) => {
+    arr.sort((a: any, b: any) => {
       if (col?.sort) return col.sort(a, b);
-      const va = (a as any)[sortKey];
-      const vb = (b as any)[sortKey];
+      const va = a?.[sortKey];
+      const vb = b?.[sortKey];
       if (va == null && vb == null) return 0;
       if (va == null) return -1;
       if (vb == null) return 1;
       if (typeof va === "number" && typeof vb === "number") return va - vb;
-      return String(va).localeCompare(String(vb));
+      return String(va).localeCompare(String(vb), undefined, { numeric: true });
     });
     return sortDir === "asc" ? arr : arr.reverse();
   }, [filtered, columns, sortKey, sortDir]);
 
   // Pagination
   const total = sorted.length;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const start = page * pageSize;
   const end = Math.min(start + pageSize, total);
   const pageRows = sorted.slice(start, end);
 
-  // CSV export of the **filtered + sorted** set (not just the page)
-  const exportCsv = () => {
-    const keys = columns.map((c) => c.header);
-    const toCell = (row: any, col: Column<any>) => {
-      const raw = col.render ? col.render(row) : (row as any)[col.key as any];
-      const txt =
-        typeof raw === "string"
-          ? raw
-          : typeof raw === "number"
-          ? String(raw)
-          : // strip tags if someone passes a React element with text
-            String((raw as any)?.props?.children ?? raw ?? "");
-      return `"${txt.replaceAll('"', '""')}"`;
-    };
+  // CSV export (filtered + sorted)
+  function exportCSV() {
+    const headers = columns.map((c) => `"${String(c.header).replace(/"/g, '""')}"`).join(",");
     const body = sorted
-      .map((r) => columns.map((c) => toCell(r, c)).join(","))
+      .map((row) =>
+        columns
+          .map((c) => {
+            const raw = c.render ? c.render(row) : (row as any)[c.key as any];
+            const txt = textifyCell(raw).replace(/"/g, '""');
+            return `"${txt}"`;
+          })
+          .join(",")
+      )
       .join("\n");
-    const csv = [keys.join(","), body].join("\n");
+    const csv = [headers, body].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -89,21 +116,23 @@ export default function DataTable<T>({
     a.download = "export.csv";
     a.click();
     URL.revokeObjectURL(url);
-  };
+  }
 
-  const onClickHeader = (key: string) => {
+  function onHeaderClick(key: string) {
     if (sortKey !== key) {
       setSortKey(key);
       setSortDir("asc");
     } else {
-      setSortDir(sortDir === "asc" ? "desc" : "asc");
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     }
     setPage(0);
-  };
+  }
 
   return (
     <div className="ecc-table-wrap">
       <div className="ecc-table-toolbar">
+        {toolbar}
+        <div className="ecc-toolbar-spacer" />
         <input
           className="ecc-input"
           placeholder={placeholder}
@@ -113,7 +142,6 @@ export default function DataTable<T>({
             setPage(0);
           }}
         />
-        <div className="ecc-toolbar-spacer" />
         <select
           className="ecc-select"
           value={pageSize}
@@ -128,22 +156,26 @@ export default function DataTable<T>({
             </option>
           ))}
         </select>
-        <button className="ecc-btn" onClick={exportCsv}>
+        <button className="ecc-btn" onClick={exportCSV}>
           Export CSV
         </button>
       </div>
+
+      {error && <div className="ecc-error">Error: {error}</div>}
+      {loading && <div className="ecc-loading">Loading…</div>}
 
       <table className="ecc-table">
         <thead>
           <tr>
             {columns.map((c) => {
               const key = String(c.key);
-              const active = sortKey === key ? ` ${sortDir}` : "";
+              const active =
+                sortKey === key ? (sortDir === "asc" ? " asc" : " desc") : "";
               return (
                 <th
                   key={key}
                   className={`is-clickable${active}`}
-                  onClick={() => onClickHeader(key)}
+                  onClick={() => onHeaderClick(key)}
                   title="Click to sort"
                 >
                   {c.header}
@@ -153,20 +185,24 @@ export default function DataTable<T>({
           </tr>
         </thead>
         <tbody>
-          {pageRows.length === 0 ? (
+          {!loading && pageRows.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="is-empty">
+              <td className="is-empty" colSpan={columns.length}>
                 No results
               </td>
             </tr>
           ) : (
             pageRows.map((row, i) => (
-              <tr key={i}>
-                {columns.map((c) => (
-                  <td key={String(c.key)} className={c.className || ""}>
-                    {c.render ? c.render(row) : (row as any)[c.key as any] ?? "—"}
-                  </td>
-                ))}
+              <tr key={(row as any)?.id ?? i}>
+                {columns.map((c) => {
+                  const cell =
+                    c.render ? c.render(row) : (row as any)[c.key as any];
+                  return (
+                    <td key={String(c.key)} className={c.className || ""}>
+                      {cell == null || cell === "" ? "—" : cell}
+                    </td>
+                  );
+                })}
               </tr>
             ))
           )}
@@ -185,15 +221,13 @@ export default function DataTable<T>({
           >
             Prev
           </button>
-          <span className="ecc-page">
-            {total === 0 ? 0 : page + 1} / {Math.max(1, Math.ceil(total / pageSize))}
+        <span className="ecc-page">
+            {total === 0 ? 0 : page + 1} / {pageCount}
           </span>
           <button
             className="ecc-btn"
-            disabled={end >= total}
-            onClick={() =>
-              setPage((p) => Math.min(Math.ceil(total / pageSize) - 1, p + 1))
-            }
+            disabled={page >= pageCount - 1}
+            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
           >
             Next
           </button>
@@ -202,3 +236,6 @@ export default function DataTable<T>({
     </div>
   );
 }
+
+// Also provide default export so both import styles work.
+export default DataTable;
