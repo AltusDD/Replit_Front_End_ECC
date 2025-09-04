@@ -5,6 +5,7 @@ import { groupBy } from "../../../utils/dict";
 import { PROPERTY_COLUMNS, mapProperty } from "../columns";
 
 export default function PropertiesPage() {
+  console.log("PropertiesPage loading...");
   const props = useCollection<any>("properties");
   const units = useCollection<any>("units");
   const leases = useCollection<any>("leases");
@@ -13,8 +14,8 @@ export default function PropertiesPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   const { rows, kpis, error, loading } = useMemo(() => {
-    const byPropUnits = groupBy(units.data, (u) => u.property_id);
-    const activeLeases = leases.data.filter((l) => String(l.status).toLowerCase() === "active");
+    const byPropUnits = groupBy(units.data || [], (u) => u.property_id);
+    const activeLeases = (leases.data || []).filter((l) => String(l.status).toLowerCase() === "active");
     const byUnitActiveLease = new Set(activeLeases.map((l) => String(l.unit_id)));
 
     const derived = (props.data || []).map((p) => {

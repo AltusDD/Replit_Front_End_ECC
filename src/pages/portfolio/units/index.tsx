@@ -13,7 +13,7 @@ export default function UnitsPage() {
   const [minBa, setMinBa] = useState<number>(0);
 
   const { rows, kpis, error, loading } = useMemo(() => {
-    const pById = indexBy(props.data, "id");
+    const pById = indexBy(props.data || [], "id");
     const activeLeaseUnits = new Set(
       (leases.data || [])
         .filter((l) => String(l.status).toLowerCase() === "active")

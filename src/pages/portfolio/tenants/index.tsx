@@ -13,8 +13,8 @@ export default function TenantsPage() {
   const [contactableOnly, setContactableOnly] = useState<boolean>(false);
 
   const { rows, kpis, error, loading } = useMemo(() => {
-    const uById = indexBy(units.data, "id");
-    const pById = indexBy(props.data, "id");
+    const uById = indexBy(units.data || [], "id");
+    const pById = indexBy(props.data || [], "id");
 
     // For each tenant, pick latest related lease for property/unit context
     const latestByTenant: Record<string, any> = {};

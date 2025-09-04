@@ -12,8 +12,8 @@ export default function LeasesPage() {
   const [status, setStatus] = useState<string>("ALL");
 
   const { rows, kpis, error, loading } = useMemo(() => {
-    const pById = indexBy(props.data, "id");
-    const tById = indexBy(tenants.data, "id");
+    const pById = indexBy(props.data || [], "id");
+    const tById = indexBy(tenants.data || [], "id");
 
     const tenantsName = (l: any) => {
       const t =
