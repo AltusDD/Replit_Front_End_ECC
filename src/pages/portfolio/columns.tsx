@@ -1,191 +1,278 @@
-// src/pages/portfolio/columns.tsx
 import React from "react";
-import { money, percent, shortDate, boolBadge as boolText, badge } from "../../utils/format";
-import type { Column } from "../../components/DataTable";
+import { Column } from "/src/components/DataTable";
+import { money, shortDate } from "/src/utils/format";
 
-// ── Entity types (shape is tolerant to your live schema) ─────────────
-export type Property = {
-  id: string | number;
-  name?: string;
-  type?: string;
-  class?: string;
-  address_city?: string;
-  address_state?: string;
+/** Badges & progress used by multiple tables */
+const Badge = ({ ok, text }: { ok: boolean; text?: string }) => (
+  <span className={`ecc-badge ${ok ? "ecc-badge--ok" : "ecc-badge--bad"}`}>
+    {text ?? (ok ? "ok" : "—")}
+  </span>
+);
+
+const WarnBadge = ({ text }: { text: string }) => (
+  <span className="ecc-badge ecc-badge--warn">{text}</span>
+);
+
+const Progress = ({ value }: { value: number }) => (
+  <div className="ecc-progress">
+    <div
+      className="ecc-progress-bar"
+      style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
+    />
+    <span className="ecc-progress-label">{value.toFixed(1)}%</span>
+  </div>
+);
+
+/* ===================== TYPES ===================== */
+export type PropertyRow = {
+  id?: string | number;
+  name: string;
+  type: string;
+  class: string;
+  state: string;
+  city: string;
   unit_count?: number;
-  occupancy_rate?: number; // optional from DB
+  occupancy?: number; // 0..100
   active?: boolean;
 };
 
-export type Unit = {
-  id: string | number;
-  property_id?: string | number;
-  unit_number?: string;
+export type UnitRow = {
+  id?: string | number;
+  property: string;
+  unit: string;
   beds?: number;
   baths?: number;
   sq_ft?: number;
   status?: string;
-  rent_amount?: number;
+  market_rent?: number;
 };
 
-export type Lease = {
-  id: string | number;
-  property_id?: string | number;
-  unit_id?: string | number;
-  rent_cents?: number;
-  start_date?: string;
-  end_date?: string;
+export type LeaseRow = {
+  id?: string | number;
+  tenants: string;
+  property: string;
+  rent?: number;
+  start?: string | Date;
+  end?: string | Date;
   status?: string;
-  tenant_names?: string; // optional if server computed
-  doorloop_id?: string | number;
-  primary_tenant_id?: string | number;
-  tenant_id?: string | number;
 };
 
-export type Tenant = {
-  id: string | number;
-  display_name?: string;
-  full_name?: string;
-  first_name?: string;
-  last_name?: string;
+export type TenantRow = {
+  id?: string | number;
+  name: string;
+  property?: string;
+  unit?: string;
   email?: string;
   phone?: string;
-  type?: string; // active / PROSPECT_TENANT etc
+  status?: string;
+  balance?: number;
 };
 
-export type Owner = {
-  id: string | number;
-  display_name?: string;
-  company_name?: string;
-  full_name?: string;
-  first_name?: string;
-  last_name?: string;
+export type OwnerRow = {
+  id?: string | number;
+  name: string;
+  email?: string;
+  phone?: string;
+  property_count?: number;
   active?: boolean;
 };
 
-// ── Columns (display only) ───────────────────────────────────────────
-export const PROPERTY_COLUMNS: Column<any>[] = [
-  { key: "name", header: "PROPERTY" },
-  { key: "type", header: "TYPE" },
-  { key: "class", header: "CLASS" },
-  { key: "state", header: "STATE" },
-  { key: "city", header: "CITY" },
-  { key: "unit_count", header: "UNITS", sort: (a, b) => (a.unit_count || 0) - (b.unit_count || 0) },
+/* ===================== COLUMNS ===================== */
+
+export const PROPERTY_COLUMNS: Column<PropertyRow>[] = [
+  { key: "name", header: "PROPERTY", filter: "text" },
+  { key: "type", header: "TYPE", filter: "select" },
+  { key: "class", header: "CLASS", filter: "select" },
+  { key: "state", header: "STATE", width: 72, filter: "select" },
+  { key: "city", header: "CITY", filter: "text" },
+  {
+    key: "unit_count",
+    header: "UNITS",
+    align: "right",
+    sort: "numeric",
+    filter: "numberRange",
+    render: (r) => (r.unit_count ?? 0).toLocaleString(),
+  },
   {
     key: "occupancy",
     header: "OCC%",
-    render: (r) => percent(r.occupancy),
-    sort: (a, b) => (a.occupancy || 0) - (b.occupancy || 0),
+    align: "right",
+    sort: "numeric",
+    filter: "numberRange",
+    render: (r) =>
+      r.occupancy == null ? "—" : <Progress value={Number(r.occupancy)} />,
   },
   {
     key: "active",
     header: "ACTIVE",
-    render: (r) => badge(r.active ? "ok" : "bad", boolText(r.active)),
+    align: "center",
+    filter: "select",
+    options: ["true", "false"],
+    render: (r) => <Badge ok={!!r.active} />,
   },
 ];
 
-export const UNIT_COLUMNS: Column<any>[] = [
-  { key: "property", header: "PROPERTY" },
-  { key: "unit_label", header: "UNIT" },
-  { key: "beds", header: "BD", sort: (a, b) => (a.beds || 0) - (b.beds || 0) },
-  { key: "baths", header: "BA", sort: (a, b) => (a.baths || 0) - (b.baths || 0) },
-  { key: "sq_ft", header: "SQFT", sort: (a, b) => (a.sq_ft || 0) - (b.sq_ft || 0) },
-  { key: "status", header: "STATUS" },
-  { key: "rent", header: "MARKET RENT", render: (r) => money(r.rent), sort: (a, b) => (a.rent || 0) - (b.rent || 0) },
+export const UNIT_COLUMNS: Column<UnitRow>[] = [
+  { key: "property", header: "PROPERTY", filter: "text" },
+  { key: "unit", header: "UNIT", filter: "text" },
+  { key: "beds", header: "BD", align: "right", sort: "numeric", filter: "numberRange" },
+  { key: "baths", header: "BA", align: "right", sort: "numeric", filter: "numberRange" },
+  { key: "sq_ft", header: "SQFT", align: "right", sort: "numeric", filter: "numberRange" },
+  { key: "status", header: "STATUS", filter: "select" },
+  {
+    key: "market_rent",
+    header: "MARKET RENT",
+    align: "right",
+    sort: "numeric",
+    filter: "numberRange",
+    render: (r) =>
+      r.market_rent == null ? <WarnBadge text="—" /> : money(r.market_rent),
+  },
 ];
 
-export const LEASE_COLUMNS: Column<any>[] = [
-  { key: "tenant_names", header: "TENANT(S)" },
-  { key: "property", header: "PROPERTY" },
-  { key: "rent", header: "RENT", render: (r) => money(r.rent), sort: (a, b) => (a.rent || 0) - (b.rent || 0) },
-  { key: "start", header: "START", render: (r) => shortDate(r.start), sort: (a, b) => String(a.start).localeCompare(String(b.start)) },
-  { key: "end", header: "END", render: (r) => shortDate(r.end), sort: (a, b) => String(a.end).localeCompare(String(b.end)) },
-  { key: "status", header: "STATUS" },
+export const LEASE_COLUMNS: Column<LeaseRow>[] = [
+  { key: "tenants", header: "TENANT(S)", filter: "text" },
+  { key: "property", header: "PROPERTY", filter: "text" },
+  {
+    key: "rent",
+    header: "RENT",
+    align: "right",
+    sort: "numeric",
+    filter: "numberRange",
+    render: (r) => (r.rent == null ? "—" : money(r.rent)),
+  },
+  {
+    key: "start",
+    header: "START",
+    filter: "text",
+    render: (r) => (r.start ? shortDate(r.start) : "—"),
+  },
+  {
+    key: "end",
+    header: "END",
+    filter: "text",
+    render: (r) => (r.end ? shortDate(r.end) : "—"),
+  },
+  {
+    key: "status",
+    header: "STATUS",
+    filter: "select",
+    render: (r) => {
+      const ok = String(r.status ?? "").toLowerCase() === "active";
+      return <span className={`ecc-badge ${ok ? "ecc-badge--ok" : "ecc-badge--warn"}`}>{r.status ?? "—"}</span>;
+    },
+  },
 ];
 
-export const TENANT_COLUMNS: Column<any>[] = [
-  { key: "name", header: "NAME" },
-  { key: "property", header: "PROPERTY" },
-  { key: "unit", header: "UNIT" },
-  { key: "email", header: "EMAIL" },
-  { key: "phone", header: "PHONE" },
-  { key: "status", header: "STATUS" },
-  { key: "balance", header: "BALANCE", render: (r) => money(r.balance), sort: (a, b) => (a.balance || 0) - (b.balance || 0) },
+export const TENANT_COLUMNS: Column<TenantRow>[] = [
+  { key: "name", header: "NAME", filter: "text" },
+  { key: "property", header: "PROPERTY", filter: "text" },
+  { key: "unit", header: "UNIT", filter: "text" },
+  { key: "email", header: "EMAIL", filter: "text" },
+  { key: "phone", header: "PHONE", filter: "text" },
+  { key: "status", header: "STATUS", filter: "select" },
+  {
+    key: "balance",
+    header: "BALANCE",
+    align: "right",
+    sort: "numeric",
+    filter: "numberRange",
+    render: (r) => money(r.balance ?? 0),
+  },
 ];
 
-export const OWNER_COLUMNS: Column<any>[] = [
-  { key: "name", header: "OWNER" },
-  { key: "email", header: "EMAIL" },
-  { key: "phone", header: "PHONE" },
-  { key: "property_count", header: "PROPS", sort: (a, b) => (a.property_count || 0) - (b.property_count || 0) },
-  { key: "active", header: "ACTIVE", render: (r) => badge(r.active ? "ok" : "bad", boolText(r.active)) },
+export const OWNER_COLUMNS: Column<OwnerRow>[] = [
+  { key: "name", header: "OWNER", filter: "text" },
+  { key: "email", header: "EMAIL", filter: "text" },
+  { key: "phone", header: "PHONE", filter: "text" },
+  {
+    key: "property_count",
+    header: "PROPS",
+    align: "right",
+    sort: "numeric",
+    filter: "numberRange",
+  },
+  {
+    key: "active",
+    header: "ACTIVE",
+    align: "center",
+    filter: "select",
+    options: ["true", "false"],
+    render: (r) => <Badge ok={!!r.active} />,
+  },
 ];
 
-// ── Client-side mappers (fills missing fields) ───────────────────────
-export function mapProperty(p: any, join: { city?: string; state?: string; units?: number; occ?: number }) {
+/* ===================== MAPPERS (compat with existing imports) ===================== */
+/** These accept a raw row from the API and normalize it to our row shapes. */
+
+export function mapProperty(raw: any): PropertyRow {
+  const units = Number(raw.unit_count ?? raw.units ?? 0);
+  const occNum =
+    raw.occupancy ??
+    raw.occ ??
+    (Number(raw.occupied_units ?? raw.occupied ?? 0) / (units || 1)) * 100;
   return {
-    id: p.id,
-    name: p.name ?? "—",
-    type: p.type ?? "—",
-    class: p.class ?? "—",
-    city: p.address_city ?? join.city ?? "—",
-    state: p.address_state ?? join.state ?? "—",
-    unit_count: p.unit_count ?? join.units ?? 0,
-    occupancy: typeof p.occupancy_rate === "number" ? p.occupancy_rate : (join.occ ?? 0),
-    active: !!p.active,
+    id: raw.id ?? raw.property_id ?? raw.pid,
+    name: raw.name ?? raw.address ?? raw.property ?? "—",
+    type: raw.type ?? raw.property_type ?? "—",
+    class: raw.class ?? raw.classification ?? "—",
+    state: raw.state ?? raw.st ?? "—",
+    city: raw.city ?? "—",
+    unit_count: units,
+    occupancy: Number.isFinite(occNum) ? Number(occNum) : undefined,
+    active: !!(raw.active ?? raw.is_active ?? true),
   };
 }
 
-export function mapUnit(u: any, propName: string, hasActiveLease: boolean) {
+export function mapUnit(raw: any): UnitRow {
   return {
-    id: u.id,
-    property: propName,
-    unit_label: u.unit_number || "—",
-    beds: u.beds ?? null,
-    baths: u.baths ?? null,
-    sq_ft: u.sq_ft ?? null,
-    status: u.status ?? (hasActiveLease ? "occupied" : "vacant"),
-    rent: u.rent_amount ?? null,
+    id: raw.id ?? raw.unit_id ?? raw.uid,
+    property: raw.property ?? raw.property_name ?? raw.address ?? "—",
+    unit: raw.unit ?? raw.unit_name ?? raw.unit_address ?? "—",
+    beds: raw.beds ?? raw.bd ?? raw.bedrooms,
+    baths: raw.baths ?? raw.ba ?? raw.bathrooms,
+    sq_ft: raw.sq_ft ?? raw.sqft ?? raw.square_feet,
+    status: raw.status ?? raw.occupancy_status ?? "—",
+    market_rent: raw.market_rent ?? raw.asking_rent ?? raw.rent,
   };
 }
 
-export function mapLease(l: any, propName: string, tenantName: string) {
+export function mapLease(raw: any): LeaseRow {
+  const names =
+    raw.tenants ??
+    raw.tenant_names ??
+    (Array.isArray(raw.tenant_list) ? raw.tenant_list.join(", ") : raw.tenant);
   return {
-    id: l.id,
-    tenant_names: l.tenant_names || tenantName || "—",
-    property: propName || "—",
-    rent: typeof l.rent_cents === "number" ? l.rent_cents / 100 : l.rent_amount ?? null,
-    start: l.start_date,
-    end: l.end_date,
-    status: l.status ?? "—",
+    id: raw.id ?? raw.lease_id ?? raw.lid,
+    tenants: names ?? "—",
+    property: raw.property ?? raw.address ?? raw.property_name ?? "—",
+    rent: raw.rent ?? raw.monthly_rent ?? raw.amount,
+    start: raw.start ?? raw.start_date,
+    end: raw.end ?? raw.end_date,
+    status: raw.status ?? "—",
   };
 }
 
-export function mapTenant(t: any, propName: string, unitLabel: string) {
-  const name = t.display_name || t.full_name || [t.first_name, t.last_name].filter(Boolean).join(" ");
+export function mapTenant(raw: any): TenantRow {
   return {
-    id: t.id,
-    name: name || "—",
-    property: propName || "—",
-    unit: unitLabel || "—",
-    email: t.email || "—",
-    phone: t.phone || "—",
-    status: t.type || "—",
-    balance: 0,
+    id: raw.id ?? raw.tenant_id ?? raw.tid,
+    name: (raw.name ?? raw.full_name ?? [raw.first_name, raw.last_name].filter(Boolean).join(" ")) || "—",
+    property: raw.property ?? raw.property_name ?? raw.address,
+    unit: raw.unit ?? raw.unit_name ?? raw.unit_address,
+    email: raw.email ?? raw.email_address,
+    phone: raw.phone ?? raw.phone_number,
+    status: raw.status ?? raw.tenant_status ?? "—",
+    balance: raw.balance ?? raw.amount_due ?? 0,
   };
 }
 
-export function mapOwner(o: any, propertyCount = 0) {
-  const name =
-    o.display_name ||
-    o.company_name ||
-    o.full_name ||
-    [o.first_name, o.last_name].filter(Boolean).join(" ");
+export function mapOwner(raw: any): OwnerRow {
   return {
-    id: o.id,
-    name: name || "—",
-    email: o.email || "—",
-    phone: o.phone || "—",
-    property_count: propertyCount,
-    active: !!o.active,
+    id: raw.id ?? raw.owner_id ?? raw.oid,
+    name: raw.name ?? raw.owner ?? raw.company ?? "—",
+    email: raw.email ?? raw.email_address,
+    phone: raw.phone ?? raw.phone_number,
+    property_count: raw.property_count ?? raw.props ?? 0,
+    active: !!(raw.active ?? raw.is_active ?? true),
   };
 }

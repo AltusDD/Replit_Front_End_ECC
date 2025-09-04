@@ -1,88 +1,86 @@
-import React, { useMemo, useState } from "react";
-import DataTable from "../../../components/DataTable";
-import { useCollection } from "../../../features/data/useCollection";
-import { groupBy } from "../../../utils/dict";
-import { PROPERTY_COLUMNS, mapProperty } from "../columns";
-import "../../../styles/table.css";
+import React, { useEffect, useMemo, useState } from "react";
+import { DataTable } from "/src/components/DataTable";
+import {
+  PROPERTY_COLUMNS,
+  mapProperty,
+  PropertyRow,
+} from "../columns";
 
-export default function PropertiesPage() {
-  const props = useCollection<any>("properties");
-  const units = useCollection<any>("units");
-  const leases = useCollection<any>("leases");
+const ENDPOINT = "/api/portfolio/properties";
 
-  const [stateFilter, setStateFilter] = useState<string>("ALL");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+async function fetchJSON(url: string) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  const j = await r.json();
+  return Array.isArray(j) ? j : j.data ?? [];
+}
 
-  const { rows, kpis, error, loading } = useMemo(() => {
-    const byPropUnits = groupBy(units.data || [], (u) => u.property_id);
-    const activeLeases = (leases.data || []).filter((l) => String(l.status).toLowerCase() === "active");
-    const byUnitActiveLease = new Set(activeLeases.map((l) => String(l.unit_id)));
+export default function PortfolioPropertiesPage() {
+  const [raw, setRaw] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
 
-    const derived = (props.data || []).map((p) => {
-      const u = byPropUnits.get(p.id) || [];
-      const unitCount = p.unit_count ?? u.length ?? 0;
-      const occCount = u.filter((x) => byUnitActiveLease.has(String(x.id))).length;
-      const occPct = unitCount ? (occCount / unitCount) * 100 : 0;
-      return mapProperty(p, {
-        city: p.address_city,
-        state: p.address_state,
-        units: unitCount,
-        occ: occPct,
-      });
-    });
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        setErr(null);
+        setRaw(await fetchJSON(ENDPOINT));
+      } catch (e: any) {
+        console.error(e);
+        setErr(e?.message || "Failed to load");
+        setRaw([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
-    const filtered = derived.filter((r) =>
-      (stateFilter === "ALL" || r.state === stateFilter) &&
-      (statusFilter === "ALL" || (statusFilter === "ACTIVE" ? r.active : !r.active))
-    );
+  const rows: PropertyRow[] = useMemo(() => raw.map(mapProperty), [raw]);
 
-    const kpis = {
-      properties: derived.length,
-      units: units.data?.length || 0,
-      activeProps: derived.filter((r) => r.active).length,
-      occupancy: (() => {
-        const totUnits = derived.reduce((s, r) => s + (r.unit_count || 0), 0);
-        const occUnits = derived.reduce((s, r) => s + Math.round(((r.occupancy || 0) / 100) * (r.unit_count || 0)), 0);
-        return totUnits ? (occUnits / totUnits) * 100 : 0;
-      })(),
-      states: Array.from(new Set(derived.map((r) => r.state).filter(Boolean))),
-    };
-
-    return {
-      rows: filtered,
-      kpis,
-      error: props.error || units.error || leases.error,
-      loading: props.loading || units.loading || leases.loading,
-    };
-  }, [props, units, leases, stateFilter, statusFilter]);
+  const kpi = useMemo(() => {
+    const total = rows.length;
+    const units = rows.reduce((s, r) => s + (r.unit_count ?? 0), 0);
+    const avgOcc =
+      rows.length === 0
+        ? 0
+        : rows.reduce((s, r) => s + (r.occupancy ?? 0), 0) / rows.length;
+    const active = rows.filter((r) => r.active).length;
+    return { total, units, avgOcc, active };
+  }, [rows]);
 
   return (
-    <div className="ecc-page">
+    <div className="ecc-table-wrap">
       <div className="ecc-kpis">
-        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.properties}</div><div className="ecc-kpi-l">PROPERTIES</div></div>
-        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.units}</div><div className="ecc-kpi-l">UNITS</div></div>
-        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.occupancy.toFixed(1)}%</div><div className="ecc-kpi-l">OCCUPANCY</div></div>
-        <div className="ecc-kpi"><div className="ecc-kpi-n">{kpis.activeProps}</div><div className="ecc-kpi-l">ACTIVE PROPS</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-l">PROPERTIES</div><div className="ecc-kpi-n">{kpi.total.toLocaleString()}</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-l">UNITS</div><div className="ecc-kpi-n">{kpi.units.toLocaleString()}</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-l">OCCUPANCY</div><div className="ecc-kpi-n">{kpi.avgOcc.toFixed(1)}%</div></div>
+        <div className="ecc-kpi"><div className="ecc-kpi-l">ACTIVE PROPS</div><div className="ecc-kpi-n">{kpi.active.toLocaleString()}</div></div>
       </div>
 
-      <DataTable
+      {err && (
+        <div className="ecc-kpi" style={{ marginBottom: 12 }}>
+          <div className="ecc-kpi-l">Error</div>
+          <div className="ecc-kpi-n">{err}</div>
+        </div>
+      )}
+
+      <DataTable<PropertyRow>
         rows={rows}
         columns={PROPERTY_COLUMNS}
         loading={loading}
-        error={error}
-        toolbar={
+        csvName="properties"
+        onRowClick={(row) => {
+          // Replace this with your drawer/route
+          console.log("open property", row);
+        }}
+        actions={(row) => (
           <>
-            <select className="ecc-select" value={stateFilter} onChange={(e) => setStateFilter(e.target.value)}>
-              <option value="ALL">All States</option>
-              {kpis.states.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-            <select className="ecc-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-              <option value="ALL">All Status</option>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-            </select>
+            <button onClick={() => console.log("View leases", row)}>View leases</button>
+            <button onClick={() => console.log("Work orders", row)}>Open work orders</button>
+            <button onClick={() => console.log("Edit property", row)}>Edit details</button>
           </>
-        }
+        )}
       />
     </div>
   );
