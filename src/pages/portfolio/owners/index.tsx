@@ -1,39 +1,37 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
 import { useCollection } from "../../../features/data/useCollection";
 import { indexBy, groupBy } from "../../../utils/dict";
 import { OWNER_COLUMNS, mapOwner } from "../columns";
 import "../../../styles/table.css";
 
-async function fetchJSON(url: string) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-  const j = await r.json();
-  return Array.isArray(j) ? j : j.data ?? [];
-}
+export default function OwnersPage() {
+  const owners = useCollection<any>("owners");
+  const properties = useCollection<any>("properties");
 
-export default function PortfolioOwnersPage() {
-  const [raw, setRaw] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
+  const { rows, kpis, error, loading } = useMemo(() => {
+    // If you later add a property_owners link table, replace this logic.
+    // For now, count properties by a simple owner_id if present, else 0.
+    const byOwnerProps = groupBy(properties.data || [], (p) => p.owner_id ?? "__none__");
 
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        setErr(null);
-        setRaw(await fetchJSON(ENDPOINT));
-      } catch (e: any) {
-        console.error(e);
-        setErr(e?.message || "Failed to load");
-        setRaw([]);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+    const enriched = (owners.data || []).map((o) => {
+      const count = (byOwnerProps.get(o.id)?.length || 0);
+      return mapOwner(o, count);
+    });
 
-  const rows: OwnerRow[] = useMemo(() => raw.map(mapOwner), [raw]);
+    const kpis = {
+      owners: enriched.length,
+      active: enriched.filter((o) => o.active).length,
+      totalProps: Array.from(byOwnerProps.values()).reduce((s: number, list: any) => s + (Array.isArray(list) ? list.length : 0), 0),
+    };
+
+    return {
+      rows: enriched,
+      kpis,
+      loading: owners.loading || properties.loading,
+      error: owners.error || properties.error,
+    };
+  }, [owners, properties]);
 
   const kpi = useMemo(() => {
     const total = rows.length;

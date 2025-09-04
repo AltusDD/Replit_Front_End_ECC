@@ -1,39 +1,54 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import DataTable from "../../../components/DataTable";
 import { useCollection } from "../../../features/data/useCollection";
 import { indexBy } from "../../../utils/dict";
 import { LEASE_COLUMNS, mapLease } from "../columns";
 import "../../../styles/table.css";
 
-async function fetchJSON(url: string) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-  const j = await r.json();
-  return Array.isArray(j) ? j : j.data ?? [];
-}
+export default function LeasesPage() {
+  const leases = useCollection<any>("leases");
+  const tenants = useCollection<any>("tenants");
+  const props = useCollection<any>("properties");
 
-export default function PortfolioLeasesPage() {
-  const [raw, setRaw] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
+  const [status, setStatus] = useState<string>("ALL");
 
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        setErr(null);
-        setRaw(await fetchJSON(ENDPOINT));
-      } catch (e: any) {
-        console.error(e);
-        setErr(e?.message || "Failed to load");
-        setRaw([]);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+  const { rows, kpis, error, loading } = useMemo(() => {
+    const pById = indexBy(props.data || [], "id");
+    const tById = indexBy(tenants.data || [], "id");
 
-  const rows: LeaseRow[] = useMemo(() => raw.map(mapLease), [raw]);
+    const tenantsName = (l: any) => {
+      const t =
+        tById.get(l.primary_tenant_id) ||
+        tById.get(l.tenant_id);
+      return t?.display_name || t?.full_name || [t?.first_name, t?.last_name].filter(Boolean).join(" ");
+    };
+
+    const enriched = (leases.data || []).map((l) => {
+      const propName = pById.get(l.property_id)?.name || "—";
+      return mapLease(l, propName, tenantsName(l));
+    });
+
+    const filtered = enriched.filter((r) => status === "ALL" || String(r.status).toLowerCase() === status.toLowerCase());
+
+    const kpis = {
+      leases: enriched.length,
+      active: enriched.filter((r) => String(r.status).toLowerCase() === "active").length,
+      ended: enriched.filter((r) => String(r.status).toLowerCase() === "ended").length,
+      mrr: enriched.reduce((s, r) => s + (Number(r.rent || 0)), 0),
+      avg: (() => {
+        const nums = enriched.map((r) => Number(r.rent || 0)).filter((n) => n > 0);
+        if (!nums.length) return 0;
+        return nums.reduce((a, b) => a + b, 0) / nums.length;
+      })(),
+    };
+
+    return {
+      rows: filtered,
+      kpis,
+      loading: leases.loading || tenants.loading || props.loading,
+      error: leases.error || tenants.error || props.error,
+    };
+  }, [leases, tenants, props, status]);
 
   const kpi = useMemo(() => {
     const total = rows.length;

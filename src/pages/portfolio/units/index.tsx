@@ -1,39 +1,51 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import DataTable from "../../../components/DataTable";
 import { useCollection } from "../../../features/data/useCollection";
 import { indexBy } from "../../../utils/dict";
 import { UNIT_COLUMNS, mapUnit } from "../columns";
 import "../../../styles/table.css";
 
-async function fetchJSON(url: string) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-  const j = await r.json();
-  return Array.isArray(j) ? j : j.data ?? [];
-}
+export default function UnitsPage() {
+  const units = useCollection<any>("units");
+  const props = useCollection<any>("properties");
+  const leases = useCollection<any>("leases");
 
-export default function PortfolioUnitsPage() {
-  const [raw, setRaw] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
+  const [minBd, setMinBd] = useState<number>(0);
+  const [minBa, setMinBa] = useState<number>(0);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        setErr(null);
-        setRaw(await fetchJSON(ENDPOINT));
-      } catch (e: any) {
-        console.error(e);
-        setErr(e?.message || "Failed to load");
-        setRaw([]);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+  const { rows, kpis, error, loading } = useMemo(() => {
+    const pById = indexBy(props.data || [], "id");
+    const activeLeaseUnits = new Set(
+      (leases.data || [])
+        .filter((l) => String(l.status).toLowerCase() === "active")
+        .map((l) => String(l.unit_id))
+    );
 
-  const rows: UnitRow[] = useMemo(() => raw.map(mapUnit), [raw]);
+    const enriched = (units.data || []).map((u) => {
+      const propName = pById.get(u.property_id)?.name || "—";
+      const occupied = activeLeaseUnits.has(String(u.id));
+      return mapUnit(u, propName, occupied);
+    });
+
+    const filtered = enriched.filter((r) => (r.beds || 0) >= minBd && (r.baths || 0) >= minBa);
+
+    const kpis = {
+      units: enriched.length,
+      occupied: enriched.filter((r) => String(r.status).toLowerCase() === "occupied").length,
+      vacant: enriched.filter((r) => String(r.status).toLowerCase() !== "occupied").length,
+      avgMarket: (() => {
+        const rents = enriched.map((r) => Number(r.market_rent || 0)).filter((n) => n > 0);
+        return rents.length ? rents.reduce((a, b) => a + b, 0) / rents.length : 0;
+      })(),
+    };
+
+    return {
+      rows: filtered,
+      kpis,
+      loading: units.loading || props.loading || leases.loading,
+      error: units.error || props.error || leases.error,
+    };
+  }, [units, props, leases, minBd, minBa]);
 
   const kpi = useMemo(() => {
     const total = rows.length;
