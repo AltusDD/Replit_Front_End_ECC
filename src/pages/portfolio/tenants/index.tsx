@@ -33,7 +33,7 @@ export default function TenantsPage() {
       const unit = l ? uById.get(l.unit_id) : null;
       const prop = l ? pById.get(l.property_id) : null;
       const unitLabel = unit?.unit_number ?? unit?.label ?? unit?.name ?? "—";
-      const propName = prop?.name ?? prop?.address_line1 ?? "—";
+      const propName = prop?.name ?? prop?.address_street1 ?? "—";
       
       const tenantType = (() => {
         const raw = String(t?.type ?? "").toLowerCase();

@@ -63,10 +63,10 @@ export type UnitRow = {
 
 export function mapUnit(src:any): UnitRow {
   const property = getPath(src,"property.name") ?? getPath(src,"property.displayName") ?? getPath(src,"property") ?? dash;
-  const unit = getPath(src,"label") ?? getPath(src,"unit.label") ?? getPath(src,"unit_number") ?? getPath(src,"number") ?? getPath(src,"name") ?? dash;
-  const beds = Number(getPath(src,"bedrooms") ?? getPath(src,"beds") ?? 0);
-  const baths = Number(getPath(src,"bathrooms") ?? getPath(src,"baths") ?? 0);
-  const sqft = Number(getPath(src,"squareFeet") ?? getPath(src,"square_feet") ?? getPath(src,"sqft") ?? 0);
+  const unit = getPath(src,"unit_number") ?? getPath(src,"label") ?? getPath(src,"unit.label") ?? getPath(src,"number") ?? getPath(src,"name") ?? dash;
+  const beds = Number(getPath(src,"beds") ?? getPath(src,"bedrooms") ?? 0);
+  const baths = Number(getPath(src,"baths") ?? getPath(src,"bathrooms") ?? 0);
+  const sqft = Number(getPath(src,"sq_ft") ?? getPath(src,"squareFeet") ?? getPath(src,"square_feet") ?? getPath(src,"sqft") ?? 0);
   
   return {
     id: String(getPath(src,"id") ?? getPath(src,"_id")),
@@ -76,7 +76,7 @@ export function mapUnit(src:any): UnitRow {
     baths,
     sqft,
     status: String(getPath(src,"status") ?? dash),
-    marketRent: Number(getPath(src,"marketRent",0)),
+    marketRent: Number(getPath(src,"rent_amount") ?? getPath(src,"marketRent") ?? 0),
   };
 }
 
@@ -111,12 +111,12 @@ export function mapLease(src:any): LeaseRow {
   return {
     id: String(getPath(src,"id") ?? getPath(src,"_id")),
     property: String(getPath(src,"property.name") ?? getPath(src,"property.displayName") ?? dash),
-    unit: String(getPath(src,"unit.label") ?? getPath(src,"unit") ?? dash),
+    unit: String(getPath(src,"unit.label") ?? getPath(src,"unit.unit_number") ?? getPath(src,"unit.number") ?? getPath(src,"unit.name") ?? dash),
     tenants: names || dash,
     status: String(getPath(src,"status") ?? dash),
-    start: String(getPath(src,"startDate") ?? getPath(src,"start") ?? ""),
-    end: String(getPath(src,"endDate") ?? getPath(src,"end") ?? ""),
-    rent: Number(getPath(src,"rent",0)),
+    start: String(getPath(src,"start_date") ?? getPath(src,"startDate") ?? getPath(src,"start") ?? ""),
+    end: String(getPath(src,"end_date") ?? getPath(src,"endDate") ?? getPath(src,"end") ?? ""),
+    rent: Number(getPath(src,"rent_cents",0) ?? getPath(src,"rent",0)),
   };
 }
 
@@ -146,12 +146,15 @@ export function mapTenant(src:any): TenantRow {
   const type =
     (getPath(src,"type") ?? getPath(src,"role") ?? "").toString().toLowerCase()
     || (!getPath(src,"leaseId") ? "prospect" : "primary");
+  const email = getPath(src,"email") ?? getPath(src,"primary_email") ?? getPath(src,"contact_email") ?? getPath(src,"profile.email") ?? getPath(src,"contacts[0].email") ?? dash;
+  const phone = getPath(src,"phone") ?? getPath(src,"phone_number") ?? getPath(src,"phoneNumber") ?? getPath(src,"mobile") ?? getPath(src,"cell") ?? getPath(src,"contacts[0].phone") ?? getPath(src,"phones[0].number") ?? dash;
+  
   return {
     id: String(getPath(src,"id") ?? getPath(src,"_id")),
-    name: String(getPath(src,"fullName") ?? getPath(src,"name") ?? dash),
-    email: String(getPath(src,"email") ?? dash),
-    phone: String(getPath(src,"phone") ?? getPath(src,"phoneNumber") ?? dash),
-    property: String(getPath(src,"property.displayName") ?? getPath(src,"property.name") ?? dash),
+    name: String(getPath(src,"full_name") ?? getPath(src,"display_name") ?? getPath(src,"fullName") ?? getPath(src,"name") ?? dash),
+    email: String(email),
+    phone: String(phone),
+    property: String(getPath(src,"property.name") ?? getPath(src,"property.displayName") ?? dash),
     unit: String(getPath(src,"unit.label") ?? getPath(src,"unit") ?? dash),
     type,
     balance: Number(getPath(src,"balance",0)),
@@ -178,9 +181,9 @@ export type OwnerRow = {
 };
 
 export function mapOwner(src:any): OwnerRow {
-  const company = getPath(src,"company") ?? getPath(src,"companyName") ?? getPath(src,"company_name") ?? getPath(src,"businessName") ?? getPath(src,"organization") ?? getPath(src,"name") ?? getPath(src,"ownerName") ?? dash;
-  const email = getPath(src,"email") ?? getPath(src,"primary_email") ?? getPath(src,"contact_email") ?? getPath(src,"owner_email") ?? dash;
-  const phone = getPath(src,"phone") ?? getPath(src,"phoneNumber") ?? getPath(src,"phone_number") ?? getPath(src,"contact_phone") ?? getPath(src,"mobile") ?? dash;
+  const company = getPath(src,"company_name") ?? getPath(src,"companyName") ?? getPath(src,"company") ?? getPath(src,"businessName") ?? getPath(src,"organization") ?? getPath(src,"name") ?? getPath(src,"ownerName") ?? getPath(src,"display_name") ?? dash;
+  const email = getPath(src,"email") ?? getPath(src,"primary_email") ?? getPath(src,"contact_email") ?? getPath(src,"owner_email") ?? getPath(src,"emails[0].address") ?? getPath(src,"contacts[0].email") ?? dash;
+  const phone = getPath(src,"phone") ?? getPath(src,"phone_number") ?? getPath(src,"phoneNumber") ?? getPath(src,"primary_phone") ?? getPath(src,"mobile") ?? getPath(src,"phones[0].number") ?? getPath(src,"contacts[0].phone") ?? dash;
   const active = getPath(src,"active") ?? getPath(src,"is_active") ?? getPath(src,"status") ?? null;
   
   return {
