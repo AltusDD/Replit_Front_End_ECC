@@ -33,7 +33,7 @@ function DashboardFallback() {
 
 export default function App() {
   return (
-    <div className="ecc-app">
+    <div className="ecc-shell">
       <Sidebar />
 
       {/* Main content area */}

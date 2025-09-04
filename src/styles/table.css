@@ -1,110 +1,122 @@
 :root{
-  /* Genesis dark palette */
-  --ink-1: #e6e6e6;
-  --ink-2: #c8c8c8;
+  /* Genesis tokens (with fallbacks) */
+  --gold: #d6b36a;
+  --gold-2: #f0d293;
+
+  --ink-1: #e9eaec;
+  --ink-2: #c7cad1;
   --ink-3: #9aa0a6;
 
-  --surface-0: #0b0b0c;
-  --surface-1: #0f1011;
-  --surface-2: #141517;
+  --bg: #0b0e12;
+  --surface: #101318;
+  --panel: #141920;
 
-  --row-bg: var(--surface-1);
-  --row-alt-bg: var(--surface-2);
-  --row-hover: #1a1b1f;
+  --row-odd: #12161c;
+  --row-even: #171c23;
+  --row-hover: #1c222b;
 
-  --line-1: #2a2a2a;
-  --accent: #d4af37; /* gold */
-  --ok: #15b77e;
-  --warn: #f5a524;
-  --bad: #e5484d;
+  --border-1: #27303b;
+  --ok: #1ec997;
+  --warn: #f4b740;
+  --bad: #e85d67;
 }
 
-/* ---- Inputs / toolbar ---- */
+/* ===== Toolbar ===== */
+.ecc-table-toolbar{
+  display:flex; align-items:center; gap:10px;
+  margin: 6px 0 10px;
+}
 .ecc-input, .ecc-select{
-  background: var(--surface-2); color: var(--ink-1);
-  border: 1px solid var(--line-1); border-radius: 6px;
-  padding: 6px 8px; min-width: 120px;
+  background: var(--panel); color: var(--ink-1);
+  border: 1px solid var(--border-1); border-radius: 10px;
+  padding: 8px 10px; min-width: 220px;
 }
-.ecc-select { height: 32px; }
+.ecc-select{ min-width: 120px; }
 .ecc-btn{
-  background: var(--surface-2); color: var(--ink-1);
-  border: 1px solid var(--line-1); border-radius: 6px; padding: 6px 10px;
+  background: var(--panel); color: var(--ink-1);
+  border: 1px solid var(--border-1); border-radius: 10px; padding: 8px 10px;
 }
+.ecc-btn:hover{ border-color: var(--gold); }
 .ecc-btn:disabled{ opacity: .5; cursor: not-allowed; }
-.ecc-range{ display:flex; gap:6px; }
+.ecc-toolbar-spacer{ flex:1; }
 
-/* ---- Table ---- */
+/* ===== KPIs ===== */
+.ecc-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 8px; }
+.ecc-kpi { background: var(--panel); border: 1px solid var(--border-1); border-radius: 14px; padding: 12px 14px; }
+.ecc-kpi-n { font-weight: 700; font-size: 20px; color: var(--ink-1); }
+.ecc-kpi-l { font-size: 12px; color: var(--ink-3); }
+
+/* ===== Table shell ===== */
 .ecc-table-wrap{ width:100%; }
 .ecc-table{
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  background: var(--surface-0);
-  border: 1px solid var(--line-1);
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-1);
+  border-radius: 14px;
   overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,.25);
 }
 
-/* Headers */
+/* ===== Headers ===== */
 .ecc-table thead th{
-  position: sticky; top: 0; z-index: 2;
-  background: #101113; color: var(--ink-2);
-  font-weight: 600; text-align: left;
-  padding: 10px 12px; border-bottom: 1px solid var(--line-1);
-}
-.ecc-table thead th.th-filter{
-  background: #0e0f11; position: sticky; top: 38px; z-index: 1;
-  padding: 8px 12px;
+  position: sticky; top: 0; z-index: 1;
+  background: linear-gradient(to bottom, #0f1319, #0e1217);
+  color: var(--ink-2);
+  font-weight: 600; letter-spacing: .02em;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-1);
+  white-space: nowrap;
 }
 .ecc-table thead th.is-clickable{ cursor: pointer; }
-.ecc-table thead th.asc::after{ content: " ▲"; color: var(--ink-3); }
-.ecc-table thead th.desc::after{ content: " ▼"; color: var(--ink-3); }
+.ecc-table thead th.asc::after{ content: " ▲"; color: var(--gold); }
+.ecc-table thead th.desc::after{ content: " ▼"; color: var(--gold); }
 
-/* Body banding */
-.ecc-table tbody tr:nth-child(odd){ background: var(--row-bg); }
-.ecc-table tbody tr:nth-child(even){ background: var(--row-alt-bg); }
+/* ===== Filter row inputs embedded in headers ===== */
+.ecc-table thead input.ecc-input,
+.ecc-table thead select.ecc-select{
+  background: #0f141a; border-color: #1f2935;
+  min-width: 0; width: 100%;
+}
+
+/* ===== Body: zebra banding / hover ===== */
+.ecc-table tbody tr:nth-child(odd){ background: var(--row-odd); }
+.ecc-table tbody tr:nth-child(even){ background: var(--row-even); }
 .ecc-table tbody tr:hover{ background: var(--row-hover); }
-.ecc-table tbody tr.is-clickable { cursor: pointer; }
+.ecc-table tbody tr.is-row-link{ cursor: pointer; }
 .ecc-table td{
-  padding: 10px 12px; border-bottom: 1px solid var(--line-1); color: var(--ink-1);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-1);
+  color: var(--ink-1);
+  vertical-align: middle;
 }
 .ecc-table td.is-right{ text-align:right; }
-.ecc-table td.is-center{ text-align:center; }
-.ecc-table td.is-empty{ text-align:center; color: var(--ink-3); padding: 16px; }
+.ecc-table td.is-empty{ text-align:center; color: var(--ink-3); }
 
-/* Footer */
+/* ===== Footer ===== */
 .ecc-table-footer{
   display:flex; align-items:center; justify-content:space-between;
-  padding: 10px 8px; color: var(--ink-3);
+  padding: 10px 6px 10px; color: var(--ink-3);
 }
 
-/* Badges */
+/* ===== Badges (for any status chips you render) ===== */
 .ecc-badge{
   display:inline-block; font-size: 12px; line-height: 1;
-  padding: 6px 8px; border-radius: 999px; border: 1px solid var(--line-1);
-  background: var(--surface-2); color: var(--ink-1);
+  padding: 6px 8px; border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: var(--panel); color: var(--ink-1);
 }
-.ecc-badge--ok{ background: color-mix(in oklab, var(--ok) 25%, black); }
-.ecc-badge--warn{ background: color-mix(in oklab, var(--warn) 25%, black); }
-.ecc-badge--bad{ background: color-mix(in oklab, var(--bad) 25%, black); }
-.ecc-badge--muted{ background: var(--surface-2); }
+.ecc-badge--ok{ background: color-mix(in oklab, var(--ok) 22%, black); }
+.ecc-badge--warn{ background: color-mix(in oklab, var(--warn) 22%, black); }
+.ecc-badge--bad{ background: color-mix(in oklab, var(--bad) 22%, black); }
 
-/* Occupancy pill */
-.ecc-occ{
-  position: relative; height: 18px; background: #0e0f11; border:1px solid var(--line-1);
-  border-radius: 999px; overflow: hidden; min-width: 110px;
-}
-.ecc-occ__bar{
-  position:absolute; left:0; top:0; bottom:0;
-  background: color-mix(in oklab, var(--accent) 40%, black);
-}
-.ecc-occ__label{
-  position: relative; font-size: 12px; color: var(--ink-1);
-  display:inline-block; width:100%; text-align:center; line-height:18px;
-}
+/* ===== Density toggle ===== */
+.ecc-table.is-dense td{ padding: 7px 10px; }
+.ecc-table.is-dense thead th{ padding: 8px 10px; }
 
-/* KPI strip (helper if you want to use it) */
-.ecc-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 10px; }
-.ecc-kpi { background: var(--surface-1); border: 1px solid var(--line-1); border-radius: 12px; padding: 12px; }
-.ecc-kpi-n { font-weight: 700; font-size: 20px; color: var(--ink-1); }
-.ecc-kpi-l { font-size: 12px; color: var(--ink-3); }
+/* Slight gold keyline on focusables */
+.ecc-input:focus, .ecc-select:focus, .ecc-btn:focus{
+  outline: 0; box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 50%, transparent);
+}
