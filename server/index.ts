@@ -342,26 +342,36 @@ app.get("/api/portfolio/owners", async (req, res) => {
   }
 });
 
-/** Debug endpoint for table samples */
-app.get("/api/portfolio/_debug/sample", async (req, res) => {
+/** Debug endpoint for SQL queries */
+app.get("/api/portfolio/_debug/sql", async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
   
-  const table = String(req.query.table || "properties");
-  const limit = Math.min(parseInt(String(req.query.limit || "3")), 10);
+  const query = String(req.query.q || "");
+  const limit = Math.min(parseInt(String(req.query.limit || "10")), 50);
   
-  if (!TABLE[table]) {
-    return res.status(400).json({ error: `Unknown table: ${table}` });
+  if (!query.toLowerCase().startsWith("select")) {
+    return res.status(400).json({ error: "SELECT queries only" });
   }
   
   try {
-    const { data, error } = await supa.client
-      .from(TABLE[table])
-      .select("*")
-      .limit(limit);
+    const { data, error } = await supa.client.rpc('exec_sql', { 
+      query_text: `${query} LIMIT ${limit}` 
+    });
     if (error) throw error;
-    res.json({ table: TABLE[table], sample: data || [] });
+    res.json(data || []);
   } catch (e: any) {
-    return sendErr(res, 500, e);
+    // Fallback to table queries if RPC doesn't work
+    try {
+      if (query.includes("FROM properties")) {
+        const { data, error } = await supa.client.from(TABLE.properties).select("*").limit(limit);
+        if (error) throw error;
+        res.json(data || []);
+      } else {
+        return sendErr(res, 400, "RPC not available, use table-specific queries");
+      }
+    } catch (fallbackError: any) {
+      return sendErr(res, 500, fallbackError);
+    }
   }
 });
 

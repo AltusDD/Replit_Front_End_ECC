@@ -1,5 +1,5 @@
 import React from "react";
-import { getPath, money, percent, shortDate, dash } from "../../utils/format";
+import { money, percent, shortDate, dash } from "../../utils/format";
 import ProgressBar from "../../features/portfolio/components/ProgressBar";
 import StatusTag from "../../features/portfolio/components/StatusTag";
 import { DataColumn } from "../../components/DataTable";
@@ -95,20 +95,18 @@ export type LeaseRow = {
 };
 
 export function mapLease(src:any): LeaseRow {
-  const tenantsList = getPath<any[]>(src,"tenants") ?? [];
-  const names = Array.isArray(tenantsList) 
-    ? tenantsList.map(t => typeof t === 'string' ? t : String(getPath(t,"fullName") ?? getPath(t,"name") ?? "")).filter(Boolean).join(", ")
-    : "";
+  // Backend now provides clean, structured data
+  const tenants = Array.isArray(src.tenants) ? src.tenants.join(", ") : "—";
   
   return {
-    id: String(getPath(src,"id") ?? getPath(src,"_id")),
-    property: String(getPath(src,"property.name") ?? getPath(src,"property.displayName") ?? dash),
-    unit: String(getPath(src,"unit.label") ?? getPath(src,"unit.unit_number") ?? getPath(src,"unit.number") ?? getPath(src,"unit.name") ?? dash),
-    tenants: names || dash,
-    status: String(getPath(src,"status") ?? dash),
-    start: String(getPath(src,"start_date") ?? getPath(src,"startDate") ?? getPath(src,"start") ?? ""),
-    end: String(getPath(src,"end_date") ?? getPath(src,"endDate") ?? getPath(src,"end") ?? ""),
-    rent: Number(getPath(src,"rent_cents",0) ?? getPath(src,"rent",0)),
+    id: String(src.id),
+    property: src.propertyName || "—",
+    unit: src.unitLabel || "—", 
+    tenants,
+    status: src.status || "—",
+    start: src.start || "",
+    end: src.end || "",
+    rent: src.rent || 0,
   };
 }
 
@@ -135,21 +133,16 @@ export type TenantRow = {
 };
 
 export function mapTenant(src:any): TenantRow {
-  const type =
-    (getPath(src,"type") ?? getPath(src,"role") ?? "").toString().toLowerCase()
-    || (!getPath(src,"leaseId") ? "prospect" : "primary");
-  const email = getPath(src,"email") ?? getPath(src,"primary_email") ?? getPath(src,"contact_email") ?? getPath(src,"profile.email") ?? getPath(src,"contacts[0].email") ?? dash;
-  const phone = getPath(src,"phone") ?? getPath(src,"phone_number") ?? getPath(src,"phoneNumber") ?? getPath(src,"mobile") ?? getPath(src,"cell") ?? getPath(src,"contacts[0].phone") ?? getPath(src,"phones[0].number") ?? dash;
-  
+  // Backend now provides clean, structured data
   return {
-    id: String(getPath(src,"id") ?? getPath(src,"_id")),
-    name: String(getPath(src,"full_name") ?? getPath(src,"display_name") ?? getPath(src,"fullName") ?? getPath(src,"name") ?? dash),
-    email: String(email),
-    phone: String(phone),
-    property: String(getPath(src,"property.name") ?? getPath(src,"property.displayName") ?? dash),
-    unit: String(getPath(src,"unit.label") ?? getPath(src,"unit") ?? dash),
-    type,
-    balance: Number(getPath(src,"balance",0)),
+    id: String(src.id),
+    name: src.name || "—",
+    email: src.email || "—",
+    phone: src.phone || "—",
+    property: src.propertyName || "—",
+    unit: src.unitLabel || "—",
+    type: src.type || "PROSPECT_TENANT",
+    balance: src.balance || 0,
   };
 }
 
@@ -173,17 +166,13 @@ export type OwnerRow = {
 };
 
 export function mapOwner(src:any): OwnerRow {
-  const company = getPath(src,"company_name") ?? getPath(src,"companyName") ?? getPath(src,"company") ?? getPath(src,"businessName") ?? getPath(src,"organization") ?? getPath(src,"name") ?? getPath(src,"ownerName") ?? getPath(src,"display_name") ?? dash;
-  const email = getPath(src,"email") ?? getPath(src,"primary_email") ?? getPath(src,"contact_email") ?? getPath(src,"owner_email") ?? getPath(src,"emails[0].address") ?? getPath(src,"contacts[0].email") ?? dash;
-  const phone = getPath(src,"phone") ?? getPath(src,"phone_number") ?? getPath(src,"phoneNumber") ?? getPath(src,"primary_phone") ?? getPath(src,"mobile") ?? getPath(src,"phones[0].number") ?? getPath(src,"contacts[0].phone") ?? dash;
-  const active = getPath(src,"active") ?? getPath(src,"is_active") ?? getPath(src,"status") ?? null;
-  
+  // Backend now provides clean, structured data
   return {
-    id: String(getPath(src,"id") ?? getPath(src,"_id")),
-    company: String(company),
-    email: String(email),
-    phone: String(phone),
-    active,
+    id: String(src.id),
+    company: src.company || "—",
+    email: src.email || "—",
+    phone: src.phone || "—",
+    active: src.active,
   };
 }
 

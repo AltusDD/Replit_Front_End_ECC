@@ -1,44 +1,20 @@
 import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
 import useCollection from "../../../features/data/useCollection";
-import { indexBy } from "../../../utils/dict";
-import { UNIT_COLUMNS, mapUnit } from "../columns";
+import { UNIT_COLUMNS } from "../columns";
 import "../../../styles/table.css";
 
 export default function UnitsPage() {
   const units = useCollection<any>("/api/portfolio/units");
-  const props = useCollection<any>("/api/portfolio/properties");
-  const leases = useCollection<any>("/api/portfolio/leases");
 
   const { rows, loading, error } = useMemo(() => {
-    const pById = indexBy(props.data || [], "id");
-    const activeLeaseUnits = new Set(
-      (leases.data || [])
-        .filter((l) => String(l.status).toLowerCase() === "active")
-        .map((l) => String(l.unit_id))
-    );
-
-    const mapped = (units.data || []).map((u) => {
-      const prop = pById.get(u.property_id);
-      const propName = prop?.name || prop?.address_line1 || "—";
-      const occupied = activeLeaseUnits.has(String(u.id));
-      
-      // Enrich unit data before mapping
-      const enriched = {
-        ...u,
-        "property.name": propName,
-        status: occupied ? "Occupied" : (u.status || "Vacant")
-      };
-      
-      return mapUnit(enriched);
-    });
-
+    // Backend now provides all structured data
     return {
-      rows: mapped,
-      loading: units.loading || props.loading || leases.loading,
-      error: units.error || props.error || leases.error,
+      rows: units.data || [],
+      loading: units.loading,
+      error: units.error,
     };
-  }, [units, props, leases]);
+  }, [units]);
 
 
   const kpis = useMemo(() => {
