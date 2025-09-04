@@ -3,45 +3,59 @@ import DataTable from "../../../components/DataTable";
 import useCollection from "../../../features/data/useCollection";
 import { indexBy } from "../../../utils/dict";
 import { LEASE_COLUMNS, mapLease } from "../columns";
+import { normalizeId } from "../../../utils/ids";
 import "../../../styles/table.css";
 
 export default function LeasesPage() {
   const leases = useCollection<any>("/api/portfolio/leases");
   const tenants = useCollection<any>("/api/portfolio/tenants");
   const props = useCollection<any>("/api/portfolio/properties");
+  const units = useCollection<any>("/api/portfolio/units");
 
   const { rows, loading, error } = useMemo(() => {
     const pById = indexBy(props.data || [], "id");
     const tById = indexBy(tenants.data || [], "id");
-
-    const tenantsName = (l: any) => {
-      const t =
-        tById.get(l.primary_tenant_id) ||
-        tById.get(l.tenant_id);
-      return t?.display_name || t?.full_name || [t?.first_name, t?.last_name].filter(Boolean).join(" ");
-    };
+    const uById = indexBy(units.data || [], "id");
 
     const mapped = (leases.data || []).map((l) => {
-      const prop = pById.get(l.property_id);
-      const propName = prop?.name || prop?.address_line1 || "—";
-      const tenant = tenantsName(l);
-      
-      // Enrich lease data before mapping
-      const enriched = {
+      const leaseId = normalizeId(l.id);
+      const prop = pById.get(normalizeId(l.property_id));
+      const unit = uById.get(normalizeId(l.unit_id));
+
+      const propName = prop?.name ?? prop?.displayName ?? prop?.address_line1 ?? "—";
+      const unitLabel = unit?.label ?? unit?.unit_number ?? unit?.number ?? unit?.name ?? "—";
+
+      // Build tenants array (primary + secondary)
+      const names: string[] = [];
+      if (l.primary_tenant_id) {
+        const pt = tById.get(normalizeId(l.primary_tenant_id));
+        if (pt?.display_name || pt?.full_name || pt?.name) {
+          names.push(pt.display_name ?? pt.full_name ?? pt.name);
+        }
+      }
+      if (l.tenant_id && l.tenant_id !== l.primary_tenant_id) {
+        const st = tById.get(normalizeId(l.tenant_id));
+        if (st?.display_name || st?.full_name || st?.name) {
+          names.push(st.display_name ?? st.full_name ?? st.name);
+        }
+      }
+
+      const shaped = {
         ...l,
-        "property.name": propName,
-        tenants: [{ name: tenant }]
+        property: { name: propName },
+        unit: { label: unitLabel },
+        tenants: names.length ? names : ["—"],
       };
       
-      return mapLease(enriched);
+      return mapLease(shaped);
     });
 
     return {
       rows: mapped,
-      loading: leases.loading || tenants.loading || props.loading,
-      error: leases.error || tenants.error || props.error,
+      loading: leases.loading || tenants.loading || props.loading || units.loading,
+      error: leases.error || tenants.error || props.error || units.error,
     };
-  }, [leases, tenants, props]);
+  }, [leases, tenants, props, units]);
 
 
   const kpis = useMemo(() => {

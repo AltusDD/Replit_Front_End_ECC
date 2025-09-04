@@ -1,0 +1,1 @@
+export const normalizeId = (id: any) => (id == null ? "" : String(id));

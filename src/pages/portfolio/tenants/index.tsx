@@ -3,6 +3,7 @@ import DataTable from "../../../components/DataTable";
 import useCollection from "../../../features/data/useCollection";
 import { indexBy } from "../../../utils/dict";
 import { TENANT_COLUMNS, mapTenant } from "../columns";
+import { normalizeId } from "../../../utils/ids";
 import "../../../styles/table.css";
 
 export default function TenantsPage() {
@@ -31,14 +32,29 @@ export default function TenantsPage() {
       const l = latestByTenant[String(t.id)];
       const unit = l ? uById.get(l.unit_id) : null;
       const prop = l ? pById.get(l.property_id) : null;
-      const unitLabel = unit?.unit_number || "—";
-      const propName = prop?.name || prop?.address_line1 || "—";
+      const unitLabel = unit?.unit_number ?? unit?.label ?? unit?.name ?? "—";
+      const propName = prop?.name ?? prop?.address_line1 ?? "—";
+      
+      const tenantType = (() => {
+        const raw = String(t?.type ?? "").toLowerCase();
+        if (raw.includes("prospect")) return "prospect_tenant";
+        // If present on latest lease, consider active lease tenant:
+        if (l?.status && String(l.status).toLowerCase() === "active") {
+          return "lease_tenant";
+        }
+        // Secondary tenant heuristic (if linked via l.tenant_id and not primary):
+        if (l && l.primary_tenant_id && l.tenant_id && l.primary_tenant_id !== l.tenant_id) {
+          return "secondary_tenant";
+        }
+        return raw || "lease_tenant";
+      })();
       
       // Enrich tenant data before mapping
       const enriched = {
         ...t,
         "property.name": propName,
         "unit.label": unitLabel,
+        type: tenantType,
         leaseId: l?.id
       };
       

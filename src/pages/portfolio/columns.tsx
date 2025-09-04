@@ -30,7 +30,7 @@ export function mapProperty(src:any): PropertyRow {
     class: String(getPath(src,"class") ?? dash),
     state: String(getPath(src,"address.state") ?? getPath(src,"state") ?? dash),
     city: String(getPath(src,"address.city") ?? getPath(src,"city") ?? dash),
-    zip: String(getPath(src,"address.zip") ?? getPath(src,"zip") ?? dash),
+    zip: String(getPath(src,"address.zip") ?? getPath(src,"address.zipCode") ?? getPath(src,"address.postal_code") ?? getPath(src,"zipcode") ?? getPath(src,"zip_code") ?? getPath(src,"postal_code") ?? getPath(src,"zip") ?? dash),
     units,
     occPct: Math.max(0, Math.min(100, occPct)),
     active: getPath(src,"active") ?? dash,
@@ -62,13 +62,19 @@ export type UnitRow = {
 };
 
 export function mapUnit(src:any): UnitRow {
+  const property = getPath(src,"property.name") ?? getPath(src,"property.displayName") ?? getPath(src,"property") ?? dash;
+  const unit = getPath(src,"label") ?? getPath(src,"unit.label") ?? getPath(src,"unit_number") ?? getPath(src,"number") ?? getPath(src,"name") ?? dash;
+  const beds = Number(getPath(src,"bedrooms") ?? getPath(src,"beds") ?? 0);
+  const baths = Number(getPath(src,"bathrooms") ?? getPath(src,"baths") ?? 0);
+  const sqft = Number(getPath(src,"squareFeet") ?? getPath(src,"square_feet") ?? getPath(src,"sqft") ?? 0);
+  
   return {
     id: String(getPath(src,"id") ?? getPath(src,"_id")),
-    property: String(getPath(src,"property.displayName") ?? getPath(src,"property.name") ?? dash),
-    unit: String(getPath(src,"label") ?? getPath(src,"unit") ?? dash),
-    beds: Number(getPath(src,"beds",0)),
-    baths: Number(getPath(src,"baths",0)),
-    sqft: Number(getPath(src,"sqft",0)),
+    property: String(property),
+    unit: String(unit),
+    beds,
+    baths,
+    sqft,
     status: String(getPath(src,"status") ?? dash),
     marketRent: Number(getPath(src,"marketRent",0)),
   };
@@ -97,11 +103,14 @@ export type LeaseRow = {
 };
 
 export function mapLease(src:any): LeaseRow {
-  const names = (getPath<any[]>(src,"tenants") ?? [])
-    .map(t=> String(getPath(t,"fullName") ?? getPath(t,"name") ?? "")).filter(Boolean).join(", ");
+  const tenantsList = getPath<any[]>(src,"tenants") ?? [];
+  const names = Array.isArray(tenantsList) 
+    ? tenantsList.map(t => typeof t === 'string' ? t : String(getPath(t,"fullName") ?? getPath(t,"name") ?? "")).filter(Boolean).join(", ")
+    : "";
+  
   return {
     id: String(getPath(src,"id") ?? getPath(src,"_id")),
-    property: String(getPath(src,"property.displayName") ?? getPath(src,"property.name") ?? dash),
+    property: String(getPath(src,"property.name") ?? getPath(src,"property.displayName") ?? dash),
     unit: String(getPath(src,"unit.label") ?? getPath(src,"unit") ?? dash),
     tenants: names || dash,
     status: String(getPath(src,"status") ?? dash),
@@ -169,19 +178,17 @@ export type OwnerRow = {
 };
 
 export function mapOwner(src:any): OwnerRow {
-  const company = String(
-    getPath(src,"company") ??
-    getPath(src,"companyName") ??
-    getPath(src,"name") ??
-    getPath(src,"ownerName") ??
-    dash
-  );
+  const company = getPath(src,"company") ?? getPath(src,"companyName") ?? getPath(src,"company_name") ?? getPath(src,"businessName") ?? getPath(src,"organization") ?? getPath(src,"name") ?? getPath(src,"ownerName") ?? dash;
+  const email = getPath(src,"email") ?? getPath(src,"primary_email") ?? getPath(src,"contact_email") ?? getPath(src,"owner_email") ?? dash;
+  const phone = getPath(src,"phone") ?? getPath(src,"phoneNumber") ?? getPath(src,"phone_number") ?? getPath(src,"contact_phone") ?? getPath(src,"mobile") ?? dash;
+  const active = getPath(src,"active") ?? getPath(src,"is_active") ?? getPath(src,"status") ?? null;
+  
   return {
     id: String(getPath(src,"id") ?? getPath(src,"_id")),
-    company,
-    email: String(getPath(src,"email") ?? dash),
-    phone: String(getPath(src,"phone") ?? getPath(src,"phoneNumber") ?? dash),
-    active: getPath(src,"active") ?? dash,
+    company: String(company),
+    email: String(email),
+    phone: String(phone),
+    active,
   };
 }
 
