@@ -33,10 +33,13 @@ export function useCollection<T = any>(
           throw new Error(extra ? `${msg} — ${extra}` : msg);
         }
 
+        // Normalize response: accept both array and {data:[...]} shapes
         const rows = Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
         setData(rows);
       } catch (e: any) {
-        if (!ac.signal.aborted) setError(String(e?.message || e));
+        // Swallow AbortError to avoid console noise on unmount/HMR
+        if (ac.signal.aborted || e?.name === "AbortError") return;
+        setError(String(e?.message || e));
       } finally {
         if (!ac.signal.aborted) setLoading(false);
       }
@@ -47,3 +50,6 @@ export function useCollection<T = any>(
 
   return { data, loading, error };
 }
+
+// Support BOTH import styles as required by spec
+export default useCollection;

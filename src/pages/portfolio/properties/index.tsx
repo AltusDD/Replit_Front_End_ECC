@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
-import { useCollection } from "../../../features/data/useCollection";
+import useCollection from "../../../features/data/useCollection";
 import { groupBy } from "../../../utils/dict";
 import { PROPERTY_COLUMNS, mapProperty } from "../columns";
 import "../../../styles/table.css";
@@ -10,15 +10,12 @@ export default function PropertiesPage() {
   const units = useCollection<any>("units");
   const leases = useCollection<any>("leases");
 
-  const [stateFilter, setStateFilter] = useState<string>("ALL");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
-
-  const { rows, kpis, error, loading } = useMemo(() => {
+  const { rows, loading, error } = useMemo(() => {
     const byPropUnits = groupBy(units.data || [], (u) => u.property_id);
     const activeLeases = (leases.data || []).filter((l) => String(l.status).toLowerCase() === "active");
     const byUnitActiveLease = new Set(activeLeases.map((l) => String(l.unit_id)));
 
-    const derived = (props.data || []).map((p) => {
+    const mapped = (props.data || []).map((p) => {
       const u = byPropUnits.get(p.id) || [];
       const unitCount = p.unit_count ?? u.length ?? 0;
       const occCount = u.filter((x) => byUnitActiveLease.has(String(x.id))).length;
@@ -31,69 +28,41 @@ export default function PropertiesPage() {
       });
     });
 
-    const filtered = derived.filter((r) =>
-      (stateFilter === "ALL" || r.state === stateFilter) &&
-      (statusFilter === "ALL" || (statusFilter === "ACTIVE" ? r.active : !r.active))
-    );
-
-    const kpis = {
-      properties: derived.length,
-      units: units.data?.length || 0,
-      activeProps: derived.filter((r) => r.active).length,
-      occupancy: (() => {
-        const totUnits = derived.reduce((s, r) => s + (r.unit_count || 0), 0);
-        const occUnits = derived.reduce((s, r) => s + Math.round(((r.occupancy || 0) / 100) * (r.unit_count || 0)), 0);
-        return totUnits ? (occUnits / totUnits) * 100 : 0;
-      })(),
-      states: Array.from(new Set(derived.map((r) => r.state).filter(Boolean))),
-    };
-
     return {
-      rows: filtered,
-      kpis,
-      error: props.error || units.error || leases.error,
+      rows: mapped,
       loading: props.loading || units.loading || leases.loading,
+      error: props.error || units.error || leases.error,
     };
-  }, [props, units, leases, stateFilter, statusFilter]);
+  }, [props, units, leases]);
+
+  // KPIs for display
+  const kpis = useMemo(() => {
+    const total = rows.length;
+    const active = rows.filter(r => r.active).length;
+    const totalUnits = rows.reduce((s, r) => s + (r.unit_count || 0), 0);
+    const avgOcc = total ? rows.reduce((s, r) => s + (r.occupancy || 0), 0) / total : 0;
+    return { total, active, totalUnits, avgOcc };
+  }, [rows]);
 
   return (
     <section className="ecc-page">
+      {/* Genesis KPI Strip */}
       <div className="ecc-kpis">
         <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.properties}</div>
+          <div className="ecc-kpi-n">{kpis.total}</div>
           <div className="ecc-kpi-l">Properties</div>
         </div>
         <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.units}</div>
-          <div className="ecc-kpi-l">Units</div>
+          <div className="ecc-kpi-n">{kpis.totalUnits}</div>
+          <div className="ecc-kpi-l">Total Units</div>
         </div>
         <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.activeProps}</div>
+          <div className="ecc-kpi-n">{kpis.active}</div>
           <div className="ecc-kpi-l">Active</div>
         </div>
         <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.occupancy.toFixed(1)}%</div>
-          <div className="ecc-kpi-l">Occupancy</div>
-        </div>
-      </div>
-
-      <div className="ecc-toolbar">
-        <div>
-          <label>State: </label>
-          <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)}>
-            <option value="ALL">All States</option>
-            {kpis.states.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label>Status: </label>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="ALL">All</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-          </select>
+          <div className="ecc-kpi-n">{kpis.avgOcc.toFixed(1)}%</div>
+          <div className="ecc-kpi-l">Avg Occupancy</div>
         </div>
       </div>
 
@@ -103,17 +72,7 @@ export default function PropertiesPage() {
         loading={loading}
         error={error}
         csvName="properties"
-        onRowClick={(row) => {
-          // Replace this with your drawer/route
-          console.log("open property", row);
-        }}
-        actions={(row) => (
-          <>
-            <button onClick={() => console.log("View leases", row)}>View leases</button>
-            <button onClick={() => console.log("Work orders", row)}>Open work orders</button>
-            <button onClick={() => console.log("Edit property", row)}>Edit details</button>
-          </>
-        )}
+        drawerTitle={(row) => row.name || `Property ${row.id}`}
       />
     </section>
   );

@@ -83,3 +83,47 @@ Preferred communication style: Simple, everyday language.
 - **Replit**: Development environment and hosting platform with integrated tooling
 - **Environment Variables**: Configuration management for database URLs and API keys
 - **Session Management**: PostgreSQL-backed session storage for user authentication
+
+## Recent Changes
+
+### Genesis Portfolio Management System Implementation (September 4, 2025)
+- **DataTable Overhaul**: Completely rebuilt DataTable component with Genesis-grade features
+  - Implemented comprehensive filtering (text, enum, number range) with sticky filter row
+  - Added multi-column sorting with shift-click support and visual indicators
+  - Built responsive pagination with configurable page sizes
+  - Created asset drawer for detailed row inspection with structured data display
+  - Added row actions menu with export, copy link, and view details functionality
+- **Portfolio Pages**: Updated all 5 portfolio entity pages (properties, units, leases, tenants, owners)
+  - Migrated from legacy table API to new Genesis DataTable specification
+  - Added comprehensive KPI displays with real-time calculations
+  - Implemented client-side data enrichment with cross-referencing between entities
+  - Applied Genesis dark theme styling with professional polish
+- **Column Configuration**: Built typed column mappers and configurations
+  - Created mappers for all 5 portfolio entity types with data normalization
+  - Implemented status badges and conditional formatting for occupancy, balance, active status
+  - Added proper type definitions matching Genesis Column interface
+- **Data Layer**: Enhanced useCollection hook with robust error handling
+  - Added AbortController support for request cancellation during HMR
+  - Implemented automatic data normalization for array and object response shapes
+  - Fixed export/import issues causing Hot Module Reload failures
+- **Visual Polish**: Applied Genesis design specification
+  - Professional dark theme with gold accent colors
+  - Sticky headers and filter rows for large datasets
+  - Zebra striping, hover effects, and selection highlighting
+  - Loading skeletons and error states with retry functionality
+
+## Portfolio Management Features
+
+### Core Functionality
+- **Properties Management**: Track property details, occupancy rates, unit counts, and status
+- **Units Management**: Monitor unit specifications, market rent, and occupancy status
+- **Lease Management**: Oversee lease agreements, rental amounts, and lease lifecycles
+- **Tenant Management**: Manage tenant information, contact details, and account balances
+- **Owner Management**: Maintain owner records and property ownership relationships
+
+### DataTable Capabilities
+- **Advanced Filtering**: Text search, dropdown selections, and number range filters
+- **Flexible Sorting**: Single and multi-column sorting with visual indicators
+- **Data Export**: CSV export functionality for all portfolio data
+- **Asset Details**: Comprehensive drawer view for detailed record inspection
+- **KPI Analytics**: Real-time key performance indicators with cross-entity calculations

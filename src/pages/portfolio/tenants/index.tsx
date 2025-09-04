@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
-import { useCollection } from "../../../features/data/useCollection";
+import useCollection from "../../../features/data/useCollection";
 import { indexBy } from "../../../utils/dict";
 import { TENANT_COLUMNS, mapTenant } from "../columns";
 import "../../../styles/table.css";
@@ -11,9 +11,7 @@ export default function TenantsPage() {
   const units = useCollection<any>("units");
   const props = useCollection<any>("properties");
 
-  const [contactableOnly, setContactableOnly] = useState<boolean>(false);
-
-  const { rows, kpis, error, loading } = useMemo(() => {
+  const { rows, loading, error } = useMemo(() => {
     const uById = indexBy(units.data || [], "id");
     const pById = indexBy(props.data || [], "id");
 
@@ -29,69 +27,57 @@ export default function TenantsPage() {
       }
     }
 
-    const enriched = (tenants.data || []).map((t) => {
+    const mapped = (tenants.data || []).map((t) => {
       const l = latestByTenant[String(t.id)];
       const unitLabel = l ? (uById.get(l.unit_id)?.unit_number || "—") : "—";
       const propName = l ? (pById.get(l.property_id)?.name || "—") : "—";
       return mapTenant(t, propName, unitLabel);
     });
 
-    const filtered = enriched.filter((r) =>
-      !contactableOnly || (r.email || r.phone)
-    );
-
-    const kpis = {
-      tenants: enriched.length,
-      contactable: enriched.filter((r) => r.email || r.phone).length,
-      withBalance: enriched.filter((r) => (r.balance || 0) > 0).length,
-      totalBalance: enriched.reduce((s, r) => s + (Number(r.balance || 0)), 0),
-    };
-
     return {
-      rows: filtered,
-      kpis,
+      rows: mapped,
       loading: tenants.loading || leases.loading || units.loading || props.loading,
       error: tenants.error || leases.error || units.error || props.error,
     };
-  }, [tenants, leases, units, props, contactableOnly]);
+  }, [tenants, leases, units, props]);
 
-  const kpi = useMemo(() => {
+  const kpis = useMemo(() => {
     const total = rows.length;
-    const leaseTenants = rows.filter((r) => String(r.status).toLowerCase().includes("lease")).length;
-    const prospects = rows.filter((r) => String(r.status).toLowerCase().includes("prospect")).length;
-    const balance = rows.reduce((s, r) => s + (r.balance ?? 0), 0);
-    return { total, leaseTenants, prospects, balance };
+    const contactable = rows.filter((r) => r.email !== "—" || r.phone !== "—").length;
+    const withBalance = rows.filter((r) => (r.balance || 0) > 0).length;
+    const totalBalance = rows.reduce((s, r) => s + (Number(r.balance) || 0), 0);
+    return { total, contactable, withBalance, totalBalance };
   }, [rows]);
 
   return (
-    <div className="ecc-table-wrap">
+    <section className="ecc-page">
       <div className="ecc-kpis">
-        <div className="ecc-kpi"><div className="ecc-kpi-l">TENANTS</div><div className="ecc-kpi-n">{kpi.total.toLocaleString()}</div></div>
-        <div className="ecc-kpi"><div className="ecc-kpi-l">LEASE TENANTS</div><div className="ecc-kpi-n">{kpi.leaseTenants.toLocaleString()}</div></div>
-        <div className="ecc-kpi"><div className="ecc-kpi-l">PROSPECTS</div><div className="ecc-kpi-n">{kpi.prospects.toLocaleString()}</div></div>
-        <div className="ecc-kpi"><div className="ecc-kpi-l">BALANCE</div><div className="ecc-kpi-n">${kpi.balance.toFixed(2)}</div></div>
-      </div>
-
-      {error && (
-        <div className="ecc-kpi" style={{ marginBottom: 12 }}>
-          <div className="ecc-kpi-l">Error</div>
-          <div className="ecc-kpi-n">{error}</div>
+        <div className="ecc-kpi">
+          <div className="ecc-kpi-n">{kpis.total}</div>
+          <div className="ecc-kpi-l">Total Tenants</div>
         </div>
-      )}
+        <div className="ecc-kpi">
+          <div className="ecc-kpi-n">{kpis.contactable}</div>
+          <div className="ecc-kpi-l">Contactable</div>
+        </div>
+        <div className="ecc-kpi">
+          <div className="ecc-kpi-n">{kpis.withBalance}</div>
+          <div className="ecc-kpi-l">With Balance</div>
+        </div>
+        <div className="ecc-kpi">
+          <div className="ecc-kpi-n">${kpis.totalBalance.toLocaleString()}</div>
+          <div className="ecc-kpi-l">Total Balance</div>
+        </div>
+      </div>
 
       <DataTable
         rows={rows}
         columns={TENANT_COLUMNS}
         loading={loading}
+        error={error}
         csvName="tenants"
-        onRowClick={(row) => console.log("open tenant", row)}
-        actions={(row) => (
-          <>
-            <button onClick={() => console.log("Message", row)}>Message</button>
-            <button onClick={() => console.log("Ledger", row)}>Open ledger</button>
-          </>
-        )}
+        drawerTitle={(row) => row.display_name || `Tenant ${row.id}`}
       />
-    </div>
+    </section>
   );
 }
