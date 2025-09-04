@@ -3,6 +3,7 @@ import DataTable from "../../../components/DataTable";
 import { useCollection } from "../../../features/data/useCollection";
 import { groupBy } from "../../../utils/dict";
 import { PROPERTY_COLUMNS, mapProperty } from "../columns";
+import "../../../styles/table.css";
 
 export default function PropertiesPage() {
   const props = useCollection<any>("properties");

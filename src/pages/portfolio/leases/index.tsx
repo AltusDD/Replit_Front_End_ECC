@@ -3,6 +3,7 @@ import DataTable from "../../../components/DataTable";
 import { useCollection } from "../../../features/data/useCollection";
 import { indexBy } from "../../../utils/dict";
 import { LEASE_COLUMNS, mapLease } from "../columns";
+import "../../../styles/table.css";
 
 export default function LeasesPage() {
   const leases = useCollection<any>("leases");

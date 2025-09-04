@@ -3,6 +3,7 @@ import DataTable from "../../../components/DataTable";
 import { useCollection } from "../../../features/data/useCollection";
 import { indexBy, groupBy } from "../../../utils/dict";
 import { OWNER_COLUMNS, mapOwner } from "../columns";
+import "../../../styles/table.css";
 
 export default function OwnersPage() {
   const owners = useCollection<any>("owners");

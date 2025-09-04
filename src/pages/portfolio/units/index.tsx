@@ -3,6 +3,7 @@ import DataTable from "../../../components/DataTable";
 import { useCollection } from "../../../features/data/useCollection";
 import { indexBy } from "../../../utils/dict";
 import { UNIT_COLUMNS, mapUnit } from "../columns";
+import "../../../styles/table.css";
 
 export default function UnitsPage() {
   const units = useCollection<any>("units");
