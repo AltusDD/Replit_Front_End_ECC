@@ -1,16 +1,18 @@
 import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
 import useCollection from "../../../features/data/useCollection";
-import { UNIT_COLUMNS } from "../columns";
+import { UNIT_COLUMNS, mapUnit } from "../columns";
 import "../../../styles/table.css";
 
 export default function UnitsPage() {
   const units = useCollection<any>("/api/portfolio/units");
 
   const { rows, loading, error } = useMemo(() => {
-    // Backend now provides all structured data
+    // Backend provides structured data - apply mapping for consistency
+    const mapped = (units.data || []).map(mapUnit);
+    
     return {
-      rows: units.data || [],
+      rows: mapped,
       loading: units.loading,
       error: units.error,
     };

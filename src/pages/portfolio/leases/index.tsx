@@ -1,16 +1,18 @@
 import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
 import useCollection from "../../../features/data/useCollection";
-import { LEASE_COLUMNS } from "../columns";
+import { LEASE_COLUMNS, mapLease } from "../columns";
 import "../../../styles/table.css";
 
 export default function LeasesPage() {
   const leases = useCollection<any>("/api/portfolio/leases");
 
   const { rows, loading, error } = useMemo(() => {
-    // Backend now provides all structured data
+    // Backend provides structured data - apply mapping for consistency
+    const mapped = (leases.data || []).map(mapLease);
+    
     return {
-      rows: leases.data || [],
+      rows: mapped,
       loading: leases.loading,
       error: leases.error,
     };

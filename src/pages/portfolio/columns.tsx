@@ -59,16 +59,16 @@ export type UnitRow = {
 };
 
 export function mapUnit(src:any): UnitRow {
-  // Backend now provides clean, structured data
+  // Backend provides structured data - use it directly  
   return {
     id: String(src.id),
-    property: src.propertyName || "—",
-    unit: src.unitLabel || "—",
+    property: src.propertyName || src.property?.name || "—",
+    unit: src.unitLabel || src.unit_number || src.label || "—",
     beds: src.beds || 0,
-    baths: src.baths || 0,
-    sqft: src.sqft || 0,
+    baths: src.baths || 0, 
+    sqft: src.sqft || src.sq_ft || 0,
     status: src.status || "—",
-    marketRent: src.marketRent || 0,
+    marketRent: src.marketRent || src.rent_amount || 0,
   };
 }
 
@@ -133,14 +133,14 @@ export type TenantRow = {
 };
 
 export function mapTenant(src:any): TenantRow {
-  // Backend now provides clean, structured data
+  // Backend provides structured data - use it directly
   return {
     id: String(src.id),
     name: src.name || "—",
-    email: src.email || "—",
+    email: src.email || "—", 
     phone: src.phone || "—",
-    property: src.propertyName || "—",
-    unit: src.unitLabel || "—",
+    property: src.propertyName || src.property?.name || "—",
+    unit: src.unitLabel || src.unit?.label || "—",
     type: src.type || "PROSPECT_TENANT",
     balance: src.balance || 0,
   };
@@ -166,12 +166,12 @@ export type OwnerRow = {
 };
 
 export function mapOwner(src:any): OwnerRow {
-  // Backend now provides clean, structured data
+  // Backend provides structured data - use it directly
   return {
     id: String(src.id),
-    company: src.company || "—",
-    email: src.email || "—",
-    phone: src.phone || "—",
+    company: src.company || src.company_name || "—",
+    email: src.email || src.primary_email || src.contact_email || "—",
+    phone: src.phone || src.phone_number || src.primary_phone || "—", 
     active: src.active,
   };
 }

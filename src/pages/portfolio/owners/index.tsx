@@ -9,28 +9,16 @@ export default function OwnersPage() {
   const properties = useCollection<any>("/api/portfolio/properties");
 
   const { rows, loading, error } = useMemo(() => {
-    const mapped = (owners.data || []).map((o) => {
-      // Expand contact field fallbacks
-      const email = o.email || o.primary_email || o.contact_email || o.owner_email || 
-                    (o.emails?.[0]?.address) || (o.contacts?.[0]?.email) || null;
-      const phone = o.phone || o.phone_number || o.phoneNumber || o.primary_phone || 
-                    o.mobile || (o.phones?.[0]?.number) || (o.contacts?.[0]?.phone) || null;
-      
-      const enriched = {
-        ...o,
-        email,
-        phone,
-      };
-      
-      return mapOwner(enriched);
-    });
+    // Backend already provides structured data
+    // Use it directly with minimal mapping
+    const mapped = (owners.data || []).map(mapOwner);
 
     return {
       rows: mapped,
-      loading: owners.loading || properties.loading,
-      error: owners.error || properties.error,
+      loading: owners.loading,
+      error: owners.error,
     };
-  }, [owners, properties]);
+  }, [owners]);
 
 
   const kpis = useMemo(() => {
