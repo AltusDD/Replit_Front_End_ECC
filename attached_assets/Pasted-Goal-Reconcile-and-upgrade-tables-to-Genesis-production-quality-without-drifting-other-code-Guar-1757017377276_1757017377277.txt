@@ -1,3 +1,84 @@
+Goal: Reconcile and upgrade tables to “Genesis” production quality without drifting other code.
+Guardrails: Only touch the three files listed below. Do not rename, move, or edit any other file. Keep all existing page imports as-is (they import DataTable default). Keep data mappers and column configs unchanged.
+
+Overwrite /src/features/data/useCollection.ts with exactly this content:
+
+/* /src/features/data/useCollection.ts
+   Robust collection fetch hook (named + default export).
+   - Handles abort on unmount/navigation
+   - Accepts either a URL string or null/undefined (returns empty)
+   - Normalizes { data: [...] } or raw [] payloads
+*/
+import { useEffect, useRef, useState } from "react";
+
+export type UseCollectionResult<T = any> = {
+  data: T[];
+  loading: boolean;
+  error: string | null;
+  reload: () => void;
+};
+
+export function useCollection<T = any>(url?: string | null): UseCollectionResult<T> {
+  const [data, setData] = useState<T[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const bumpRef = useRef(0);
+
+  const reload = () => {
+    bumpRef.current++;
+    setError(null);
+  };
+
+  useEffect(() => {
+    if (!url) {
+      setData([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    const ctrl = new AbortController();
+    abortRef.current?.abort();
+    abortRef.current = ctrl;
+
+    setLoading(true);
+
+    (async () => {
+      try {
+        const res = await fetch(url, { signal: ctrl.signal });
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        const json = await res.json();
+
+        // Normalize array payloads
+        const arr: any[] = Array.isArray(json)
+          ? json
+          : Array.isArray(json?.data)
+          ? json.data
+          : [];
+
+        setData(arr as T[]);
+        setError(null);
+      } catch (e: any) {
+        if (e?.name === "AbortError") return; // ignore aborted navigations
+        setError(e?.message || "Failed to load");
+        setData([]);
+      } finally {
+        if (!ctrl.signal.aborted) setLoading(false);
+      }
+    })();
+
+    return () => ctrl.abort();
+  }, [url, bumpRef.current]);
+
+  return { data, loading, error, reload };
+}
+
+export default useCollection;
+
+
+Overwrite /src/components/DataTable.tsx with exactly this content:
+
 /* /src/components/DataTable.tsx
    Genesis-grade table:
    - Sticky header + sticky filter row
@@ -518,3 +599,188 @@ export default function DataTable<Row = any>(props: DataTableProps<Row>) {
     </div>
   );
 }
+
+
+Overwrite /src/styles/table.css with exactly this content:
+
+/* /src/styles/table.css
+   Genesis dark: higher contrast, banded rows, sticky header+filters, right-aligned numbers,
+   polished paddings, hover cues, skeletons, and drawer.
+*/
+
+:root{
+  /* Ink */
+  --ink-1: #e8e8ea;
+  --ink-2: #c9cbd0;
+  --ink-3: #9aa0a6;
+
+  /* Surfaces */
+  --surface-0: #0b0e12; /* page */
+  --surface-1: #12151b; /* table shell */
+  --surface-2: #171b22; /* row */
+  --surface-3: #1d222b; /* alt row */
+
+  /* Lines/accents */
+  --line-1: #2b313b;
+  --accent: #d6b36a;
+
+  /* Status */
+  --ok: #17c28a;
+  --warn: #f5a524;
+  --bad: #e5484d;
+}
+
+/* ---------- Toolbar ---------- */
+.ecc-table-toolbar{
+  display:flex; align-items:center; gap:12px;
+  margin: 10px 0 14px;
+}
+.ecc-input, .ecc-select{
+  background: var(--surface-2); color: var(--ink-1);
+  border: 1px solid var(--line-1); border-radius: 10px;
+  padding: 8px 10px; min-width: 220px; outline:none;
+}
+.ecc-input::placeholder{ color: var(--ink-3); }
+.ecc-select{ min-width: 120px; }
+.ecc-btn{
+  background: var(--surface-2); color: var(--ink-1);
+  border: 1px solid var(--line-1); border-radius: 10px; padding: 8px 12px;
+}
+.ecc-btn:disabled{ opacity: .5; cursor: not-allowed; }
+.ecc-toolbar-spacer{ flex:1; }
+
+/* ---------- Table shell ---------- */
+.ecc-table-wrap{ width:100%; }
+.ecc-table{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--surface-1);
+  border: 1px solid var(--line-1);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* ---------- Header ---------- */
+.ecc-table thead th{
+  top: 0;
+  position: sticky;
+  z-index: 2;
+  background: var(--surface-1);
+  color: var(--ink-2);
+  font-weight: 700;
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line-1);
+  white-space: nowrap;
+}
+.ecc-table thead th.is-clickable{ cursor: pointer; }
+.ecc-table thead th.asc::after{ content: " ▲"; color: var(--ink-3); }
+.ecc-table thead th.desc::after{ content: " ▼"; color: var(--ink-3); }
+
+/* Sticky filter row under header */
+.ecc-filter-row th{
+  position: sticky;
+  top: 44px; /* header height */
+  z-index: 1;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--line-1);
+  padding: 8px 14px;
+}
+.ecc-range{ display:flex; gap:8px; }
+.ecc-input--min, .ecc-input--max{ width: 90px; min-width: 90px; }
+
+/* ---------- Body ---------- */
+.ecc-table tbody tr:nth-child(odd){ background: var(--surface-2); }
+.ecc-table tbody tr:nth-child(even){ background: var(--surface-3); }
+.ecc-table tbody tr:hover{ background: #202633; }
+.ecc-table td{
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line-1);
+  color: var(--ink-1);
+  vertical-align: middle;
+}
+.ecc-table td.is-right{ text-align:right; }
+.ecc-table td.is-empty{ text-align:center; color: var(--ink-3); padding: 24px; }
+
+/* ---------- Footer ---------- */
+.ecc-table-footer{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 12px 8px; color: var(--ink-3);
+}
+.ecc-page{ padding: 0 10px; }
+.ecc-pager{ display:flex; align-items:center; gap:10px; }
+
+/* ---------- Badges (for your renderers if needed) ---------- */
+.ecc-badge{
+  display:inline-block; font-size: 12px; line-height: 1;
+  padding: 6px 8px; border-radius: 999px; border: 1px solid var(--line-1);
+  background: var(--surface-2); color: var(--ink-1);
+}
+.ecc-badge--ok{ background: color-mix(in oklab, var(--ok) 25%, black); }
+.ecc-badge--warn{ background: color-mix(in oklab, var(--warn) 25%, black); }
+.ecc-badge--bad{ background: color-mix(in oklab, var(--bad) 25%, black); }
+
+/* ---------- Skeletons ---------- */
+.ecc-skel-row .ecc-skel{
+  height: 12px; border-radius: 6px; width: 100%;
+  background: linear-gradient(90deg, #20242d 25%, #2a2f3b 37%, #20242d 63%);
+  background-size: 400% 100%;
+  animation: eccShimmer 1.2s ease-in-out infinite;
+}
+@keyframes eccShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+/* ---------- Drawer ---------- */
+.ecc-drawer{
+  position: fixed; inset: 0; display:flex; justify-content:flex-end; z-index: 50;
+}
+.ecc-drawer__backdrop{
+  position:absolute; inset:0; background: rgba(0,0,0,.5);
+}
+.ecc-drawer__panel{
+  position:relative; width: 520px; max-width: 90vw; background: var(--surface-1);
+  border-left:1px solid var(--line-1); height: 100%;
+  display:flex; flex-direction:column;
+}
+.ecc-drawer__head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 14px; border-bottom:1px solid var(--line-1);
+}
+.ecc-drawer__title{ font-weight:800; color:var(--ink-1); }
+.ecc-drawer__body{ padding: 14px; overflow:auto; }
+.ecc-grid{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+.ecc-field__label{ color: var(--ink-3); font-size: 12px; margin-bottom: 4px; }
+.ecc-field__value{ color: var(--ink-1); font-weight: 600; }
+
+
+After writing the 3 files: do not change any page code. Just run dev server.
+The pages still import DataTable (default) and call it with rows + your existing column configs/mappers. You now have:
+
+Banded rows, right-aligned numeral columns, sticky header + filter row
+
+Inline column filters (text/enum/number range)
+
+Click to sort / Shift+Click to multi-sort
+
+Footer page size (25/50/100/200) with navigation
+
+CSV export of filtered rows
+
+Double-click a row to open the Drawer (or pass rowHref to navigate)
+
+Optional rowActions={(r)=>…} to display per-row buttons (kept off unless you add it)
+
+Loading skeletons if you pass loading
+
+Graceful empty/error states
+
+Notes you don’t have to wire right now (but are available)
+
+If you want the Drawer instead to navigate, pass rowHref={(r)=>"/portfolio/properties/"+r.id}.
+
+If you want an actions column, pass rowActions={(r)=> <button className="ecc-btn" onClick={()=>console.log("actions", r)}>⋯</button>}.
+
+If a page tracks loading/error, pass them to <DataTable loading={loading} error={error} …/> for skeletons and banners.

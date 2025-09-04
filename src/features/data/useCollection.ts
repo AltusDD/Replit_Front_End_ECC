@@ -1,55 +1,72 @@
-import { useEffect, useState } from "react";
+/* /src/features/data/useCollection.ts
+   Robust collection fetch hook (named + default export).
+   - Handles abort on unmount/navigation
+   - Accepts either a URL string or null/undefined (returns empty)
+   - Normalizes { data: [...] } or raw [] payloads
+*/
+import { useEffect, useRef, useState } from "react";
 
-export function useCollection<T = any>(
-  collection: "properties" | "units" | "leases" | "tenants" | "owners"
-) {
+export type UseCollectionResult<T = any> = {
+  data: T[];
+  loading: boolean;
+  error: string | null;
+  reload: () => void;
+};
+
+export function useCollection<T = any>(url?: string | null): UseCollectionResult<T> {
   const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const bumpRef = useRef(0);
+
+  const reload = () => {
+    bumpRef.current++;
+    setError(null);
+  };
 
   useEffect(() => {
-    const ac = new AbortController();
+    if (!url) {
+      setData([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    const ctrl = new AbortController();
+    abortRef.current?.abort();
+    abortRef.current = ctrl;
+
     setLoading(true);
-    setError(null);
 
     (async () => {
       try {
-        const res = await fetch(`/api/portfolio/${collection}`, {
-          signal: ac.signal,
-          headers: { Accept: "application/json" },
-        });
+        const res = await fetch(url, { signal: ctrl.signal });
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        const json = await res.json();
 
-        const text = await res.text();
-        let json: any;
-        try {
-          json = text ? JSON.parse(text) : null;
-        } catch {
-          throw new Error(`Non-JSON from /api/portfolio/${collection}: ${text.slice(0,160)}…`);
-        }
+        // Normalize array payloads
+        const arr: any[] = Array.isArray(json)
+          ? json
+          : Array.isArray(json?.data)
+          ? json.data
+          : [];
 
-        if (!res.ok) {
-          const msg = json?.message || json?.error || res.statusText || "Unknown API error";
-          const extra = [json?.code, json?.details, json?.hint].filter(Boolean).join(" · ");
-          throw new Error(extra ? `${msg} — ${extra}` : msg);
-        }
-
-        // Normalize response: accept both array and {data:[...]} shapes
-        const rows = Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
-        setData(rows);
+        setData(arr as T[]);
+        setError(null);
       } catch (e: any) {
-        // Swallow AbortError to avoid console noise on unmount/HMR
-        if (ac.signal.aborted || e?.name === "AbortError") return;
-        setError(String(e?.message || e));
+        if (e?.name === "AbortError") return; // ignore aborted navigations
+        setError(e?.message || "Failed to load");
+        setData([]);
       } finally {
-        if (!ac.signal.aborted) setLoading(false);
+        if (!ctrl.signal.aborted) setLoading(false);
       }
     })();
 
-    return () => ac.abort();
-  }, [collection]);
+    return () => ctrl.abort();
+  }, [url, bumpRef.current]);
 
-  return { data, loading, error };
+  return { data, loading, error, reload };
 }
 
-// Support BOTH import styles as required by spec
 export default useCollection;
