@@ -186,7 +186,7 @@ export function mapOwner(src:any): OwnerRow {
 }
 
 export const OWNER_COLUMNS = [
-  { key:"company", header:"COMPANY", type:"text" },
+  { key:"company", header:"COMPANY", type:"text", render:(_v: any, r: any) => <strong>{r.company ?? ""}</strong> },
   { key:"email", header:"EMAIL", type:"text" },
   { key:"phone", header:"PHONE", type:"text" },
   { key:"active", header:"ACTIVE", type:"enum", render:(value:any, r:OwnerRow)=><StatusTag value={String(r.active)} /> },
