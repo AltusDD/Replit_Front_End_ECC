@@ -72,14 +72,14 @@ export default function TenantsPage() {
         <div className="ecc-kpi"><div className="ecc-kpi-l">BALANCE</div><div className="ecc-kpi-n">${kpi.balance.toFixed(2)}</div></div>
       </div>
 
-      {err && (
+      {error && (
         <div className="ecc-kpi" style={{ marginBottom: 12 }}>
           <div className="ecc-kpi-l">Error</div>
-          <div className="ecc-kpi-n">{err}</div>
+          <div className="ecc-kpi-n">{error}</div>
         </div>
       )}
 
-      <DataTable<TenantRow>
+      <DataTable
         rows={rows}
         columns={TENANT_COLUMNS}
         loading={loading}

@@ -49,14 +49,14 @@ export default function OwnersPage() {
         <div className="ecc-kpi"><div className="ecc-kpi-l">—</div><div className="ecc-kpi-n">—</div></div>
       </div>
 
-      {err && (
+      {error && (
         <div className="ecc-kpi" style={{ marginBottom: 12 }}>
           <div className="ecc-kpi-l">Error</div>
-          <div className="ecc-kpi-n">{err}</div>
+          <div className="ecc-kpi-n">{error}</div>
         </div>
       )}
 
-      <DataTable<OwnerRow>
+      <DataTable
         rows={rows}
         columns={OWNER_COLUMNS}
         loading={loading}

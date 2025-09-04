@@ -64,14 +64,14 @@ export default function UnitsPage() {
         <div className="ecc-kpi"><div className="ecc-kpi-l">AVG MARKET RENT</div><div className="ecc-kpi-n">${kpi.avgRent.toFixed(2)}</div></div>
       </div>
 
-      {err && (
+      {error && (
         <div className="ecc-kpi" style={{ marginBottom: 12 }}>
           <div className="ecc-kpi-l">Error</div>
-          <div className="ecc-kpi-n">{err}</div>
+          <div className="ecc-kpi-n">{error}</div>
         </div>
       )}
 
-      <DataTable<UnitRow>
+      <DataTable
         rows={rows}
         columns={UNIT_COLUMNS}
         loading={loading}

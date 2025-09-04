@@ -68,14 +68,14 @@ export default function LeasesPage() {
         <div className="ecc-kpi"><div className="ecc-kpi-l">AVG RENT</div><div className="ecc-kpi-n">${kpi.avgRent.toFixed(2)}</div></div>
       </div>
 
-      {err && (
+      {error && (
         <div className="ecc-kpi" style={{ marginBottom: 12 }}>
           <div className="ecc-kpi-l">Error</div>
-          <div className="ecc-kpi-n">{err}</div>
+          <div className="ecc-kpi-n">{error}</div>
         </div>
       )}
 
-      <DataTable<LeaseRow>
+      <DataTable
         rows={rows}
         columns={LEASE_COLUMNS}
         loading={loading}
