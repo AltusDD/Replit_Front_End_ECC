@@ -1,5 +1,9 @@
+/* =========================
+   Genesis Table Styles
+   ========================= */
+
 :root{
-  /* Design tokens with fallbacks (Genesis grade dark) */
+  /* Core design tokens */
   --ink-1: #e6e6e6;
   --ink-2: #c8c8c8;
   --ink-3: #9aa0a6;
@@ -14,12 +18,24 @@
 
   --line-1: #2a2a2a;
   --accent: #d4af37; /* gold accent */
+
   --ok: #15b77e;
   --warn: #f5a524;
   --bad: #e5484d;
+
+  /* Aliases for helpers */
+  --ecc-bg-0: var(--surface-0);
+  --ecc-bg-1: var(--surface-1);
+  --ecc-bg-2: var(--surface-2);
+  --ecc-ink-1: var(--ink-1);
+  --ecc-ink-2: var(--ink-2);
+  --ecc-ink-3: var(--ink-3);
+  --ecc-line-1: var(--line-1);
 }
 
-/* Toolbar */
+/* =========================
+   Toolbar
+   ========================= */
 .ecc-table-toolbar{
   display:flex; align-items:center; gap:10px;
   margin: 8px 0 12px;
@@ -37,8 +53,10 @@
 .ecc-btn:disabled{ opacity: .5; cursor: not-allowed; }
 .ecc-toolbar-spacer{ flex:1; }
 
-/* Table shell */
-.ecc-table-wrap{ width:100%; }
+/* =========================
+   Table shell
+   ========================= */
+.ecc-table-wrap{ width:100%; position: relative; z-index: 0; }
 .ecc-table{
   width: 100%;
   border-collapse: separate;
@@ -49,12 +67,12 @@
   overflow: hidden;
 }
 
-/* Headers */
+/* =========================
+   Headers
+   ========================= */
 .ecc-table thead th{
-  top: 0;
-  position: sticky;
-  z-index: 1;
-  background: var(--surface-0);
+  position: sticky; top: 0; z-index: 1;
+  background: var(--ecc-bg-0);
   color: var(--ink-2);
   font-weight: 600;
   text-align: left;
@@ -65,10 +83,13 @@
 .ecc-table thead th.asc::after{ content: " ▲"; color: var(--ink-3); }
 .ecc-table thead th.desc::after{ content: " ▼"; color: var(--ink-3); }
 
-/* Body: zebra banding */
-.ecc-table tbody tr{ background: var(--row-bg); }
-.ecc-table tbody tr:nth-child(even){ background: var(--row-alt-bg); }
+/* =========================
+   Body: zebra banding (Genesis black/grey)
+   ========================= */
+.ecc-table tbody tr:nth-child(odd){  background: var(--ecc-bg-1); }
+.ecc-table tbody tr:nth-child(even){ background: var(--ecc-bg-2); }
 .ecc-table tbody tr:hover{ background: var(--row-hover); }
+
 .ecc-table td{
   padding: 10px 12px;
   border-bottom: 1px solid var(--line-1);
@@ -77,61 +98,65 @@
 .ecc-table td.is-right{ text-align:right; }
 .ecc-table td.is-empty{ text-align:center; color: var(--ink-3); }
 
-/* Footer */
+/* =========================
+   Footer
+   ========================= */
 .ecc-table-footer{
   display:flex; align-items:center; justify-content:space-between;
   padding: 10px 6px 0; color: var(--ink-3);
 }
 .ecc-page{ padding: 0 10px; }
 
-/* Badges */
+/* =========================
+   Badges / Pills
+   ========================= */
 .ecc-badge{
   display:inline-block; font-size: 12px; line-height: 1;
-  padding: 6px 8px; border-radius: 999px; border: 1px solid var(--line-1);
+  padding: 6px 8px; border-radius: 999px;
+  border: 1px solid var(--line-1);
   background: var(--surface-2); color: var(--ink-1);
 }
-.ecc-badge--ok{ background: color-mix(in oklab, var(--ok) 25%, black); }
-.ecc-badge--warn{ background: color-mix(in oklab, var(--warn) 25%, black); }
-.ecc-badge--bad{ background: color-mix(in oklab, var(--bad) 25%, black); }
+/* Slight color tints using srgb mixing (widely supported) */
+.ecc-badge--ok   { background: color-mix(in srgb, var(--ok) 25%, black); }
+.ecc-badge--warn { background: color-mix(in srgb, var(--warn) 25%, black); }
+.ecc-badge--bad  { background: color-mix(in srgb, var(--bad) 25%, black); }
 
-/* KPI strip (tiny helper) */
+/* =========================
+   KPI strip
+   ========================= */
 .ecc-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 10px; }
-.ecc-kpi { background: var(--surface-1); border: 1px solid var(--line-1); border-radius: 12px; padding: 12px; }
-.ecc-kpi-n { font-weight: 700; font-size: 20px; color: var(--ink-1); }
-.ecc-kpi-l { font-size: 12px; color: var(--ink-3); }
-/* GENESIS THEME: KPI & table helpers */
-:root{
-  /* Use your existing theme tokens if defined; these fallbacks keep it readable */
-  --ecc-bg-0: var(--surface-0, #0b0b0b);
-  --ecc-bg-1: var(--surface-1, #111111);
-  --ecc-bg-2: var(--surface-2, #161616);
-  --ecc-ink-1: var(--ink-1, #e6e6e6);
-  --ecc-ink-2: var(--ink-2, #c7c7c7);
-  --ecc-ink-3: var(--ink-3, #9aa0a6);
-  --ecc-line-1: var(--line-1, #2a2a2a);
+.ecc-kpi  { background: var(--surface-1); border: 1px solid var(--line-1); border-radius: 12px; padding: 12px; }
+.ecc-kpi-n{ font-weight: 700; font-size: 20px; color: var(--ink-1); }
+.ecc-kpi-l{ font-size: 12px; color: var(--ink-3); }
+
+/* =========================
+   Overlay / Black-screen hot-fix
+   Hide any full-viewport overlay unless explicitly opened.
+   ========================= */
+.ecc-scrim,
+.ecc-overlay,
+.modal-backdrop,
+#overlay-root > *,
+#modal-root  > *{
+  position: fixed;
+  inset: 0;
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
-.ecc-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-.ecc-table thead th { position: sticky; top: 0; background: var(--ecc-bg-0); z-index: 1; }
-
-/* Zebra banding (Genesis black/grey) */
-.ecc-table tbody tr:nth-child(odd){ background: var(--ecc-bg-1); }
-.ecc-table tbody tr:nth-child(even){ background: var(--ecc-bg-2); }
-
-/* Row hover */
-.ecc-table tbody tr:hover { background: color-mix(in srgb, var(--ecc-bg-2), white 2%); }
-
-/* Pills / badges */
-.ecc-badge{
-  display:inline-block; padding:2px 8px; border-radius:999px;
-  font-size:12px; line-height:18px; background:var(--ecc-line-1); color:var(--ecc-ink-1);
+/* Only show when an "open" state is present */
+.ecc-scrim.is-open,
+.ecc-overlay.is-open,
+.modal-backdrop.is-open,
+#overlay-root > .is-open,
+#modal-root  > .is-open{
+  display: block !important;
+  opacity: .6 !important;
+  pointer-events: auto !important;
+  background: rgba(0,0,0,.6);
+  z-index: 9999;
 }
-.ecc-badge--ok   { background: color-mix(in srgb, #1e7f37, black 20%); }
-.ecc-badge--bad  { background: color-mix(in srgb, #b3261e, black 25%); }
-.ecc-badge--warn { background: color-mix(in srgb, #e5a500, black 40%); }
 
-/* KPI strip */
-.ecc-kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:10px; }
-.ecc-kpi  { background: var(--ecc-bg-1); border:1px solid var(--ecc-line-1); border-radius:12px; padding:12px; }
-.ecc-kpi-n{ font-weight:700; font-size:20px; color:var(--ecc-ink-1); }
-.ecc-kpi-l{ font-size:12px; color:var(--ecc-ink-3); }
+/* Safety: ensure portfolio content isn't hidden by stray z-index */
+.portfolio-page{ position: relative; z-index: 0; }

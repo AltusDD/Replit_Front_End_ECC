@@ -9,22 +9,24 @@ function getKey<T, K extends PropertyKey>(row: T, keyer: Keyer<T, K>): K {
 export function indexBy<T, K extends PropertyKey>(
   rows: T[] = [],
   keyer: Keyer<T, K>
-): Record<K, T> {
-  return rows.reduce((acc: any, row) => {
+): Map<K, T> {
+  return rows.reduce((acc, row) => {
     const k = getKey(row, keyer);
-    acc[k] = row;
+    acc.set(k, row);
     return acc;
-  }, {} as Record<K, T>);
+  }, new Map<K, T>());
 }
 
 /** Group into {key: T[]} */
 export function groupBy<T, K extends PropertyKey>(
   rows: T[] = [],
   keyer: Keyer<T, K>
-): Record<K, T[]> {
-  return rows.reduce((acc: any, row) => {
+): Map<K, T[]> {
+  return rows.reduce((acc, row) => {
     const k = getKey(row, keyer);
-    (acc[k] || (acc[k] = [])).push(row);
+    const existing = acc.get(k) || [];
+    existing.push(row);
+    acc.set(k, existing);
     return acc;
-  }, {} as Record<K, T[]>);
+  }, new Map<K, T[]>());
 }
