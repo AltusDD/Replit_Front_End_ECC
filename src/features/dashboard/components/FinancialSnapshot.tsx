@@ -35,13 +35,13 @@ export function FinancialSnapshot({ series }: FinancialSnapshotProps) {
 
   // Transform data for charts
   const incomeExpenseData = series.months.slice(-6).map(month => ({
-    month: month.label.split(' ')[0], // Just "Jan", "Feb" etc.
+    month: month.month ? new Date(month.month + '-01').toLocaleDateString('en-US', { month: 'short' }) : 'Unknown',
     income: month.income / 100, // Convert cents to dollars
     expenses: month.expenses / 100,
   }));
 
   const portfolioValueData = series.quarters.map(quarter => ({
-    quarter: quarter.label,
+    quarter: quarter.quarter,
     value: quarter.value / 100, // Convert cents to dollars
     debt: quarter.debt / 100,
   }));

@@ -1,4 +1,5 @@
-// src/features/dashboard/components/TrendIndicator.tsx
+// TrendIndicator.tsx - Genesis specification trend component
+
 import React from 'react';
 
 interface TrendIndicatorProps {
@@ -9,7 +10,7 @@ export function TrendIndicator({ value }: TrendIndicatorProps) {
   if (value > 0) {
     return (
       <span 
-        className="trend--up inline-flex items-center"
+        className="text-[var(--altus-good)] inline-flex items-center text-sm font-medium"
         aria-label={`up ${Math.abs(value).toFixed(1)} percent`}
       >
         ▲ {value.toFixed(1)}%
@@ -20,7 +21,7 @@ export function TrendIndicator({ value }: TrendIndicatorProps) {
   if (value < 0) {
     return (
       <span 
-        className="trend--down inline-flex items-center"
+        className="text-[var(--altus-bad)] inline-flex items-center text-sm font-medium"
         aria-label={`down ${Math.abs(value).toFixed(1)} percent`}
       >
         ▼ {Math.abs(value).toFixed(1)}%
@@ -30,7 +31,7 @@ export function TrendIndicator({ value }: TrendIndicatorProps) {
 
   return (
     <span 
-      className="text-[var(--altus-muted)] inline-flex items-center"
+      className="text-[var(--altus-muted)] inline-flex items-center text-sm"
       aria-label="no change"
     >
       • 0.0%

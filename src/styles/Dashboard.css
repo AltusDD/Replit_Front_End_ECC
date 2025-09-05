@@ -1,24 +1,27 @@
-/* src/styles/Dashboard.css - Genesis Dashboard Styles */
+/* Genesis Command Center Dashboard Styles - Exact Specification */
 
-/* Dashboard-specific tokens extending Altus palette */
 :root {
   --altus-black: #0b0e12;
-  --altus-panel: #1a1d21;
-  --altus-grey-600: #2a2d31; /* approved light grey background */
-  --altus-grey-700: #2f353d;
+  --altus-panel: #2a2d31;      /* approved light grey for panels */
+  --altus-panel-2: #2f353d;
   --altus-gold: #d6b36a;
   --altus-text: #d7dae0;
   --altus-muted: #a0a0a0;
-  --altus-good: #1f6f4a;
-  --altus-bad: #80343a;
+  --altus-good: #2ea36a;
+  --altus-bad: #d16464;
+  --altus-outline: rgba(255,255,255,.08);
 }
 
-/* Dashboard-specific classes */
-.dash-card { 
-  background: var(--altus-grey-600); 
-  border: 1px solid rgba(255,255,255,.06); 
-  border-radius: 12px; 
-  box-shadow: 0 4px 14px rgba(0,0,0,.35); 
+.dash-grid { 
+  display: grid; 
+  gap: 16px; 
+}
+
+.dash-card {
+  background: var(--altus-panel);
+  border: 1px solid var(--altus-outline);
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
 }
 
 .dash-title { 
@@ -31,50 +34,35 @@
   color: var(--altus-muted); 
 }
 
-.dash-grid { 
+.kpi-grid { 
   display: grid; 
-  gap: 16px; 
-}
-
-@media (min-width: 1200px) {
-  .dash-grid { 
-    grid-template-columns: 2fr 1fr; 
-  }
-  .dash-row { 
-    grid-column: 1 / -1; 
-  }
+  grid-template-columns: repeat(5,1fr); 
+  gap: 12px; 
 }
 
 .kpi-card { 
   position: relative; 
-  padding: 16px 18px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  padding: 14px 16px; 
+  min-height: 86px; 
 }
 
-.kpi-card:hover {
-  background: var(--altus-grey-700);
-  transform: translateY(-1px);
+.kpi-value { 
+  font-size: 22px; 
+  font-weight: 700; 
+}
+
+.kpi-meta { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  margin-top: 6px; 
 }
 
 .sparkline { 
   position: absolute; 
   inset: 0; 
   opacity: .12; 
-  pointer-events: none;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.trend--up { 
-  color: #4ade80; 
-}
-
-.trend--down { 
-  color: #f87171; 
+  pointer-events: none; 
 }
 
 .progress { 
@@ -86,136 +74,189 @@
 
 .progress__fill { 
   height: 100%; 
-  background: var(--altus-gold);
-  transition: width 0.3s ease;
+  background: var(--altus-gold); 
 }
 
-/* Dashboard layout grid */
+@media (max-width: 1200px) { 
+  .kpi-grid { 
+    grid-template-columns: repeat(2, 1fr);
+  } 
+}
+
+/* Dashboard Layout Grid */
 .dashboard-grid {
   display: grid;
-  gap: 20px;
-  grid-template-columns: 1fr;
+  gap: 24px;
+  padding: 24px;
+  background: var(--altus-black);
+  min-height: 100vh;
 }
 
-@media (min-width: 768px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr 1fr;
-  }
+.dashboard-row-1 {
+  /* KPI Banner - full width */
+  grid-column: 1 / -1;
 }
 
-@media (min-width: 1200px) {
-  .dashboard-grid {
-    grid-template-columns: 2fr 1fr;
-  }
-  .dashboard-grid > .dash-row {
-    grid-column: 1 / -1;
-  }
-}
-
-/* KPI Banner */
-.kpi-banner {
+.dashboard-row-2 {
+  /* Map + Action Center */
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
 }
 
-/* Action center sections */
+.dashboard-row-3 {
+  /* Financial Snapshot - full width */
+  grid-column: 1 / -1;
+}
+
+.dashboard-row-4 {
+  /* Funnel + Occupancy */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-row-2,
+  .dashboard-row-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Action Center Styles */
 .action-section {
   margin-bottom: 24px;
 }
 
-.action-section:last-child {
-  margin-bottom: 0;
-}
-
-.action-list {
-  space-y: 12px;
-}
-
 .action-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255,255,255,.06);
-}
-
-.action-item:last-child {
-  border-bottom: none;
-}
-
-/* Map styles */
-.portfolio-map {
-  height: 400px;
+  justify-content: between;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.action-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Portfolio Map Styles */
+.portfolio-map {
+  height: 420px;
+  border-radius: 12px;
   overflow: hidden;
 }
 
-/* Occupancy table */
+.portfolio-map .leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 12px;
+}
+
+/* Chart Container Styles */
+.chart-container {
+  height: 320px;
+}
+
+.chart-container.compact {
+  height: 280px;
+}
+
+/* Funnel Styles */
+.funnel-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 24px 0;
+}
+
+.funnel-step {
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+  padding: 16px;
+  background: var(--altus-panel-2);
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.funnel-step:hover {
+  background: rgba(214, 179, 106, 0.1);
+}
+
+.funnel-bar {
+  height: 8px;
+  background: var(--altus-gold);
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.funnel-label {
+  font-weight: 600;
+  color: var(--altus-text);
+  font-size: 14px;
+}
+
+.funnel-count {
+  color: var(--altus-muted);
+  font-size: 12px;
+}
+
+/* Occupancy Table Styles */
 .occupancy-table {
   width: 100%;
 }
 
-.occupancy-table th,
-.occupancy-table td {
+.occupancy-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto;
+  gap: 16px;
   padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid rgba(255,255,255,.06);
-}
-
-.occupancy-table th {
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  color: var(--altus-muted);
-}
-
-.occupancy-table tr:hover {
-  background: rgba(255,255,255,.02);
+  border-bottom: 1px solid var(--altus-outline);
   cursor: pointer;
-}
-
-/* Status badges */
-.status-tag {
-  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
-.status-tag--occupied {
-  background: var(--altus-good);
-  color: white;
+.occupancy-row:hover {
+  background: rgba(255, 255, 255, 0.02);
 }
 
-.status-tag--vacant {
-  background: #f59e0b;
-  color: white;
+.occupancy-progress {
+  width: 60px;
 }
 
-.status-tag--delinquent {
-  background: var(--altus-bad);
-  color: white;
-}
-
-/* Loading skeleton */
+/* Loading Skeletons */
 .skeleton {
-  background: linear-gradient(90deg, var(--altus-grey-700) 25%, var(--altus-grey-600) 50%, var(--altus-grey-700) 75%);
+  background: linear-gradient(90deg, #2a2d31 25%, #34393f 50%, #2a2d31 75%);
   background-size: 200% 100%;
-  animation: skeleton-loading 2s infinite;
+  animation: shimmer 1.5s infinite;
 }
 
-@keyframes skeleton-loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus rings */
+.dash-card:focus-visible,
+.action-item:focus-visible,
+.funnel-step:focus-visible,
+.occupancy-row:focus-visible {
+  outline: 2px solid var(--altus-gold);
+  outline-offset: 2px;
 }

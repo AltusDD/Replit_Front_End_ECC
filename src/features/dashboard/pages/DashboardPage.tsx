@@ -1,4 +1,4 @@
-// src/features/dashboard/pages/DashboardPage.tsx
+// DashboardPage.tsx - Genesis specification responsive grid layout
 import React, { useEffect } from 'react';
 import { useDashboardData, type TimeRange } from '../hooks/useDashboardData';
 import { KpiBanner } from '../components/KpiBanner';
@@ -7,6 +7,7 @@ import { ActionCenter } from '../components/ActionCenter';
 import { FinancialSnapshot } from '../components/FinancialSnapshot';
 import { LeasingFunnel } from '../components/LeasingFunnel';
 import { OccupancyBreakdown } from '../components/OccupancyBreakdown';
+import { runDashboardAudit } from '../../../dev/auditDashboard';
 import '../../../styles/Dashboard.css';
 
 // Loading skeleton components
@@ -83,13 +84,17 @@ export default function DashboardPage() {
   const [timeRange, setTimeRange] = React.useState<TimeRange>('12m');
   const { data, loading, error } = useDashboardData(timeRange);
 
-  // Debug mode audit
+  // Debug mode audit - Genesis specification
   useEffect(() => {
-    if (typeof location !== 'undefined' && 
-        new URLSearchParams(location.search).get('debug') === '1') {
-      import('../../../dev/auditDashboard').then(m => m.runDashboardAudit?.()).catch(() => {});
+    if (data && typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const debugMode = urlParams.get('debug') === '1';
+      
+      if (debugMode) {
+        runDashboardAudit(data);
+      }
     }
-  }, []);
+  }, [data]);
 
   if (error) {
     return (
@@ -125,7 +130,7 @@ export default function DashboardPage() {
           {loading || !data ? (
             <KpiSkeleton />
           ) : (
-            <KpiBanner data={data.kpis} series={data.series} />
+            <KpiBanner data={data} />
           )}
         </div>
 
@@ -152,9 +157,10 @@ export default function DashboardPage() {
               <div className="dash-card p-6">
                 <h3 className="dash-title text-lg mb-6">Action Center</h3>
                 <ActionCenter 
-                  leases={data.leases}
-                  tenants={data.tenants}
+                  leases={data.leases} 
+                  tenants={data.tenants} 
                   properties={data.properties}
+                  workOrders={data.workOrders}
                 />
               </div>
             )}

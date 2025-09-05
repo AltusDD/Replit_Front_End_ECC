@@ -1,135 +1,120 @@
-// src/features/dashboard/components/KpiBanner.tsx
+// KpiBanner.tsx - Genesis specification KPI component with sparklines and deep links
 import React from 'react';
-import { Link } from 'wouter';
-import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { TrendIndicator } from './TrendIndicator';
+import { type DashboardData } from '../hooks/useDashboardData';
+import { fmtMoney, fmtPct, fmtDays } from '../utils/formatDashboard';
 
-interface KpiCardProps {
-  title: string;
-  value: string;
-  trend?: number;
-  sparklineData?: number[];
-  linkTo: string;
-  'data-testid'?: string;
+interface KpiBannerProps {
+  data: DashboardData;
 }
 
-function KpiCard({ title, value, trend, sparklineData, linkTo, 'data-testid': testId }: KpiCardProps) {
-  const sparkData = sparklineData?.map((v, i) => ({ value: v, index: i })) || [];
-
+// Simple sparkline component for KPI background
+function Sparkline({ data, color = 'var(--altus-gold)' }: { data: number[]; color?: string }) {
+  if (!data || data.length < 2) return null;
+  
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  
+  const points = data.map((value, i) => {
+    const x = (i / (data.length - 1)) * 100;
+    const y = 100 - ((value - min) / range) * 100;
+    return `${x},${y}`;
+  }).join(' ');
+  
   return (
-    <Link href={linkTo}>
-      <div className="kpi-card dash-card" data-testid={testId}>
-        <div className="flex flex-col gap-1">
-          <div className="dash-subtle text-sm font-medium uppercase tracking-wide">
-            {title}
-          </div>
-          <div className="text-2xl font-bold text-[var(--altus-text)]">
-            {value}
-          </div>
-          {trend !== undefined && (
-            <div className="text-sm">
-              <TrendIndicator value={trend} />
-            </div>
-          )}
-        </div>
-        
-        {sparkData.length > 0 && (
-          <div className="sparkline">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={sparkData}>
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="var(--altus-gold)"
-                  fill="var(--altus-gold)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
-    </Link>
+    <div className="sparkline">
+      <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <polyline
+          points={points}
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          opacity="0.3"
+        />
+      </svg>
+    </div>
   );
 }
 
-interface KpiBannerProps {
-  data: {
-    occupancyPct: number;
-    avgTurnDays: number;
-    collectionRatePct: number;
-    highPriorityWorkOrders: number;
-    noiMTD: number; // in cents
-  };
-  series?: {
-    months: Array<{ occupancyPct: number }>;
-  };
-}
-
-export function KpiBanner({ data, series }: KpiBannerProps) {
-  // Generate sparkline data for occupancy
-  const occupancySparkline = series?.months?.map(m => m.occupancyPct) || [];
+export function KpiBanner({ data }: KpiBannerProps) {
+  const { kpis, series } = data;
   
-  // Mock trend data for demo
-  const trends = {
-    occupancy: 2.3,
-    turnTime: -1.8,
-    collection: 1.1,
-    workOrders: 0,
-    noi: 4.7,
-  };
-
-  // Format currency
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(cents / 100);
-  };
+  // Generate sparkline data from series with safety checks
+  const occupancySparkline = series?.months?.map(m => m.occupancyPct * 100) || [];
+  const noiSparkline = series?.months?.map(m => (m.income - m.expenses) / 100) || []; // Convert cents to dollars
+  
+  const kpiCards = [
+    {
+      label: 'Portfolio Occupancy',
+      value: fmtPct(kpis.occupancyPct),
+      trend: kpis.trends.occupancyPct,
+      to: '/portfolio/units?status=vacant',
+      testId: 'kpi-occupancy',
+      sparkline: occupancySparkline,
+    },
+    {
+      label: 'Avg Turn Time',
+      value: fmtDays(kpis.avgTurnDays),
+      trend: kpis.trends.avgTurnDays,
+      to: '/reports/turns',
+      testId: 'kpi-turn-time',
+      sparkline: null,
+    },
+    {
+      label: 'Rent Collection Rate',
+      value: fmtPct(kpis.collectionRatePct),
+      trend: kpis.trends.collectionRatePct,
+      to: '/portfolio/tenants?type=delinquent',
+      testId: 'kpi-collection',
+      sparkline: null,
+    },
+    {
+      label: 'High-Priority WOs',
+      value: kpis.highPriorityWorkOrders.toString(),
+      trend: kpis.trends.highPriorityWorkOrders,
+      to: '/construction?priority=high',
+      testId: 'kpi-work-orders',
+      sparkline: null,
+    },
+    {
+      label: 'NOI (MTD)',
+      value: fmtMoney(kpis.noiMTD, 2),
+      trend: kpis.trends.noiMTD,
+      to: '/reports/pnl?period=mtd',
+      testId: 'kpi-noi',
+      sparkline: noiSparkline,
+    },
+  ];
 
   return (
-    <div className="kpi-banner">
-      <KpiCard
-        title="Portfolio Occupancy"
-        value={`${data.occupancyPct.toFixed(1)}%`}
-        trend={trends.occupancy}
-        sparklineData={occupancySparkline}
-        linkTo="/portfolio/units?status=vacant"
-        data-testid="kpi-occupancy"
-      />
-      
-      <KpiCard
-        title="Avg Turn Time"
-        value={`${data.avgTurnDays} days`}
-        trend={trends.turnTime}
-        linkTo="/reports/turns"
-        data-testid="kpi-turn-time"
-      />
-      
-      <KpiCard
-        title="Rent Collection Rate"
-        value={`${data.collectionRatePct.toFixed(1)}%`}
-        trend={trends.collection}
-        linkTo="/portfolio/tenants?type=delinquent"
-        data-testid="kpi-collection-rate"
-      />
-      
-      <KpiCard
-        title="High Priority WOs"
-        value={data.highPriorityWorkOrders.toString()}
-        trend={trends.workOrders}
-        linkTo="/construction?priority=high"
-        data-testid="kpi-work-orders"
-      />
-      
-      <KpiCard
-        title="NOI (MTD)"
-        value={formatCurrency(data.noiMTD)}
-        trend={trends.noi}
-        linkTo="/reports/pnl?period=mtd"
-        data-testid="kpi-noi"
-      />
+    <div className="kpi-grid">
+      {kpiCards.map((kpi) => (
+        <a
+          key={kpi.testId}
+          href={kpi.to}
+          className="kpi-card dash-card cursor-pointer hover:bg-[var(--altus-panel-2)] transition-colors"
+          data-testid={kpi.testId}
+          aria-label={`${kpi.label}: ${kpi.value}`}
+          tabIndex={0}
+        >
+          {kpi.sparkline && (
+            <Sparkline data={kpi.sparkline} />
+          )}
+          
+          <div className="relative z-10">
+            <div className="text-xs text-[var(--altus-muted)] uppercase tracking-wide font-medium mb-1">
+              {kpi.label}
+            </div>
+            <div className="kpi-value text-[var(--altus-text)] mb-1">
+              {kpi.value}
+            </div>
+            <div className="kpi-meta">
+              <TrendIndicator value={kpi.trend} />
+            </div>
+          </div>
+        </a>
+      ))}
     </div>
   );
 }

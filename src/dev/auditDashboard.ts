@@ -1,95 +1,182 @@
-// src/dev/auditDashboard.ts - Dashboard Data Coverage Auditor (Real API Data)
-export function runDashboardAudit() {
+// Dev auditor for Dashboard debug mode - Genesis specification
+// Accessible at /dashboard?debug=1
+
+export interface AuditData {
+  propertiesWithCoords: {
+    total: number;
+    withCoords: number;
+    percentage: number;
+  };
+  statusCounts: Record<string, number>;
+  expiringLeases: {
+    count: number;
+    sample: Array<{
+      tenantName: string;
+      property: string;
+      endDate: string;
+    }>;
+  };
+  delinquentTenants: {
+    count: number;
+    sample: Array<{
+      name: string;
+      property: string;
+      balance: number;
+    }>;
+  };
+  highPriorityWO: {
+    count: number;
+    unassigned: number;
+    sample: Array<{
+      property: string;
+      summary: string;
+      assignedVendor?: string;
+    }>;
+  };
+  seriesData: {
+    monthsCount: number;
+    dateRange: string;
+  };
+}
+
+export function runDashboardAudit(dashboardData: any): AuditData {
   try {
-    console.log('🔍 DASHBOARD DATA AUDIT - Real Portfolio Data Coverage Report');
-    console.log('=' .repeat(80));
+    const { properties, tenants, leases, workOrders, series } = dashboardData;
 
-    // Fetch real data for audit
-    Promise.all([
-      fetch('/api/portfolio/properties').then(r => r.json()),
-      fetch('/api/portfolio/tenants').then(r => r.json()), 
-      fetch('/api/portfolio/leases').then(r => r.json()),
-      fetch('/api/portfolio/units').then(r => r.json()),
-      fetch('/api/portfolio/owners').then(r => r.json()),
-    ]).then(([properties, tenants, leases, units, owners]) => {
-      const stats: Array<{ Metric: string; Count: number; Details: string }> = [];
+    // Properties with coordinates analysis
+    const propertiesWithCoords = {
+      total: properties?.length || 0,
+      withCoords: properties?.filter((p: any) => 
+        p.lat && p.lng && !isNaN(p.lat) && !isNaN(p.lng) && p.lat !== 0 && p.lng !== 0
+      ).length || 0,
+      percentage: 0,
+    };
+    
+    if (propertiesWithCoords.total > 0) {
+      propertiesWithCoords.percentage = 
+        (propertiesWithCoords.withCoords / propertiesWithCoords.total) * 100;
+    }
 
-      // Properties audit
-      const propertiesWithCoords = properties.filter((p: any) => p.latitude || p.lat);
-      stats.push({
-        Metric: 'Properties with coordinates',
-        Count: propertiesWithCoords.length,
-        Details: `${((propertiesWithCoords.length / properties.length) * 100).toFixed(1)}%`,
-      });
-
-      stats.push({
-        Metric: 'Total Properties',
-        Count: properties.length,
-        Details: 'From /api/portfolio/properties',
-      });
-
-      stats.push({
-        Metric: 'Total Units', 
-        Count: units.length,
-        Details: 'From /api/portfolio/units',
-      });
-
-      stats.push({
-        Metric: 'Total Tenants',
-        Count: tenants.length, 
-        Details: 'From /api/portfolio/tenants',
-      });
-
-      stats.push({
-        Metric: 'Active Leases',
-        Count: leases.filter((l: any) => l.status !== 'ended').length,
-        Details: `${leases.length} total leases`,
-      });
-
-      const delinquentTenants = tenants.filter((t: any) => parseFloat(t.balance || '0') > 0);
-      stats.push({
-        Metric: 'Delinquent Tenants',
-        Count: delinquentTenants.length,
-        Details: `${((delinquentTenants.length / tenants.length) * 100).toFixed(1)}%`,
-      });
-
-      stats.push({
-        Metric: 'Portfolio Owners',
-        Count: owners.length,
-        Details: 'From /api/portfolio/owners',
-      });
-
-      console.table(stats);
-
-      console.log('\n📊 SAMPLE API RESPONSE SHAPES (Keys Only)');
-      console.log('-'.repeat(50));
-
-      if (properties[0]) {
-        console.log('Properties[0] keys:', Object.keys(properties[0]));
-      }
-      if (tenants[0]) {
-        console.log('Tenants[0] keys:', Object.keys(tenants[0]));
-      }
-      if (leases[0]) {
-        console.log('Leases[0] keys:', Object.keys(leases[0]));
-      }
-      if (units[0]) {
-        console.log('Units[0] keys:', Object.keys(units[0]));
-      }
-      if (owners[0]) {
-        console.log('Owners[0] keys:', Object.keys(owners[0]));
-      }
-
-      console.log('\n✅ Real data audit completed successfully');
-      console.log(`Generated at: ${new Date().toISOString()}`);
-      console.log('=' .repeat(80));
-
-    }).catch(error => {
-      console.error('❌ Failed to fetch real portfolio data for audit:', error);
+    // Status counts
+    const statusCounts: Record<string, number> = {};
+    properties?.forEach((p: any) => {
+      const status = p.status || 'unknown';
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
     });
 
+    // Leases expiring <= 45 days
+    const now = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(now.getDate() + 45);
+    
+    const expiringLeases = leases?.filter((l: any) => {
+      if (!l.endDate) return false;
+      const endDate = new Date(l.endDate);
+      return l.status === 'active' && endDate >= now && endDate <= futureDate;
+    }) || [];
+
+    // Delinquent tenants
+    const delinquentTenants = tenants?.filter((t: any) => 
+      t.isDelinquent && t.balance > 0
+    ).sort((a: any, b: any) => b.balance - a.balance) || [];
+
+    // High-priority work orders
+    const highPriorityWO = workOrders?.filter((w: any) => 
+      w.priority === 'high'
+    ) || [];
+    
+    const unassignedHighPriority = highPriorityWO.filter((w: any) => 
+      !w.assignedVendor
+    ).length;
+
+    // Series data analysis
+    const seriesData = {
+      monthsCount: series?.months?.length || 0,
+      dateRange: series?.months?.length > 0 ? 
+        `${series.months[0]?.month} - ${series.months[series.months.length - 1]?.month}` : 
+        'No data',
+    };
+
+    const auditResult: AuditData = {
+      propertiesWithCoords,
+      statusCounts,
+      expiringLeases: {
+        count: expiringLeases.length,
+        sample: expiringLeases.slice(0, 5).map((l: any) => ({
+          tenantName: l.tenantName || 'Unknown',
+          property: l.unitLabel || 'Unknown Unit',
+          endDate: l.endDate,
+        })),
+      },
+      delinquentTenants: {
+        count: delinquentTenants.length,
+        sample: delinquentTenants.slice(0, 5).map((t: any) => ({
+          name: t.name,
+          property: t.propertyName || 'Unknown Property',
+          balance: t.balance,
+        })),
+      },
+      highPriorityWO: {
+        count: highPriorityWO.length,
+        unassigned: unassignedHighPriority,
+        sample: highPriorityWO.slice(0, 5).map((w: any) => ({
+          property: w.propertyName || 'Unknown Property',
+          summary: w.summary || 'No summary',
+          assignedVendor: w.assignedVendor,
+        })),
+      },
+      seriesData,
+    };
+
+    // Console output for debug mode
+    console.group('🔍 Dashboard Data Audit');
+    
+    console.table('Properties with Coordinates', [
+      { Metric: 'Total Properties', Value: propertiesWithCoords.total },
+      { Metric: 'With Valid Coords', Value: propertiesWithCoords.withCoords },
+      { Metric: 'Percentage', Value: `${propertiesWithCoords.percentage.toFixed(1)}%` },
+    ]);
+
+    if (Object.keys(statusCounts).length > 0) {
+      console.table('Property Status Counts', 
+        Object.entries(statusCounts).map(([status, count]) => ({
+          Status: status,
+          Count: count,
+        }))
+      );
+    }
+
+    if (auditResult.expiringLeases.sample.length > 0) {
+      console.table('Leases Expiring ≤45 Days (Sample)', auditResult.expiringLeases.sample);
+    }
+
+    if (auditResult.delinquentTenants.sample.length > 0) {
+      console.table('Top Delinquent Tenants (Sample)', auditResult.delinquentTenants.sample);
+    }
+
+    if (auditResult.highPriorityWO.sample.length > 0) {
+      console.table('High-Priority Work Orders (Sample)', auditResult.highPriorityWO.sample);
+    }
+
+    console.table('Series Data Coverage', [
+      { Metric: 'Months Count', Value: seriesData.monthsCount },
+      { Metric: 'Date Range', Value: seriesData.dateRange },
+    ]);
+
+    console.groupEnd();
+
+    return auditResult;
   } catch (error) {
-    console.error('❌ Dashboard audit failed:', error);
-    // Never throw - must not crash UI
+    console.warn('Dashboard audit failed:', error);
+    
+    // Return safe defaults on error
+    return {
+      propertiesWithCoords: { total: 0, withCoords: 0, percentage: 0 },
+      statusCounts: {},
+      expiringLeases: { count: 0, sample: [] },
+      delinquentTenants: { count: 0, sample: [] },
+      highPriorityWO: { count: 0, unassigned: 0, sample: [] },
+      seriesData: { monthsCount: 0, dateRange: 'No data' },
+    };
   }
 }

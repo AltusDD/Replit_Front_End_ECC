@@ -1,11 +1,17 @@
-// src/features/dashboard/hooks/useDashboardData.ts - Real API Data Integration
+// useDashboardData.ts - Genesis specification data hook with mock support
 import { useState, useEffect, useRef } from 'react';
 import {
   type DashboardProperty,
   type DashboardTenant,
   type DashboardLease,
-  type DashboardUnit,
-  type DashboardOwner,
+  type DashboardWorkOrder,
+  MOCK_PROPERTIES,
+  MOCK_TENANTS,
+  MOCK_LEASES,
+  MOCK_WORK_ORDERS,
+  MOCK_SERIES,
+  MOCK_FUNNEL,
+  validateDashboardData,
 } from '../api/mock-data';
 
 export type TimeRange = '30d' | '90d' | '6m' | '12m';
@@ -14,18 +20,24 @@ export interface DashboardData {
   properties: DashboardProperty[];
   tenants: DashboardTenant[];
   leases: DashboardLease[];
-  units: DashboardUnit[];
-  owners: DashboardOwner[];
+  workOrders: DashboardWorkOrder[];
   kpis: {
     occupancyPct: number;
     avgTurnDays: number;
     collectionRatePct: number;
     highPriorityWorkOrders: number;
-    noiMTD: number; // in cents
+    noiMTD: number;
+    trends: {
+      occupancyPct: number;
+      avgTurnDays: number;
+      collectionRatePct: number;
+      highPriorityWorkOrders: number;
+      noiMTD: number;
+    };
   };
   series: {
-    months: Array<{ label: string; income: number; expenses: number; occupancyPct: number }>;
-    quarters: Array<{ label: string; value: number; debt: number }>;
+    months: Array<{ month: string; income: number; expenses: number; occupancyPct: number }>;
+    quarters: Array<{ quarter: string; value: number; debt: number }>;
   };
   funnel: { applications: number; screenings: number; leases: number };
 }
@@ -37,9 +49,39 @@ export interface UseDashboardDataResult {
 }
 
 async function fetchDashboardData(signal?: AbortSignal): Promise<DashboardData> {
-  const baseUrl = '';
+  // Genesis specification: Check for mock mode or live API mode
+  const useLiveData = import.meta.env.VITE_USE_LIVE === '1';
+  
+  if (!useLiveData) {
+    // Mock data with abortable simulated latency (300-600ms)
+    const latency = 300 + Math.random() * 300;
+    
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(resolve, latency);
+      
+      if (signal) {
+        signal.addEventListener('abort', () => {
+          clearTimeout(timer);
+          reject(new Error('Request aborted'));
+        });
+      }
+    });
+    
+    // Validate mock data
+    const mockData = {
+      properties: MOCK_PROPERTIES,
+      tenants: MOCK_TENANTS,
+      leases: MOCK_LEASES,
+      workOrders: MOCK_WORK_ORDERS,
+    };
+    
+    validateDashboardData(mockData);
+    
+    return generateDashboardData(mockData);
+  }
 
-  // Fetch all real portfolio data in parallel
+  // Live API mode (adapter function signature ready for future)
+  const baseUrl = '';
   const [propertiesRes, tenantsRes, leasesRes, unitsRes, ownersRes] = await Promise.all([
     fetch(`${baseUrl}/api/portfolio/properties`, { signal }),
     fetch(`${baseUrl}/api/portfolio/tenants`, { signal }),
@@ -162,25 +204,86 @@ async function fetchDashboardData(signal?: AbortSignal): Promise<DashboardData> 
     };
   });
 
+  return adaptFromLive({ properties, tenants, leases, units, owners });
+}
+
+// Adapter function for future live API integration
+function adaptFromLive(liveData: any): DashboardData {
+  const { properties, tenants, leases, units, owners } = liveData;
+  
+  // Calculate KPIs from live data
+  const totalUnits = units?.length || 0;
+  const occupiedUnits = units?.filter((u: any) => u.status === 'occupied')?.length || 0;
+  const occupancyPct = totalUnits > 0 ? (occupiedUnits / totalUnits) : 0;
+  
+  const delinquentTenants = tenants?.filter((t: any) => t.isDelinquent) || [];
+  const collectionRatePct = tenants?.length > 0 ? 
+    ((tenants.length - delinquentTenants.length) / tenants.length) : 1;
+  
+  const totalMonthlyIncome = units?.reduce((sum: number, u: any) => sum + (u.currentRent || 0), 0) || 0;
+  const estimatedExpenses = totalMonthlyIncome * 0.65;
+  
+  return generateDashboardData({
+    properties: properties || [],
+    tenants: tenants || [],
+    leases: leases || [],
+    workOrders: [], // No work orders API yet
+    customKpis: {
+      occupancyPct,
+      collectionRatePct,
+      noiMTD: totalMonthlyIncome - estimatedExpenses,
+    }
+  });
+}
+
+// Core data generation function
+function generateDashboardData(input: {
+  properties: DashboardProperty[];
+  tenants: DashboardTenant[];
+  leases: DashboardLease[];
+  workOrders: DashboardWorkOrder[];
+  customKpis?: any;
+}): DashboardData {
+  const { properties, tenants, leases, workOrders, customKpis } = input;
+  
+  // Calculate DB-first KPIs
+  const totalProperties = properties.length;
+  const occupiedProperties = properties.filter(p => p.status === 'occupied').length;
+  const occupancyPct = customKpis?.occupancyPct ?? (totalProperties > 0 ? occupiedProperties / totalProperties : 0);
+  
+  const delinquentTenants = tenants.filter(t => t.isDelinquent);
+  const collectionRatePct = customKpis?.collectionRatePct ?? 
+    (tenants.length > 0 ? (tenants.length - delinquentTenants.length) / tenants.length : 1);
+  
+  const highPriorityWO = workOrders.filter(w => w.priority === 'high').length;
+  
+  const totalMonthlyRent = properties.reduce((sum, p) => sum + p.currentRent, 0);
+  const noiMTD = customKpis?.noiMTD ?? (totalMonthlyRent * 0.35); // 35% NOI margin
+  
+  // Trend deltas vs prior period (mock ±% changes)
+  const trends = {
+    occupancyPct: (Math.random() - 0.5) * 10, // ±5%
+    avgTurnDays: (Math.random() - 0.5) * 8, // ±4 days
+    collectionRatePct: (Math.random() - 0.5) * 6, // ±3%
+    highPriorityWorkOrders: Math.round((Math.random() - 0.5) * 6), // ±3 orders
+    noiMTD: (Math.random() - 0.5) * 20, // ±10%
+  };
+  
   return {
     properties,
     tenants,
     leases,
-    units,
-    owners,
+    workOrders,
     kpis: {
       occupancyPct,
-      avgTurnDays: 14, // Placeholder - would come from lease turnover analysis
+      avgTurnDays: 12,
       collectionRatePct,
-      highPriorityWorkOrders: 0, // No work order API yet
-      noiMTD: Math.round(totalMonthlyIncome - estimatedExpenses),
+      highPriorityWorkOrders: highPriorityWO,
+      noiMTD,
+      trends,
     },
-    series: { months, quarters },
-    funnel: {
-      applications: Math.round(leases.length * 2.5), // Rough funnel ratios
-      screenings: Math.round(leases.length * 1.8),
-      leases: leases.filter(l => l.status === 'active').length,
-    },
+    series: MOCK_SERIES,
+    funnel: MOCK_FUNNEL,
   };
 }
 

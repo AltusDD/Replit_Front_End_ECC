@@ -1,6 +1,6 @@
-// src/features/dashboard/components/ChartContainer.tsx
+// ChartContainer.tsx - Genesis specification chart frame component
+
 import React from 'react';
-import '../../../styles/Dashboard.css';
 
 export type TimeRange = '30d' | '90d' | '6m' | '12m';
 
@@ -10,6 +10,7 @@ interface ChartContainerProps {
   onRangeChange?: (range: TimeRange) => void;
   rightSlot?: React.ReactNode;
   children: React.ReactNode;
+  height?: 'fixed' | 'compact';
 }
 
 const RANGE_OPTIONS: { value: TimeRange; label: string }[] = [
@@ -24,18 +25,21 @@ export function ChartContainer({
   range, 
   onRangeChange,
   rightSlot,
-  children 
+  children,
+  height = 'fixed'
 }: ChartContainerProps) {
+  const heightClass = height === 'compact' ? 'h-[280px]' : 'h-[320px]';
+  
   return (
-    <div className="dash-card p-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="dash-card">
+      <div className="flex items-center justify-between p-6 pb-4">
         <h3 className="dash-title text-lg">{title}</h3>
         <div className="flex items-center gap-3">
           {range && onRangeChange && (
             <select
               value={range}
               onChange={(e) => onRangeChange(e.target.value as TimeRange)}
-              className="bg-[var(--altus-grey-700)] text-[var(--altus-text)] border border-gray-600 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--altus-gold)] focus:border-transparent"
+              className="bg-[var(--altus-panel-2)] text-[var(--altus-text)] border border-[var(--altus-outline)] rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--altus-gold)] focus:border-transparent"
             >
               {RANGE_OPTIONS.map(option => (
                 <option key={option.value} value={option.value}>
@@ -47,8 +51,8 @@ export function ChartContainer({
           {rightSlot}
         </div>
       </div>
-      <div className="border-b border-gray-700 mb-4"></div>
-      <div className="min-h-[300px]">
+      <div className="border-b border-[var(--altus-outline)] mx-6"></div>
+      <div className={`p-6 pt-4 ${heightClass}`}>
         {children}
       </div>
     </div>
