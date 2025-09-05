@@ -60,8 +60,15 @@ async function fetchDashboardData(signal?: AbortSignal): Promise<DashboardData> 
     ownersRes.json(),
   ]);
 
+  // Ensure all data is arrays
+  const safePropertiesData = Array.isArray(propertiesData) ? propertiesData : [];
+  const safeTenantsData = Array.isArray(tenantsData) ? tenantsData : [];
+  const safeLeasesData = Array.isArray(leasesData) ? leasesData : [];
+  const safeUnitsData = Array.isArray(unitsData) ? unitsData : [];
+  const safeOwnersData = Array.isArray(ownersData) ? ownersData : [];
+
   // Transform real API data to dashboard format
-  const properties: DashboardProperty[] = propertiesData.map((p: any) => ({
+  const properties: DashboardProperty[] = safePropertiesData.map((p: any) => ({
     id: String(p.id),
     address1: p.address || p.name || 'Unknown Address',
     city: p.city || 'Unknown City',
@@ -77,7 +84,7 @@ async function fetchDashboardData(signal?: AbortSignal): Promise<DashboardData> 
     units: parseInt(p.units || p.unitCount || '1'),
   }));
 
-  const tenants: DashboardTenant[] = tenantsData.map((t: any) => ({
+  const tenants: DashboardTenant[] = safeTenantsData.map((t: any) => ({
     id: String(t.id),
     name: t.name || 'Unknown Tenant',
     propertyName: t.propertyName,
@@ -87,7 +94,7 @@ async function fetchDashboardData(signal?: AbortSignal): Promise<DashboardData> 
     isDelinquent: t.type === 'PROSPECT_TENANT' ? false : parseFloat(t.balance || '0') > 0,
   }));
 
-  const leases: DashboardLease[] = leasesData.map((l: any) => ({
+  const leases: DashboardLease[] = safeLeasesData.map((l: any) => ({
     id: String(l.id),
     tenantId: String(l.tenantId || ''),
     propertyId: String(l.propertyId || ''),
@@ -98,7 +105,7 @@ async function fetchDashboardData(signal?: AbortSignal): Promise<DashboardData> 
     monthlyRent: parseFloat(l.monthlyRent || l.rent || '0'),
   }));
 
-  const units: DashboardUnit[] = unitsData.map((u: any) => ({
+  const units: DashboardUnit[] = safeUnitsData.map((u: any) => ({
     id: String(u.id),
     propertyId: String(u.propertyId || ''),
     propertyName: u.propertyName,
@@ -109,7 +116,7 @@ async function fetchDashboardData(signal?: AbortSignal): Promise<DashboardData> 
             u.occupancyStatus === 'vacant' ? 'vacant' : 'occupied',
   }));
 
-  const owners: DashboardOwner[] = ownersData.map((o: any) => ({
+  const owners: DashboardOwner[] = safeOwnersData.map((o: any) => ({
     id: String(o.id),
     company: o.company || 'Unknown Company',
     name: o.name || o.company || 'Unknown Owner',

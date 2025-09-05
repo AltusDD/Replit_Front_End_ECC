@@ -22,6 +22,8 @@ export function OccupancyBreakdown({ properties }: OccupancyBreakdownProps) {
 
   // Group properties by city and calculate occupancy
   const cityData = React.useMemo(() => {
+    if (!properties || !Array.isArray(properties)) return [];
+    
     const grouped = properties.reduce((acc, property) => {
       if (!acc[property.city]) {
         acc[property.city] = {

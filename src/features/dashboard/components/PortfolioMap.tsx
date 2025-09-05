@@ -25,12 +25,16 @@ function MapContent({ properties }: PortfolioMapProps) {
   
   // Get unique cities
   const cities = useMemo(() => {
-    const citySet = new Set(properties.map(p => p.city));
+    if (!properties || !Array.isArray(properties)) return ['all'];
+    
+    const citySet = new Set(properties.map(p => p.city).filter(Boolean));
     return ['all', ...Array.from(citySet)];
   }, [properties]);
 
   // Filter properties by selected city and valid coordinates
   const filteredProperties = useMemo(() => {
+    if (!properties || !Array.isArray(properties)) return [];
+    
     const filtered = selectedCity === 'all' 
       ? properties 
       : properties.filter(p => p.city === selectedCity);
@@ -38,8 +42,8 @@ function MapContent({ properties }: PortfolioMapProps) {
     // Only include properties with valid coordinates
     return filtered.filter(p => 
       p.lat && p.lng && 
-      !isNaN(p.lat) && !isNaN(p.lng) &&
-      p.lat !== 0 && p.lng !== 0
+      !isNaN(Number(p.lat)) && !isNaN(Number(p.lng)) &&
+      Number(p.lat) !== 0 && Number(p.lng) !== 0
     );
   }, [properties, selectedCity]);
 
@@ -137,7 +141,7 @@ function MapContent({ properties }: PortfolioMapProps) {
           {filteredProperties.map((property) => (
             <Marker
               key={property.id}
-              position={[property.lat, property.lng]}
+              position={[Number(property.lat!), Number(property.lng!)]}
               icon={createIcon(property.status)}
             >
               <Popup>

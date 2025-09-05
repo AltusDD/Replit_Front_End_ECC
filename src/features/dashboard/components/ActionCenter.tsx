@@ -13,12 +13,15 @@ interface ActionCenterProps {
 export function ActionCenter({ leases, tenants, properties }: ActionCenterProps) {
   // Get leases expiring in next 45 days
   const expiringLeases = React.useMemo(() => {
+    if (!leases || !Array.isArray(leases)) return [];
+    
     const now = new Date();
     const futureDate = new Date();
     futureDate.setDate(now.getDate() + 45);
     
     return leases
       .filter(lease => {
+        if (!lease.endDate) return false;
         const endDate = new Date(lease.endDate);
         return lease.status === 'active' && endDate >= now && endDate <= futureDate;
       })
@@ -27,6 +30,8 @@ export function ActionCenter({ leases, tenants, properties }: ActionCenterProps)
 
   // Get top delinquent tenants
   const delinquentTenants = React.useMemo(() => {
+    if (!tenants || !Array.isArray(tenants)) return [];
+    
     return tenants
       .filter(tenant => tenant.isDelinquent && tenant.balance > 0)
       .sort((a, b) => b.balance - a.balance)
