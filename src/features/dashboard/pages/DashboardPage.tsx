@@ -87,7 +87,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (typeof location !== 'undefined' && 
         new URLSearchParams(location.search).get('debug') === '1') {
-      import('../../dev/auditDashboard').then(m => m.runDashboardAudit?.()).catch(() => {});
+      import('../../../dev/auditDashboard').then(m => m.runDashboardAudit?.()).catch(() => {});
     }
   }, []);
 

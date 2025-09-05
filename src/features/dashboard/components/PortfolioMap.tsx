@@ -1,21 +1,26 @@
 // src/features/dashboard/components/PortfolioMap.tsx
-import React, { useState, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import type { Property } from '../api/mock-data';
 
-// Lazy load Leaflet components to avoid SSR issues
-const MapContainer = lazy(() => import('react-leaflet').then(module => ({ default: module.MapContainer })));
-const TileLayer = lazy(() => import('react-leaflet').then(module => ({ default: module.TileLayer })));
-const Marker = lazy(() => import('react-leaflet').then(module => ({ default: module.Marker })));
-const Popup = lazy(() => import('react-leaflet').then(module => ({ default: module.Popup })));
-
-// Lazy load Leaflet for client-side only
-const L = lazy(() => import('leaflet').then(module => ({ default: module.default })));
+// Import Leaflet components and CSS
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 interface PortfolioMapProps {
   properties: Property[];
 }
 
 function MapContent({ properties }: PortfolioMapProps) {
+  // Fix Leaflet default markers in React
+  useEffect(() => {
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    });
+  }, []);
   const [selectedCity, setSelectedCity] = useState<string>('all');
   
   // Get unique cities
