@@ -154,7 +154,6 @@ export default function DashboardPage() {
                 <ActionCenter 
                   leases={data.leases}
                   tenants={data.tenants}
-                  workOrders={data.workOrders}
                   properties={data.properties}
                 />
               </div>

@@ -63,3 +63,4 @@ args = "PORT=${PORT:-5173} npm run dev"
 channel = "stable-25_05"
 
 [agent]
+integrations = ["javascript_database==1.0.0"]

@@ -2,10 +2,10 @@
 import React from 'react';
 import { useLocation } from 'wouter';
 import { ChartContainer } from './ChartContainer';
-import type { Property } from '../api/mock-data';
+import type { DashboardProperty } from '../api/mock-data';
 
 interface OccupancyBreakdownProps {
-  properties: Property[];
+  properties: DashboardProperty[];
 }
 
 interface CityData {

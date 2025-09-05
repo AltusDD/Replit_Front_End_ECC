@@ -1,6 +1,6 @@
 // src/features/dashboard/components/PortfolioMap.tsx
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
-import type { Property } from '../api/mock-data';
+import type { DashboardProperty } from '../api/mock-data';
 
 // Import Leaflet components and CSS
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -8,7 +8,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 interface PortfolioMapProps {
-  properties: Property[];
+  properties: DashboardProperty[];
 }
 
 function MapContent({ properties }: PortfolioMapProps) {
@@ -29,11 +29,18 @@ function MapContent({ properties }: PortfolioMapProps) {
     return ['all', ...Array.from(citySet)];
   }, [properties]);
 
-  // Filter properties by selected city
+  // Filter properties by selected city and valid coordinates
   const filteredProperties = useMemo(() => {
-    return selectedCity === 'all' 
+    const filtered = selectedCity === 'all' 
       ? properties 
       : properties.filter(p => p.city === selectedCity);
+    
+    // Only include properties with valid coordinates
+    return filtered.filter(p => 
+      p.lat && p.lng && 
+      !isNaN(p.lat) && !isNaN(p.lng) &&
+      p.lat !== 0 && p.lng !== 0
+    );
   }, [properties, selectedCity]);
 
   // Calculate map bounds
@@ -50,7 +57,7 @@ function MapContent({ properties }: PortfolioMapProps) {
   }, [filteredProperties]);
 
   // Create custom icons for different statuses
-  const createIcon = (status: Property['status']) => {
+  const createIcon = (status: DashboardProperty['status']) => {
     const colors = {
       occupied: '#1f6f4a', // green
       vacant: '#f59e0b',   // yellow
@@ -80,7 +87,7 @@ function MapContent({ properties }: PortfolioMapProps) {
     }).format(cents / 100);
   };
 
-  const getStatusLabel = (status: Property['status']) => {
+  const getStatusLabel = (status: DashboardProperty['status']) => {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
@@ -105,13 +112,23 @@ function MapContent({ properties }: PortfolioMapProps) {
       </div>
       
       <div className="portfolio-map">
-        <MapContainer
-          center={center}
-          zoom={10}
-          bounds={bounds}
-          className="w-full h-full"
-          data-testid="portfolio-map"
-        >
+        {filteredProperties.length === 0 ? (
+          <div className="w-full h-full bg-[var(--altus-grey-700)] flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-[var(--altus-text)] mb-2">📍</div>
+              <div className="text-[var(--altus-muted)] text-sm">
+                {selectedCity === 'all' ? 'No properties with coordinates' : `No properties in ${selectedCity} with coordinates`}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <MapContainer
+            center={center}
+            zoom={10}
+            bounds={bounds}
+            className="w-full h-full"
+            data-testid="portfolio-map"
+          >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -140,9 +157,9 @@ function MapContent({ properties }: PortfolioMapProps) {
                       {getStatusLabel(property.status)}
                     </span>
                   </div>
-                  {property.status === 'occupied' && (
+                  {property.status === 'occupied' && property.currentRent > 0 && (
                     <div className="text-sm text-gray-600 mt-1">
-                      Rent: {formatCurrency(property.currentRent * 100)}
+                      Rent: ${property.currentRent.toLocaleString()}
                     </div>
                   )}
                   <a 
@@ -156,7 +173,8 @@ function MapContent({ properties }: PortfolioMapProps) {
               </Popup>
             </Marker>
           ))}
-        </MapContainer>
+          </MapContainer>
+        )}
       </div>
     </div>
   );

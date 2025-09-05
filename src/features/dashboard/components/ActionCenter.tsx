@@ -2,16 +2,15 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { ActionButton } from './ActionButton';
-import type { Lease, TenantSummary, WorkOrder, Property } from '../api/mock-data';
+import type { DashboardLease, DashboardTenant, DashboardProperty } from '../api/mock-data';
 
 interface ActionCenterProps {
-  leases: Lease[];
-  tenants: TenantSummary[];
-  workOrders: WorkOrder[];
-  properties: Property[];
+  leases: DashboardLease[];
+  tenants: DashboardTenant[];
+  properties: DashboardProperty[];
 }
 
-export function ActionCenter({ leases, tenants, workOrders, properties }: ActionCenterProps) {
+export function ActionCenter({ leases, tenants, properties }: ActionCenterProps) {
   // Get leases expiring in next 45 days
   const expiringLeases = React.useMemo(() => {
     const now = new Date();
@@ -29,18 +28,15 @@ export function ActionCenter({ leases, tenants, workOrders, properties }: Action
   // Get top delinquent tenants
   const delinquentTenants = React.useMemo(() => {
     return tenants
-      .filter(tenant => tenant.isDelinquent && tenant.balanceDue > 0)
-      .sort((a, b) => b.balanceDue - a.balanceDue)
+      .filter(tenant => tenant.isDelinquent && tenant.balance > 0)
+      .sort((a, b) => b.balance - a.balance)
       .slice(0, 3);
   }, [tenants]);
 
-  // Get high priority work orders
+  // Get high priority work orders (placeholder - no work order API yet)
   const highPriorityWorkOrders = React.useMemo(() => {
-    return workOrders
-      .filter(wo => wo.priority === 'high' && !wo.assignedVendor)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 3);
-  }, [workOrders]);
+    return []; // Empty until work orders API is available
+  }, []);
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -55,9 +51,9 @@ export function ActionCenter({ leases, tenants, workOrders, properties }: Action
     return format(date, 'MMM d, yyyy');
   };
 
-  const getPropertyName = (propertyId: string) => {
-    const property = properties.find(p => p.id === propertyId);
-    return property?.address1 || 'Unknown Property';
+  const getPropertyName = (tenantPropertyName?: string) => {
+    // Use propertyName from tenant data directly since real API provides it
+    return tenantPropertyName || 'Unknown Property';
   };
 
   const getTenantName = (tenantId: string) => {
@@ -80,7 +76,7 @@ export function ActionCenter({ leases, tenants, workOrders, properties }: Action
                   {getTenantName(lease.tenantId)}
                 </div>
                 <div className="text-xs text-[var(--altus-muted)]">
-                  {getPropertyName(lease.propertyId)} • Ends {shortDate(lease.endDate)}
+                  {lease.unitLabel || 'Unknown Unit'} • Ends {shortDate(lease.endDate || '')}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -123,9 +119,9 @@ export function ActionCenter({ leases, tenants, workOrders, properties }: Action
                   {tenant.name}
                 </div>
                 <div className="text-xs text-[var(--altus-muted)]">
-                  {getPropertyName(tenant.propertyId)} • 
+                  {getPropertyName(tenant.propertyName)} • 
                   <span className="text-red-400 ml-1">
-                    {formatCurrency(tenant.balanceDue * 100)}
+                    ${tenant.balance.toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -162,33 +158,9 @@ export function ActionCenter({ leases, tenants, workOrders, properties }: Action
           New High-Priority Work Orders
         </h4>
         <div className="space-y-3">
-          {highPriorityWorkOrders.map((workOrder) => (
-            <div key={workOrder.id} className="action-item">
-              <div className="flex-1">
-                <div className="text-sm font-medium text-[var(--altus-text)]">
-                  {getPropertyName(workOrder.propertyId)}
-                </div>
-                <div className="text-xs text-[var(--altus-muted)]">
-                  {workOrder.summary}
-                </div>
-              </div>
-              <div>
-                <ActionButton 
-                  size="sm" 
-                  variant="primary"
-                  onClick={() => console.info('Assign vendor', workOrder.id)}
-                  data-testid={`assign-vendor-${workOrder.id}`}
-                >
-                  Assign Vendor
-                </ActionButton>
-              </div>
-            </div>
-          ))}
-          {highPriorityWorkOrders.length === 0 && (
-            <div className="text-sm text-[var(--altus-muted)] text-center py-4">
-              No high priority work orders
-            </div>
-          )}
+          <div className="text-sm text-[var(--altus-muted)] text-center py-4">
+            Work orders API not yet available
+          </div>
         </div>
       </div>
     </div>
