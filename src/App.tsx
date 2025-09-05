@@ -30,18 +30,8 @@ import ReportsCreatePage from "./pages/reports/Create";
 import ReportsSavedPage from "./pages/reports/Saved";
 import ReportsTemplatesPage from "./pages/reports/Templates";
 
-/**
- * If you already have a real Dashboard page component, swap this import in:
- *   import DashboardPage from "./pages/dashboard";
- * …and remove the inline fallback below.
- */
-function DashboardFallback() {
-  return (
-    <section className="ecc-page">
-      <h1 className="ecc-page-title">Dashboard</h1>
-    </section>
-  );
-}
+// Dashboard Page
+import DashboardPage from "./features/dashboard/pages/DashboardPage";
 
 export default function App() {
   // Dev auditor for ?debug=1
@@ -61,7 +51,7 @@ export default function App() {
         <Switch>
           {/* Home -> Dashboard */}
           <Route path="/" component={() => <Redirect to="/dashboard" />} />
-          <Route path="/dashboard" component={DashboardFallback} />
+          <Route path="/dashboard" component={DashboardPage} />
 
           {/* -------- Portfolio V3 (ACTIVE) -------- */}
           <Route path="/portfolio/properties" component={PropertiesPage} />

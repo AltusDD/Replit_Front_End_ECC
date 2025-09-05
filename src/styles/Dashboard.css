@@ -1,0 +1,221 @@
+/* src/styles/Dashboard.css - Genesis Dashboard Styles */
+
+/* Dashboard-specific tokens extending Altus palette */
+:root {
+  --altus-black: #0b0e12;
+  --altus-panel: #1a1d21;
+  --altus-grey-600: #2a2d31; /* approved light grey background */
+  --altus-grey-700: #2f353d;
+  --altus-gold: #d6b36a;
+  --altus-text: #d7dae0;
+  --altus-muted: #a0a0a0;
+  --altus-good: #1f6f4a;
+  --altus-bad: #80343a;
+}
+
+/* Dashboard-specific classes */
+.dash-card { 
+  background: var(--altus-grey-600); 
+  border: 1px solid rgba(255,255,255,.06); 
+  border-radius: 12px; 
+  box-shadow: 0 4px 14px rgba(0,0,0,.35); 
+}
+
+.dash-title { 
+  font-weight: 600; 
+  letter-spacing: .02em; 
+  color: var(--altus-text); 
+}
+
+.dash-subtle { 
+  color: var(--altus-muted); 
+}
+
+.dash-grid { 
+  display: grid; 
+  gap: 16px; 
+}
+
+@media (min-width: 1200px) {
+  .dash-grid { 
+    grid-template-columns: 2fr 1fr; 
+  }
+  .dash-row { 
+    grid-column: 1 / -1; 
+  }
+}
+
+.kpi-card { 
+  position: relative; 
+  padding: 16px 18px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.kpi-card:hover {
+  background: var(--altus-grey-700);
+  transform: translateY(-1px);
+}
+
+.sparkline { 
+  position: absolute; 
+  inset: 0; 
+  opacity: .12; 
+  pointer-events: none;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.trend--up { 
+  color: #4ade80; 
+}
+
+.trend--down { 
+  color: #f87171; 
+}
+
+.progress { 
+  height: 8px; 
+  background: #21262c; 
+  border-radius: 999px; 
+  overflow: hidden; 
+}
+
+.progress__fill { 
+  height: 100%; 
+  background: var(--altus-gold);
+  transition: width 0.3s ease;
+}
+
+/* Dashboard layout grid */
+.dashboard-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+  .dashboard-grid > .dash-row {
+    grid-column: 1 / -1;
+  }
+}
+
+/* KPI Banner */
+.kpi-banner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+/* Action center sections */
+.action-section {
+  margin-bottom: 24px;
+}
+
+.action-section:last-child {
+  margin-bottom: 0;
+}
+
+.action-list {
+  space-y: 12px;
+}
+
+.action-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.action-item:last-child {
+  border-bottom: none;
+}
+
+/* Map styles */
+.portfolio-map {
+  height: 400px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Occupancy table */
+.occupancy-table {
+  width: 100%;
+}
+
+.occupancy-table th,
+.occupancy-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.occupancy-table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--altus-muted);
+}
+
+.occupancy-table tr:hover {
+  background: rgba(255,255,255,.02);
+  cursor: pointer;
+}
+
+/* Status badges */
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-tag--occupied {
+  background: var(--altus-good);
+  color: white;
+}
+
+.status-tag--vacant {
+  background: #f59e0b;
+  color: white;
+}
+
+.status-tag--delinquent {
+  background: var(--altus-bad);
+  color: white;
+}
+
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(90deg, var(--altus-grey-700) 25%, var(--altus-grey-600) 50%, var(--altus-grey-700) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 2s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
