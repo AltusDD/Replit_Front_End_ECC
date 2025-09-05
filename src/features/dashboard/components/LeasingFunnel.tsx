@@ -1,6 +1,6 @@
-// src/features/dashboard/components/LeasingFunnel.tsx
+// LeasingFunnel.tsx - Genesis specification horizontal funnel with live data
 import React from 'react';
-import { FunnelChart, Funnel, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { BarChart, Bar, ResponsiveContainer, Tooltip } from 'recharts';
 import { ChartContainer } from './ChartContainer';
 import { ActionButton } from './ActionButton';
 
@@ -8,126 +8,137 @@ interface LeasingFunnelProps {
   funnel: {
     applications: number;
     screenings: number;
-    leases: number;
+    signed: number;
   };
 }
 
 export function LeasingFunnel({ funnel }: LeasingFunnelProps) {
-  const funnelData = [
-    { name: 'Applications', value: funnel.applications, fill: 'var(--altus-gold)' },
-    { name: 'Screenings', value: funnel.screenings, fill: '#f59e0b' },
-    { name: 'Leases Signed', value: funnel.leases, fill: 'var(--altus-good)' },
+  // Horizontal funnel data
+  const funnelSteps = [
+    {
+      name: 'Applications',
+      value: funnel.applications,
+      color: 'var(--chart-blue)',
+      route: '/leasing/applications',
+    },
+    {
+      name: 'Screenings',
+      value: funnel.screenings,
+      color: 'var(--altus-gold)',
+      route: '/leasing/screenings',
+    },
+    {
+      name: 'Leases Signed',
+      value: funnel.signed,
+      color: 'var(--chart-green)',
+      route: '/leasing/signed',
+    },
   ];
 
+  // Calculate conversion rates
   const conversionRates = {
-    screenings: funnel.applications > 0 ? (funnel.screenings / funnel.applications) * 100 : 0,
-    leases: funnel.screenings > 0 ? (funnel.leases / funnel.screenings) * 100 : 0,
+    applicationToScreening: funnel.applications > 0 ? (funnel.screenings / funnel.applications) * 100 : 0,
+    screeningToSigned: funnel.screenings > 0 ? (funnel.signed / funnel.screenings) * 100 : 0,
+    overallConversion: funnel.applications > 0 ? (funnel.signed / funnel.applications) * 100 : 0,
   };
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-[var(--altus-grey-700)] border border-gray-600 rounded-lg p-3 shadow-lg">
-          <p className="text-[var(--altus-text)] font-medium">{data.name}</p>
-          <p className="text-[var(--altus-muted)] text-sm">{data.value} total</p>
+        <div className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-3 shadow-lg">
+          <p className="text-[var(--text)] font-medium">{data.name}</p>
+          <p className="text-[var(--text-dim)] text-sm">{data.value} total</p>
         </div>
       );
     }
     return null;
   };
 
-  const handleStepClick = (stepName: string) => {
-    const routes = {
-      'Applications': '/leasing/applications',
-      'Screenings': '/leasing/screenings',
-      'Leases Signed': '/leasing/signed',
-    };
-    console.info('Navigate to', routes[stepName as keyof typeof routes]);
-  };
-
   return (
-    <ChartContainer title="Leasing Funnel (Last 90 Days)">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Funnel Chart */}
-        <div className="flex-1">
-          <ResponsiveContainer width="100%" height={250}>
-            <FunnelChart margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-              <Tooltip content={<CustomTooltip />} />
-              <Funnel
-                dataKey="value"
-                data={funnelData}
-                isAnimationActive={true}
-                stroke="rgba(255,255,255,0.2)"
-                strokeWidth={2}
-              >
-                {funnelData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Funnel>
-            </FunnelChart>
-          </ResponsiveContainer>
-        </div>
+    <div className="ecc-panel p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="ecc-panel__title text-lg">Leasing Funnel (Last 90 Days)</h3>
+      </div>
 
-        {/* Stats and Actions */}
+      <div className="space-y-6">
+        {/* Horizontal Funnel Steps */}
         <div className="space-y-4">
-          {/* Funnel Steps */}
-          <div className="space-y-3">
-            {funnelData.map((step, index) => (
-              <div key={step.name} className="flex items-center justify-between p-3 bg-[var(--altus-grey-700)] rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: step.fill }}
-                  />
-                  <div>
-                    <div className="text-sm font-medium text-[var(--altus-text)]">
-                      {step.name}
-                    </div>
-                    <div className="text-xs text-[var(--altus-muted)]">
-                      {step.value} total
-                    </div>
+          {funnelSteps.map((step, index) => {
+            const isFirst = index === 0;
+            const maxValue = funnel.applications;
+            const widthPercentage = maxValue > 0 ? (step.value / maxValue) * 100 : 0;
+
+            return (
+              <div key={step.name} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: step.color }}
+                    />
+                    <span className="small-label">{step.name}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="number-sm">{step.value}</span>
+                    <ActionButton
+                      size="sm"
+                      onClick={() => window.open(step.route, '_blank')}
+                    >
+                      View
+                    </ActionButton>
                   </div>
                 </div>
-                <ActionButton
-                  size="sm"
-                  onClick={() => handleStepClick(step.name)}
-                  data-testid={`funnel-${step.name.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  View
-                </ActionButton>
-              </div>
-            ))}
-          </div>
 
-          {/* Conversion Rates */}
-          <div className="bg-[var(--altus-grey-700)] rounded-lg p-4">
-            <h5 className="text-sm font-semibold text-[var(--altus-text)] mb-3">
-              Conversion Rates
-            </h5>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-[var(--altus-muted)]">App → Screening:</span>
-                <span className="text-[var(--altus-text)]">
-                  {conversionRates.screenings.toFixed(1)}%
-                </span>
+                {/* Horizontal Bar */}
+                <div className="relative">
+                  <div className="w-full h-6 bg-[var(--line)] rounded-lg overflow-hidden">
+                    <div 
+                      className="h-full rounded-lg transition-all duration-300"
+                      style={{ 
+                        width: `${widthPercentage}%`, 
+                        backgroundColor: step.color 
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Conversion Rate Arrow (except for first step) */}
+                  {!isFirst && (
+                    <div className="absolute -bottom-6 left-4 text-xs text-[var(--text-dim)]">
+                      {index === 1 
+                        ? `${conversionRates.applicationToScreening.toFixed(1)}% convert`
+                        : `${conversionRates.screeningToSigned.toFixed(1)}% convert`
+                      }
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[var(--altus-muted)]">Screen → Lease:</span>
-                <span className="text-[var(--altus-text)]">
-                  {conversionRates.leases.toFixed(1)}%
-                </span>
-              </div>
-              <div className="flex justify-between text-sm font-medium pt-2 border-t border-gray-600">
-                <span className="text-[var(--altus-muted)]">Overall:</span>
-                <span className="text-[var(--altus-text)]">
-                  {funnel.applications > 0 ? ((funnel.leases / funnel.applications) * 100).toFixed(1) : 0}%
-                </span>
-              </div>
+            );
+          })}
+        </div>
+
+        {/* Summary Statistics */}
+        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[var(--line)]">
+          <div className="text-center">
+            <div className="number-lg text-[var(--chart-blue)]">
+              {conversionRates.applicationToScreening.toFixed(1)}%
             </div>
+            <div className="small-label">App → Screen</div>
+          </div>
+          <div className="text-center">
+            <div className="number-lg text-[var(--altus-gold)]">
+              {conversionRates.screeningToSigned.toFixed(1)}%
+            </div>
+            <div className="small-label">Screen → Sign</div>
+          </div>
+          <div className="text-center">
+            <div className="number-lg text-[var(--chart-green)]">
+              {conversionRates.overallConversion.toFixed(1)}%
+            </div>
+            <div className="small-label">Overall</div>
           </div>
         </div>
       </div>
-    </ChartContainer>
+    </div>
   );
 }

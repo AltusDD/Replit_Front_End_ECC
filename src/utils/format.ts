@@ -1,70 +1,50 @@
-// src/utils/format.ts
+// Global formatting utilities - Genesis specification
 
-export const dash = "—";
+export const fmtDate = (iso?: string | null) =>
+  !iso ? "—" : new Date(iso).toLocaleDateString(undefined, { 
+    month: "short", 
+    day: "numeric", 
+    year: "numeric" 
+  }); // Mon D, YYYY
 
-// Safe deep getter
-export function getPath<T = any>(obj: any, path: string, d?: T): T | undefined {
-  try {
-    return path.split(".").reduce<any>((v, k) => (v == null ? v : v[k]), obj) ?? d;
-  } catch { return d; }
-}
-
-/** Format a number as currency with optional decimals. */
-export function money(n?: number | null, opts?: { decimals?: 0 | 2 }): string {
-  if (n == null || Number.isNaN(n as number)) return "—";
+export const fmtMoney = (n?: number | null) => {
+  if (n == null || Number.isNaN(n)) return "—";
   if (n === 0) return "$0";
-  const v = typeof n === "number" ? n : Number(n);
-  const decimals = opts?.decimals ?? 0;
-  return v.toLocaleString(undefined, { 
+  return n.toLocaleString(undefined, { 
     style: "currency", 
     currency: "USD", 
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals 
+    maximumFractionDigits: 2 
   });
-}
+};
 
-/** Format a number as a percent, default 1 decimal. */
-export function percent(n?: number | null, digits = 1): string {
-  if (n == null || Number.isNaN(n)) return "0%";
-  return `${Math.round(n || 0)}%`;
-}
+export const fmtPct = (v?: number | null, digits = 1) => 
+  (v == null ? "—" : `${v.toFixed(digits)}%`);
 
-/** Format date to Mon D, YYYY (e.g., Sep 4, 2025). */
-export function shortDate(v?: string | number | Date | null): string {
-  if (!v) return "—";
-  const d = new Date(v);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
+export const fmtCompact = (n?: number | null) => {
+  if (n == null || Number.isNaN(n)) return "—";
+  
+  const absN = Math.abs(n);
+  const sign = n < 0 ? "-" : "";
+  
+  if (absN >= 1000000) {
+    return `${sign}${(absN / 1000000).toFixed(1)}M`;
+  } else if (absN >= 1000) {
+    return `${sign}${(absN / 1000).toFixed(1)}K`;
+  } else {
+    return `${sign}${absN.toLocaleString()}`;
+  }
+};
 
-export type BadgeKind = "ok" | "warn" | "bad" | "muted";
+export const fmtDays = (days?: number | null) => {
+  if (days == null || Number.isNaN(days)) return "—";
+  
+  const absDays = Math.abs(days);
+  if (absDays === 1) return "1 day";
+  return `${Math.round(absDays)} days`;
+};
 
-/** Small colored badge. Usage: badge("Active", "ok") */
-export function badge(text: string, kind: BadgeKind = "muted"): string {
-  return text; // Return just the text for now since this is a .ts file
-}
-
-/** True/false pill with your badge styling. */
-export function boolBadge(ok?: boolean | null, truthy = "ACTIVE", falsy = "INACTIVE"): string {
-  const isTrue = !!ok;
-  return isTrue ? truthy : falsy;
-}
-
-/** Alias for legacy imports. */
-export const boolText = boolBadge;
-
-// Genesis progress bar for occupancy
-export function progressBar(value: number, max: number = 100): string {
-  const percentage = Math.min((value / max) * 100, 100);
-  return percent(percentage, 1);
-}
-
-// Genesis status badge with enhanced styling
-export function statusBadge(text: string, isActive: boolean, type: "status" | "occupancy" = "status"): string {
-  return text; // Return just the text for now since this is a .ts file
-}
-
-// Simple row actions - just show the three dots for now
-export function rowActions(actions: Array<{label: string, onClick: () => void}>): string {
-  return "⋯"; // Return just the dots for now since this is a .ts file
-}
+// Legacy aliases for compatibility with existing portfolio pages
+export const dash = "—";
+export const money = fmtMoney;
+export const percent = fmtPct;
+export const shortDate = fmtDate;

@@ -1,173 +1,164 @@
-// src/features/dashboard/components/ActionCenter.tsx
+// ActionCenter.tsx - Genesis specification with actionable items and live data
 import React from 'react';
-import { format } from 'date-fns';
+import { fmtDate, fmtMoney } from '../../../utils/format';
 import { ActionButton } from './ActionButton';
-import type { DashboardLease, DashboardTenant, DashboardProperty } from '../api/mock-data';
 
-interface ActionCenterProps {
-  leases: DashboardLease[];
-  tenants: DashboardTenant[];
-  properties: DashboardProperty[];
+interface LeaseExpiring {
+  leaseId: string;
+  tenant: string;
+  property: string;
+  endDate: string;
 }
 
-export function ActionCenter({ leases, tenants, properties }: ActionCenterProps) {
-  // Get leases expiring in next 45 days
-  const expiringLeases = React.useMemo(() => {
-    if (!leases || !Array.isArray(leases)) return [];
-    
-    const now = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(now.getDate() + 45);
-    
-    return leases
-      .filter(lease => {
-        if (!lease.endDate) return false;
-        const endDate = new Date(lease.endDate);
-        return lease.status === 'active' && endDate >= now && endDate <= futureDate;
-      })
-      .slice(0, 3);
-  }, [leases]);
+interface TopDelinquent {
+  tenantId: string;
+  tenant: string;
+  property: string;
+  balance: number;
+}
 
-  // Get top delinquent tenants
-  const delinquentTenants = React.useMemo(() => {
-    if (!tenants || !Array.isArray(tenants)) return [];
-    
-    return tenants
-      .filter(tenant => tenant.isDelinquent && tenant.balance > 0)
-      .sort((a, b) => b.balance - a.balance)
-      .slice(0, 3);
-  }, [tenants]);
+interface HighPriorityWO {
+  woId: string;
+  property: string;
+  summary: string;
+}
 
-  // Get high priority work orders (placeholder - no work order API yet)
-  const highPriorityWorkOrders = React.useMemo(() => {
-    return []; // Empty until work orders API is available
-  }, []);
+interface ActionCenterProps {
+  leasesExpiring: LeaseExpiring[];
+  topDelinquents: TopDelinquent[];
+  highPriorityWOs: HighPriorityWO[];
+}
 
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(cents / 100);
-  };
+// Section component for each action category
+function ActionSection({ 
+  title, 
+  items, 
+  emptyMessage 
+}: { 
+  title: string; 
+  items: React.ReactNode[];
+  emptyMessage: string;
+}) {
+  return (
+    <div className="action-section">
+      <h4 className="small-label mb-3">{title}</h4>
+      {items.length === 0 ? (
+        <div className="action-empty">
+          {emptyMessage}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items}
+        </div>
+      )}
+    </div>
+  );
+}
 
-  const shortDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return format(date, 'MMM d, yyyy');
-  };
+export function ActionCenter({ leasesExpiring, topDelinquents, highPriorityWOs }: ActionCenterProps) {
+  // Lease expiration actions
+  const leaseItems = leasesExpiring.slice(0, 3).map((lease) => (
+    <div key={lease.leaseId} className="action-item">
+      <div className="flex-1 min-w-0">
+        <div className="number-sm font-medium truncate">{lease.tenant}</div>
+        <div className="text-xs text-[var(--text-dim)]">
+          {lease.property} • Expires {fmtDate(lease.endDate)}
+        </div>
+      </div>
+      <div className="flex gap-2 ml-4">
+        <ActionButton 
+          variant="secondary"
+          size="sm"
+          onClick={() => window.open(`/portfolio/tenants?focus=${lease.leaseId}`, '_blank')}
+        >
+          Contact Tenant
+        </ActionButton>
+        <ActionButton
+          variant="primary"
+          size="sm"
+          onClick={() => window.open(`/leasing/renewal?lease=${lease.leaseId}`, '_blank')}
+        >
+          Start Renewal
+        </ActionButton>
+      </div>
+    </div>
+  ));
 
-  const getPropertyName = (tenantPropertyName?: string) => {
-    // Use propertyName from tenant data directly since real API provides it
-    return tenantPropertyName || 'Unknown Property';
-  };
+  // Delinquent tenant actions
+  const delinquentItems = topDelinquents.slice(0, 3).map((tenant) => (
+    <div key={tenant.tenantId} className="action-item">
+      <div className="flex-1 min-w-0">
+        <div className="number-sm font-medium truncate">{tenant.tenant}</div>
+        <div className="text-xs text-[var(--text-dim)]">
+          {tenant.property} • Balance: {fmtMoney(tenant.balance)}
+        </div>
+      </div>
+      <div className="flex gap-2 ml-4">
+        <ActionButton
+          variant="secondary"
+          size="sm"
+          onClick={() => window.open(`/accounting/ledger?tenant=${tenant.tenantId}`, '_blank')}
+        >
+          View Ledger
+        </ActionButton>
+        <ActionButton
+          variant="primary"
+          size="sm"
+          onClick={() => window.open(`/communications/send?tenant=${tenant.tenantId}&template=payment_reminder`, '_blank')}
+        >
+          Send Reminder
+        </ActionButton>
+      </div>
+    </div>
+  ));
 
-  const getTenantName = (tenantId: string) => {
-    const tenant = tenants.find(t => t.id === tenantId);
-    return tenant?.name || 'Unknown Tenant';
-  };
+  // Work order actions
+  const workOrderItems = highPriorityWOs.slice(0, 3).map((wo) => (
+    <div key={wo.woId} className="action-item">
+      <div className="flex-1 min-w-0">
+        <div className="number-sm font-medium truncate">{wo.summary}</div>
+        <div className="text-xs text-[var(--text-dim)]">
+          {wo.property} • High Priority
+        </div>
+      </div>
+      <div className="flex gap-2 ml-4">
+        <ActionButton
+          variant="secondary"
+          size="sm"
+          onClick={() => window.open(`/maintenance/work-orders?focus=${wo.woId}`, '_blank')}
+        >
+          View Details
+        </ActionButton>
+        <ActionButton
+          variant="primary"
+          size="sm"
+          onClick={() => window.open(`/maintenance/assign-vendor?wo=${wo.woId}`, '_blank')}
+        >
+          Assign Vendor
+        </ActionButton>
+      </div>
+    </div>
+  ));
 
   return (
     <div className="space-y-6">
-      {/* Leases Expiring */}
-      <div className="action-section">
-        <h4 className="text-sm font-semibold text-[var(--altus-text)] mb-3 uppercase tracking-wide">
-          Leases Expiring (Next 45 Days)
-        </h4>
-        <div className="space-y-3">
-          {expiringLeases.map((lease) => (
-            <div key={lease.id} className="action-item">
-              <div className="flex-1">
-                <div className="text-sm font-medium text-[var(--altus-text)]">
-                  {getTenantName(lease.tenantId)}
-                </div>
-                <div className="text-xs text-[var(--altus-muted)]">
-                  {lease.unitLabel || 'Unknown Unit'} • Ends {shortDate(lease.endDate || '')}
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <ActionButton 
-                  size="sm" 
-                  onClick={() => console.info('Contact tenant', lease.tenantId)}
-                  data-testid={`contact-tenant-${lease.id}`}
-                >
-                  Contact
-                </ActionButton>
-                <ActionButton 
-                  size="sm" 
-                  variant="primary"
-                  onClick={() => console.info('Start renewal', lease.id)}
-                  data-testid={`start-renewal-${lease.id}`}
-                >
-                  Renew
-                </ActionButton>
-              </div>
-            </div>
-          ))}
-          {expiringLeases.length === 0 && (
-            <div className="text-sm text-[var(--altus-muted)] text-center py-4">
-              No leases expiring soon
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Top Delinquent Tenants */}
-      <div className="action-section">
-        <h4 className="text-sm font-semibold text-[var(--altus-text)] mb-3 uppercase tracking-wide">
-          Top Delinquent Tenants
-        </h4>
-        <div className="space-y-3">
-          {delinquentTenants.map((tenant) => (
-            <div key={tenant.id} className="action-item">
-              <div className="flex-1">
-                <div className="text-sm font-medium text-[var(--altus-text)]">
-                  {tenant.name}
-                </div>
-                <div className="text-xs text-[var(--altus-muted)]">
-                  {getPropertyName(tenant.propertyName)} • 
-                  <span className="text-red-400 ml-1">
-                    ${tenant.balance.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <ActionButton 
-                  size="sm"
-                  to={`/card/tenant/${tenant.id}?tab=ledger`}
-                  data-testid={`view-ledger-${tenant.id}`}
-                >
-                  Ledger
-                </ActionButton>
-                <ActionButton 
-                  size="sm" 
-                  variant="danger"
-                  onClick={() => console.info('Send reminder', tenant.id)}
-                  data-testid={`send-reminder-${tenant.id}`}
-                >
-                  Remind
-                </ActionButton>
-              </div>
-            </div>
-          ))}
-          {delinquentTenants.length === 0 && (
-            <div className="text-sm text-[var(--altus-muted)] text-center py-4">
-              No delinquent tenants
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* High Priority Work Orders */}
-      <div className="action-section">
-        <h4 className="text-sm font-semibold text-[var(--altus-text)] mb-3 uppercase tracking-wide">
-          New High-Priority Work Orders
-        </h4>
-        <div className="space-y-3">
-          <div className="text-sm text-[var(--altus-muted)] text-center py-4">
-            Work orders API not yet available
-          </div>
-        </div>
-      </div>
+      <ActionSection
+        title="Leases Expiring Soon"
+        items={leaseItems}
+        emptyMessage="No leases expiring in the next 45 days. You're in the clear!"
+      />
+      
+      <ActionSection
+        title="Delinquent Tenants"
+        items={delinquentItems}
+        emptyMessage="No delinquent accounts. Great job on collections!"
+      />
+      
+      <ActionSection
+        title="High Priority Work Orders"
+        items={workOrderItems}
+        emptyMessage="No high priority work orders. All systems running smoothly!"
+      />
     </div>
   );
 }

@@ -1,40 +1,36 @@
-// TrendIndicator.tsx - Genesis specification trend component
-
+// TrendIndicator.tsx - Genesis specification trend indicators
 import React from 'react';
 
 interface TrendIndicatorProps {
   value: number;
+  showValue?: boolean;
+  size?: 'sm' | 'md';
 }
 
-export function TrendIndicator({ value }: TrendIndicatorProps) {
-  if (value > 0) {
+export function TrendIndicator({ value, showValue = true, size = 'sm' }: TrendIndicatorProps) {
+  const isPositive = value > 0;
+  const isNeutral = Math.abs(value) < 0.1;
+  
+  const iconSize = size === 'sm' ? 'text-sm' : 'text-base';
+  const textSize = size === 'sm' ? 'text-xs' : 'text-sm';
+  
+  if (isNeutral) {
     return (
-      <span 
-        className="text-[var(--altus-good)] inline-flex items-center text-sm font-medium"
-        aria-label={`up ${Math.abs(value).toFixed(1)} percent`}
-      >
-        ▲ {value.toFixed(1)}%
-      </span>
+      <div className="flex items-center gap-1 trend-neutral">
+        <span className={`${iconSize}`}>•</span>
+        {showValue && <span className={`${textSize} font-medium`}>—</span>}
+      </div>
     );
   }
   
-  if (value < 0) {
-    return (
-      <span 
-        className="text-[var(--altus-bad)] inline-flex items-center text-sm font-medium"
-        aria-label={`down ${Math.abs(value).toFixed(1)} percent`}
-      >
-        ▼ {Math.abs(value).toFixed(1)}%
-      </span>
-    );
-  }
-
+  const colorClass = isPositive ? 'trend-up' : 'trend-down';
+  const icon = isPositive ? '▲' : '▼';
+  const displayValue = showValue ? `${isPositive ? '+' : ''}${value.toFixed(1)}%` : '';
+  
   return (
-    <span 
-      className="text-[var(--altus-muted)] inline-flex items-center text-sm"
-      aria-label="no change"
-    >
-      • 0.0%
-    </span>
+    <div className={`flex items-center gap-1 ${colorClass}`}>
+      <span className={`${iconSize}`}>{icon}</span>
+      {showValue && <span className={`${textSize} font-medium`}>{displayValue}</span>}
+    </div>
   );
 }

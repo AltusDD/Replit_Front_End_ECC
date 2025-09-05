@@ -1,168 +1,151 @@
-// src/features/dashboard/components/OccupancyBreakdown.tsx
+// OccupancyBreakdown.tsx - Genesis specification table with progress bars and live data
 import React from 'react';
-import { useLocation } from 'wouter';
 import { ChartContainer } from './ChartContainer';
-import type { DashboardProperty } from '../api/mock-data';
+
+interface CityOccupancy {
+  city: string;
+  properties: number;
+  occUnits: number;
+  vacUnits: number;
+  occPct: number;
+}
 
 interface OccupancyBreakdownProps {
-  properties: DashboardProperty[];
+  occByCity: CityOccupancy[];
 }
 
-interface CityData {
-  city: string;
-  totalProperties: number;
-  occupiedUnits: number;
-  vacantUnits: number;
-  totalUnits: number;
-  occupancyPct: number;
-}
-
-export function OccupancyBreakdown({ properties }: OccupancyBreakdownProps) {
-  const [, navigate] = useLocation();
-
-  // Group properties by city and calculate occupancy
-  const cityData = React.useMemo(() => {
-    if (!properties || !Array.isArray(properties)) return [];
-    
-    const grouped = properties.reduce((acc, property) => {
-      if (!acc[property.city]) {
-        acc[property.city] = {
-          city: property.city,
-          totalProperties: 0,
-          occupiedUnits: 0,
-          vacantUnits: 0,
-          totalUnits: 0,
-        };
-      }
-
-      const cityStats = acc[property.city];
-      cityStats.totalProperties += 1;
-      cityStats.totalUnits += property.units;
-
-      if (property.status === 'occupied') {
-        cityStats.occupiedUnits += property.units;
-      } else {
-        cityStats.vacantUnits += property.units;
-      }
-
-      return acc;
-    }, {} as Record<string, Omit<CityData, 'occupancyPct'>>);
-
-    // Calculate occupancy percentages and sort by city name
-    return Object.values(grouped)
-      .map(city => ({
-        ...city,
-        occupancyPct: city.totalUnits > 0 ? (city.occupiedUnits / city.totalUnits) * 100 : 0,
-      }))
-      .sort((a, b) => a.city.localeCompare(b.city));
-  }, [properties]);
-
+export function OccupancyBreakdown({ occByCity }: OccupancyBreakdownProps) {
   const handleCityClick = (cityName: string) => {
-    navigate(`/portfolio/properties?city=${encodeURIComponent(cityName)}`);
+    window.open(`/portfolio/properties?filter=city:${encodeURIComponent(cityName)}`, '_blank');
   };
 
   const ProgressBar = ({ percentage }: { percentage: number }) => (
-    <div className="progress">
+    <div className="progress-bar">
       <div 
-        className="progress__fill" 
-        style={{ width: `${percentage}%` }}
+        className="progress-fill" 
+        style={{ width: `${Math.min(percentage, 100)}%` }}
       />
     </div>
   );
 
+  // Calculate totals
+  const totals = occByCity.reduce(
+    (acc, city) => ({
+      properties: acc.properties + city.properties,
+      occUnits: acc.occUnits + city.occUnits,
+      vacUnits: acc.vacUnits + city.vacUnits,
+      totalUnits: acc.totalUnits + city.occUnits + city.vacUnits,
+    }),
+    { properties: 0, occUnits: 0, vacUnits: 0, totalUnits: 0 }
+  );
+
+  const overallOccPct = totals.totalUnits > 0 ? (totals.occUnits / totals.totalUnits) * 100 : 0;
+
   return (
-    <ChartContainer title="Occupancy Breakdown by City">
+    <div className="ecc-panel p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="ecc-panel__title text-lg">Occupancy Breakdown</h3>
+      </div>
+
       <div className="overflow-x-auto">
-        <table className="occupancy-table">
+        <table className="w-full text-sm">
           <thead>
-            <tr>
-              <th>Location</th>
-              <th className="text-center"># Properties</th>
-              <th className="text-center">Occupied Units</th>
-              <th className="text-center">Vacant Units</th>
-              <th className="text-center">Occupancy %</th>
+            <tr className="border-b border-[var(--line)]">
+              <th className="text-left py-3 px-2 small-label">Location</th>
+              <th className="text-center py-3 px-2 small-label">Properties</th>
+              <th className="text-center py-3 px-2 small-label">Occ Units</th>
+              <th className="text-center py-3 px-2 small-label">Vac Units</th>
+              <th className="text-center py-3 px-2 small-label">Occ %</th>
             </tr>
           </thead>
           <tbody>
-            {cityData.map((city) => (
+            {occByCity.map((city) => (
               <tr 
                 key={city.city}
                 onClick={() => handleCityClick(city.city)}
-                className="cursor-pointer"
-                data-testid={`city-row-${city.city.toLowerCase().replace(/\s+/g, '-')}`}
+                className="border-b border-[var(--line)] hover:bg-[var(--panel-elev)] cursor-pointer transition-colors"
               >
-                <td>
-                  <div className="font-medium text-[var(--altus-text)]">
+                <td className="py-3 px-2">
+                  <div className="number-sm font-medium text-[var(--text)]">
                     {city.city}
                   </div>
                 </td>
-                <td className="text-center text-[var(--altus-text)]">
-                  {city.totalProperties}
+                <td className="text-center py-3 px-2">
+                  <span className="number-sm text-[var(--text)]">
+                    {city.properties}
+                  </span>
                 </td>
-                <td className="text-center text-[var(--altus-text)]">
-                  {city.occupiedUnits}
+                <td className="text-center py-3 px-2">
+                  <span className="number-sm text-[var(--chart-green)]">
+                    {city.occUnits}
+                  </span>
                 </td>
-                <td className="text-center text-[var(--altus-text)]">
-                  {city.vacantUnits}
+                <td className="text-center py-3 px-2">
+                  <span className="number-sm text-[var(--text-dim)]">
+                    {city.vacUnits}
+                  </span>
                 </td>
-                <td className="text-center">
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1">
-                      <ProgressBar percentage={city.occupancyPct} />
+                <td className="text-center py-3 px-2">
+                  <div className="flex items-center gap-3 justify-center">
+                    <div className="w-16">
+                      <ProgressBar percentage={city.occPct} />
                     </div>
-                    <span className="text-sm font-medium text-[var(--altus-text)] min-w-[3rem]">
-                      {city.occupancyPct.toFixed(1)}%
+                    <span className="number-sm font-medium text-[var(--text)] min-w-[3rem]">
+                      {city.occPct.toFixed(1)}%
                     </span>
                   </div>
                 </td>
               </tr>
             ))}
-            {cityData.length === 0 && (
-              <tr>
-                <td colSpan={5} className="text-center text-[var(--altus-muted)] py-8">
-                  No property data available
-                </td>
-              </tr>
-            )}
           </tbody>
+          
+          {/* Totals Row */}
+          <tfoot>
+            <tr className="border-t-2 border-[var(--altus-gold)] bg-[var(--panel-elev)]">
+              <td className="py-3 px-2">
+                <div className="number-sm font-bold text-[var(--altus-gold)]">
+                  Total Portfolio
+                </div>
+              </td>
+              <td className="text-center py-3 px-2">
+                <span className="number-sm font-bold text-[var(--altus-gold)]">
+                  {totals.properties}
+                </span>
+              </td>
+              <td className="text-center py-3 px-2">
+                <span className="number-sm font-bold text-[var(--chart-green)]">
+                  {totals.occUnits}
+                </span>
+              </td>
+              <td className="text-center py-3 px-2">
+                <span className="number-sm font-bold text-[var(--text-dim)]">
+                  {totals.vacUnits}
+                </span>
+              </td>
+              <td className="text-center py-3 px-2">
+                <div className="flex items-center gap-3 justify-center">
+                  <div className="w-16">
+                    <ProgressBar percentage={overallOccPct} />
+                  </div>
+                  <span className="number-sm font-bold text-[var(--altus-gold)] min-w-[3rem]">
+                    {overallOccPct.toFixed(1)}%
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 
-      {/* Summary Stats */}
-      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="text-center p-3 bg-[var(--altus-grey-700)] rounded-lg">
-          <div className="text-lg font-bold text-[var(--altus-text)]">
-            {cityData.length}
-          </div>
-          <div className="text-xs text-[var(--altus-muted)] uppercase tracking-wide">
-            Cities
+      {/* Empty State */}
+      {occByCity.length === 0 && (
+        <div className="text-center py-8">
+          <div className="text-[var(--text-dim)] mb-2">📊</div>
+          <div className="text-[var(--text-dim)] text-sm">
+            No occupancy data available
           </div>
         </div>
-        <div className="text-center p-3 bg-[var(--altus-grey-700)] rounded-lg">
-          <div className="text-lg font-bold text-[var(--altus-text)]">
-            {cityData.reduce((sum, city) => sum + city.totalProperties, 0)}
-          </div>
-          <div className="text-xs text-[var(--altus-muted)] uppercase tracking-wide">
-            Properties
-          </div>
-        </div>
-        <div className="text-center p-3 bg-[var(--altus-grey-700)] rounded-lg">
-          <div className="text-lg font-bold text-[var(--altus-text)]">
-            {cityData.reduce((sum, city) => sum + city.totalUnits, 0)}
-          </div>
-          <div className="text-xs text-[var(--altus-muted)] uppercase tracking-wide">
-            Total Units
-          </div>
-        </div>
-        <div className="text-center p-3 bg-[var(--altus-grey-700)] rounded-lg">
-          <div className="text-lg font-bold text-[var(--altus-text)]">
-            {cityData.reduce((sum, city) => sum + city.occupiedUnits, 0)}
-          </div>
-          <div className="text-xs text-[var(--altus-muted)] uppercase tracking-wide">
-            Occupied
-          </div>
-        </div>
-      </div>
-    </ChartContainer>
+      )}
+    </div>
   );
 }

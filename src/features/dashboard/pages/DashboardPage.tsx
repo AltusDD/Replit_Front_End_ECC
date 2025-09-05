@@ -7,7 +7,7 @@ import { ActionCenter } from '../components/ActionCenter';
 import { FinancialSnapshot } from '../components/FinancialSnapshot';
 import { LeasingFunnel } from '../components/LeasingFunnel';
 import { OccupancyBreakdown } from '../components/OccupancyBreakdown';
-import { runDashboardAudit } from '../../../dev/auditDashboard';
+// Debug audit removed - using built-in debug mode
 import '../../../styles/Dashboard.css';
 
 // Loading skeleton components
@@ -81,20 +81,9 @@ function ActionCenterSkeleton() {
 }
 
 export default function DashboardPage() {
-  const [timeRange, setTimeRange] = React.useState<TimeRange>('12m');
-  const { data, loading, error } = useDashboardData(timeRange);
+  const { data, loading, error, debugInfo } = useDashboardData();
 
-  // Debug mode audit - Genesis specification
-  useEffect(() => {
-    if (data && typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const debugMode = urlParams.get('debug') === '1';
-      
-      if (debugMode) {
-        runDashboardAudit(data);
-      }
-    }
-  }, [data]);
+  // Debug info is now handled directly in the useDashboardData hook
 
   if (error) {
     return (
@@ -130,7 +119,7 @@ export default function DashboardPage() {
           {loading || !data ? (
             <KpiSkeleton />
           ) : (
-            <KpiBanner data={data} />
+            <KpiBanner kpis={data.kpis} />
           )}
         </div>
 
@@ -157,10 +146,9 @@ export default function DashboardPage() {
               <div className="dash-card p-6">
                 <h3 className="dash-title text-lg mb-6">Action Center</h3>
                 <ActionCenter 
-                  leases={data.leases} 
-                  tenants={data.tenants} 
-                  properties={data.properties}
-                  workOrders={data.workOrders}
+                  leasesExpiring={data.leasesExpiring45}
+                  topDelinquents={data.topDelinquents}
+                  highPriorityWOs={data.highPriorityWOs}
                 />
               </div>
             )}
@@ -175,7 +163,10 @@ export default function DashboardPage() {
               <ChartSkeleton title="Portfolio Value vs Debt" />
             </div>
           ) : (
-            <FinancialSnapshot series={data.series} />
+            <FinancialSnapshot 
+              incomeVsExpenses={data.incomeVsExpenses}
+              valueVsDebt={data.valueVsDebt}
+            />
           )}
         </div>
 
@@ -185,7 +176,7 @@ export default function DashboardPage() {
             {loading || !data ? (
               <ChartSkeleton title="Leasing Funnel" />
             ) : (
-              <LeasingFunnel funnel={data.funnel} />
+              <LeasingFunnel funnel={data.funnel90} />
             )}
           </div>
           
@@ -193,7 +184,7 @@ export default function DashboardPage() {
             {loading || !data ? (
               <ChartSkeleton title="Occupancy Breakdown" />
             ) : (
-              <OccupancyBreakdown properties={data.properties} />
+              <OccupancyBreakdown occByCity={data.occByCity} />
             )}
           </div>
         </div>
