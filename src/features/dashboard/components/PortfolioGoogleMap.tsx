@@ -6,7 +6,8 @@ import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import type { DashboardData } from '../hooks/useDashboardData';
 
 interface PortfolioGoogleMapProps {
-  data: DashboardData;
+  propertiesForMap: DashboardData['propertiesForMap'];
+  missingGeoCount?: number;
 }
 
 // Property pin component with status colors
@@ -66,9 +67,19 @@ function ActionButton({
   );
 }
 
-export function PortfolioGoogleMap({ data }: PortfolioGoogleMapProps) {
-  const { propertiesForMap } = data;
-  const missingGeoCount = 0; // Calculate if needed
+export function PortfolioGoogleMap({ propertiesForMap, missingGeoCount = 0 }: PortfolioGoogleMapProps) {
+  // Handle loading state
+  if (!propertiesForMap || propertiesForMap.length === 0) {
+    return (
+      <div className="ecc-panel p-6">
+        <div className="portfolio-map bg-[var(--panel-elev)] rounded-lg flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="text-[var(--text-dim)]">Loading map data...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   const [selectedProperty, setSelectedProperty] = useState<DashboardData['propertiesForMap'][0] | null>(null);
   
   // Check for required Google Maps API key
