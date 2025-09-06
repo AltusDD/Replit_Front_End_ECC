@@ -129,7 +129,7 @@ function QAOverlay({
 }
 
 // Main dashboard page component
-export function DashboardPage() {
+export default function DashboardPage() {
   const { data, loading, error, qa } = useDashboardData();
   
   // Check if debug mode is enabled
