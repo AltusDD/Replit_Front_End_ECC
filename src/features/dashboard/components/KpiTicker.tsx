@@ -1,6 +1,7 @@
 // KpiTicker.tsx - Genesis v2 specification actionable KPIs with visuals
 import React from 'react';
-import { fmtPct } from '../../../utils/format';
+import { Link } from 'wouter';
+import { fmtPct, fmtMoney } from '../../../utils/format';
 
 interface KpiData {
   occupancyPct: number;
@@ -14,9 +15,9 @@ interface KpiTickerProps {
   kpis: KpiData;
 }
 
-// Mini donut chart for percentages
+// Mini donut chart for percentages (thicker for better visibility)
 function MiniDonut({ percentage, size = 40 }: { percentage: number; size?: number }) {
-  const circumference = 2 * Math.PI * 14;
+  const circumference = 2 * Math.PI * 12; // Thicker ring
   const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
   
   return (
@@ -25,17 +26,17 @@ function MiniDonut({ percentage, size = 40 }: { percentage: number; size?: numbe
         <circle
           cx={size / 2}
           cy={size / 2}
-          r={14}
+          r={12}
           stroke="var(--line)"
-          strokeWidth="3"
+          strokeWidth="4"
           fill="none"
         />
         <circle
           cx={size / 2}
           cy={size / 2}
-          r={14}
+          r={12}
           stroke="var(--good)"
-          strokeWidth="3"
+          strokeWidth="4"
           fill="none"
           strokeDasharray={strokeDasharray}
           strokeLinecap="round"
@@ -49,7 +50,7 @@ function MiniDonut({ percentage, size = 40 }: { percentage: number; size?: numbe
   );
 }
 
-// Simple sparkline for trends
+// Simple sparkline for daily trends
 function MiniSparkline({ trend }: { trend: number }) {
   const points = Array.from({ length: 7 }, (_, i) => {
     const base = 50;
@@ -77,120 +78,88 @@ function MiniSparkline({ trend }: { trend: number }) {
   );
 }
 
-// Trend badge
-function TrendBadge({ value }: { value: number }) {
-  const isPositive = value > 0;
-  const color = isPositive ? 'var(--good)' : 'var(--bad)';
-  const icon = isPositive ? '▲' : '▼';
-  
-  return (
-    <div className="flex items-center gap-1" style={{ color }}>
-      <span className="text-xs">{icon}</span>
-      <span className="text-xs font-medium">{Math.abs(value).toFixed(1)}%</span>
-    </div>
-  );
-}
-
 export function KpiTicker({ kpis }: KpiTickerProps) {
   if (!kpis) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-4">
-            <div className="bg-[var(--panel-elev)] h-4 w-20 mb-2 rounded animate-pulse"></div>
-            <div className="bg-[var(--panel-elev)] h-8 w-16 mb-2 rounded animate-pulse"></div>
-            <div className="bg-[var(--panel-elev)] h-3 w-24 rounded animate-pulse"></div>
+          <div key={i} className="ecc-kpi">
+            <div className="skeleton h-4 w-20 mb-2 rounded"></div>
+            <div className="skeleton h-8 w-16 mb-2 rounded"></div>
+            <div className="skeleton h-3 w-24 rounded"></div>
           </div>
         ))}
       </div>
     );
   }
 
-  const kpiItems = [
-    {
-      id: 'occupancy',
-      label: 'Occupancy',
-      value: fmtPct(kpis.occupancyPct, 1),
-      secondary: `of all units`,
-      route: '/portfolio/units?status=occupied',
-      visual: <MiniDonut percentage={kpis.occupancyPct} />,
-      trend: 2.3,
-    },
-    {
-      id: 'vacant',
-      label: 'Rent-Ready / Vacant',
-      value: `${kpis.rentReadyVacant.ready} / ${kpis.rentReadyVacant.vacant}`,
-      secondary: `units available`,
-      route: '/portfolio/units?status=vacant',
-      visual: (
-        <div className="text-2xl font-bold text-[var(--warn)]">
-          {kpis.rentReadyVacant.ready}
-        </div>
-      ),
-      trend: -1.2,
-    },
-    {
-      id: 'collections',
-      label: 'Collections (MTD)',
-      value: fmtPct(kpis.collectionsRatePct, 1),
-      secondary: 'current tenants',
-      route: '/accounting?scope=mtd&filter=unpaid',
-      visual: <MiniDonut percentage={kpis.collectionsRatePct} />,
-      trend: 0.8,
-    },
-    {
-      id: 'criticalwo',
-      label: 'Critical WOs',
-      value: kpis.openCriticalWO.toString(),
-      secondary: 'open issues',
-      route: '/construction?priority=high',
-      visual: (
-        <div className="text-2xl font-bold text-[var(--bad)]">
-          {kpis.openCriticalWO}
-        </div>
-      ),
-      trend: -0.5,
-    },
-  ];
-
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-      {kpiItems.map((kpi) => (
-        <div
-          key={kpi.id}
-          className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-4 cursor-pointer transition-all duration-200 hover:bg-[var(--panel-elev)] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[var(--altus-gold)] focus:ring-offset-2 focus:ring-offset-[var(--altus-black)]"
-          onClick={() => window.open(kpi.route, '_blank')}
-          role="button"
-          tabIndex={0}
-          onKeyPress={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              window.open(kpi.route, '_blank');
-            }
-          }}
-        >
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex-1 min-w-0">
-              <div className="text-xs text-[var(--text-dim)] uppercase tracking-wide font-medium mb-1">
-                {kpi.label}
-              </div>
-              <div className="text-2xl font-bold text-[var(--text)] mb-1">
-                {kpi.value}
-              </div>
-              <div className="text-xs text-[var(--text-dim)]">
-                {kpi.secondary}
-              </div>
-            </div>
-            <div className="ml-3 flex-shrink-0">
-              {kpi.visual}
-            </div>
-          </div>
-          
+      {/* Portfolio Occupancy - Clickable to units overview */}
+      <Link to="/portfolio/units" className="block">
+        <button className="ecc-kpi w-full text-left" data-testid="button-kpi-occupancy">
+          <div className="ecc-kpi__title">Portfolio Occupancy</div>
           <div className="flex items-center justify-between">
-            <TrendBadge value={kpi.trend} />
-            <MiniSparkline trend={kpi.trend} />
+            <div className="ecc-kpi__value">{fmtPct(kpis.occupancyPct, 1)}</div>
+            <MiniDonut percentage={kpis.occupancyPct} />
           </div>
-        </div>
-      ))}
+          <div className="flex items-center gap-2 mt-2">
+            <MiniSparkline trend={2} />
+            <span className="text-xs text-[var(--good)]">+2.1% vs last month</span>
+          </div>
+        </button>
+      </Link>
+
+      {/* Rent Ready / Vacant - Clickable to vacant units filter */}
+      <Link to="/portfolio/units?status=vacant&rent_ready=true" className="block">
+        <button className="ecc-kpi w-full text-left" data-testid="button-kpi-vacant">
+          <div className="ecc-kpi__title">Rent Ready / Vacant</div>
+          <div className="ecc-kpi__value mb-2">
+            {kpis.rentReadyVacant.ready} / {kpis.rentReadyVacant.vacant}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-[var(--warn)] flex items-center justify-center">
+              <span className="text-xs font-bold text-[var(--altus-black)]">
+                {kpis.rentReadyVacant.vacant}
+              </span>
+            </div>
+            <span className="text-xs text-[var(--text-dim)]">units available</span>
+          </div>
+        </button>
+      </Link>
+
+      {/* Collections Rate MTD - Clickable to delinquent tenants */}
+      <Link to="/portfolio/tenants?filter=delinquent" className="block">
+        <button className="ecc-kpi w-full text-left" data-testid="button-kpi-collections">
+          <div className="ecc-kpi__title">Collections (MTD)</div>
+          <div className="flex items-center justify-between">
+            <div className="ecc-kpi__value">{fmtPct(kpis.collectionsRatePct, 1)}</div>
+            <MiniDonut percentage={kpis.collectionsRatePct} />
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <MiniSparkline trend={-1} />
+            <span className="text-xs text-[var(--warn)]\">Daily receipts trend</span>
+          </div>
+        </button>
+      </Link>
+
+      {/* Critical Work Orders - Clickable to maintenance */}
+      <Link to="/maintenance?priority=high,critical&status=open" className="block">
+        <button className="ecc-kpi w-full text-left" data-testid="button-kpi-workorders">
+          <div className="ecc-kpi__title">Critical Work Orders</div>
+          <div className="ecc-kpi__value mb-2">{kpis.openCriticalWO}</div>
+          <div className="flex items-center gap-2">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+              kpis.openCriticalWO > 5 ? 'bg-[var(--bad)]' : 'bg-[var(--neutral)]'
+            }`}>
+              <span className="text-xs font-bold text-white">!</span>
+            </div>
+            <span className="text-xs text-[var(--text-dim)]">
+              {kpis.openCriticalWO > 5 ? 'Needs attention' : 'Under control'}
+            </span>
+          </div>
+        </button>
+      </Link>
     </div>
   );
 }
