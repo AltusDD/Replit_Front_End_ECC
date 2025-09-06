@@ -151,32 +151,22 @@ function checkGoogleMapsAPI(): boolean {
 
 // API client for portfolio endpoints
 async function fetchFromAPI<T>(endpoint: string, signal?: AbortSignal): Promise<T> {
-  try {
-    const response = await fetch(`/api/portfolio/${endpoint}`, { signal });
-    
-    if (!response.ok) {
-      if (response.status === 500) {
-        const errorText = await response.text();
-        if (errorText.includes("Supabase not configured")) {
-          throw new Error(
-            "❌ DATABASE CONNECTION: Supabase configuration missing. " +
-            "Dashboard requires live portfolio data connection."
-          );
-        }
+  const response = await fetch(`/api/portfolio/${endpoint}`, { signal });
+  
+  if (!response.ok) {
+    if (response.status === 500) {
+      const errorText = await response.text();
+      if (errorText.includes("Supabase not configured")) {
+        throw new Error(
+          "❌ DATABASE CONNECTION: Supabase configuration missing. " +
+          "Dashboard requires live portfolio data connection."
+        );
       }
-      throw new Error(`API Error ${response.status}: ${response.statusText}`);
     }
-    
-    return await response.json();
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new Error('Request aborted');
-      }
-      throw error;
-    }
-    throw new Error(`Network error: ${String(error)}`);
+    throw new Error(`API Error ${response.status}: ${response.statusText}`);
   }
+  
+  return await response.json();
 }
 
 // Calculate occupancy KPI
@@ -429,16 +419,17 @@ export function useDashboardData(): UseDashboardDataResult {
     let mounted = true;
     
     async function loadData() {
+      // Cancel any previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      abortControllerRef.current = new AbortController();
+      
       try {
         setLoading(true);
         setError(null);
         
-        // Cancel any previous request
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
-        
-        abortControllerRef.current = new AbortController();
         const startTime = performance.now();
         
         const result = await fetchDashboardData(abortControllerRef.current.signal);
@@ -477,16 +468,18 @@ export function useDashboardData(): UseDashboardDataResult {
       } catch (err) {
         if (!mounted) return;
         
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        
-        // Don't set error for aborted requests during HMR
-        if (errorMessage.includes('aborted') || errorMessage.includes('AbortError')) {
-          console.log('Dashboard request aborted (likely due to HMR)');
-          return;
+        if (err instanceof Error) {
+          // Don't handle AbortError as real errors during HMR
+          if (err.name === 'AbortError') {
+            return; // Silently ignore abort errors
+          }
+          
+          console.error('Dashboard data error:', err);
+          setError(err.message);
+        } else {
+          console.error('Dashboard data error:', err);
+          setError(String(err));
         }
-        
-        console.error('Dashboard data error:', err);
-        setError(errorMessage);
       } finally {
         if (mounted) {
           setLoading(false);
@@ -498,8 +491,13 @@ export function useDashboardData(): UseDashboardDataResult {
     
     return () => {
       mounted = false;
+      // Clean abort without triggering promise rejections
       if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+        try {
+          abortControllerRef.current.abort();
+        } catch (e) {
+          // Ignore cleanup errors
+        }
       }
     };
   }, [isDebugMode]);
