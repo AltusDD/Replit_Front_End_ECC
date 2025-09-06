@@ -36,3 +36,9 @@ export const fmtCompact = (n?: number | null) => {
     return `${sign}${absN.toLocaleString()}`;
   }
 };
+
+// Legacy aliases for compatibility
+export const money = fmtMoney;
+export const percent = fmtPct;
+export const shortDate = fmtDate;
+export const dash = "—";

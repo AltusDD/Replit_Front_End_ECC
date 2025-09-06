@@ -1,56 +1,36 @@
-// PortfolioGoogleMap.tsx - @vis.gl/react-google-maps with clustering, real coords only
-import React, { useState, useMemo } from 'react';
-import { Map, AdvancedMarker, InfoWindow, Pin, useMap } from '@vis.gl/react-google-maps';
-import { MarkerClusterer } from '@googlemaps/markerclusterer';
+// Portfolio Google Map - @vis.gl implementation with status pins
 
-interface MapProperty {
-  id: number;
-  lat: number;
-  lng: number;
-  address: string;
-  city: string;
-  state: string;
-  status: 'occupied' | 'vacant_ready' | 'vacant_not_ready' | 'delinquent';
-  delinquent: boolean;
-  rentReady: boolean;
-  currentTenant?: string;
-}
+import { useState, useMemo } from 'react';
+import { Map, AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
+import { MarkerClusterer } from '@googlemaps/markerclusterer';
+import type { DashboardData } from '../hooks/useDashboardData';
 
 interface PortfolioGoogleMapProps {
-  propertiesForMap: MapProperty[];
+  propertiesForMap: DashboardData['propertiesForMap'];
   missingGeoCount?: number;
 }
 
-// Status-based pin colors per specification
-function getStatusColor(status: MapProperty['status']): string {
-  switch (status) {
-    case 'occupied': return '#2cc38a'; // Green: occupied + current
-    case 'vacant_ready': return '#f3c969'; // Yellow: vacant + rent-ready
-    case 'vacant_not_ready': return '#ff9500'; // Orange: vacant + not rent-ready
-    case 'delinquent': return '#ef5953'; // Red: occupied + delinquent tenant
-    default: return '#8b93a3'; // Neutral fallback
-  }
-}
-
-// Custom property pin with status colors
-function PropertyPin({ status }: { status: MapProperty['status'] }) {
-  const color = getStatusColor(status);
+// Property pin component with status colors
+function PropertyPin({ status }: { status: 'occupied' | 'vacant' | 'delinquent' }) {
+  const statusConfig = {
+    occupied: { bg: 'bg-[var(--good)]', border: 'border-[var(--good)]' },
+    vacant: { bg: 'bg-[var(--warn)]', border: 'border-[var(--warn)]' },
+    delinquent: { bg: 'bg-[var(--bad)]', border: 'border-[var(--bad)]' },
+  };
+  
+  const config = statusConfig[status];
   
   return (
-    <div
-      className="w-4 h-4 rounded-full border-2 border-white shadow-lg cursor-pointer transition-transform hover:scale-110"
-      style={{ backgroundColor: color }}
-    />
+    <div className={`w-4 h-4 rounded-full ${config.bg} border-2 border-white shadow-lg`} />
   );
 }
 
-// Status badge for InfoWindow
-function StatusBadge({ status }: { status: MapProperty['status'] }) {
+// Status badge component
+function StatusBadge({ status }: { status: 'occupied' | 'vacant' | 'delinquent' }) {
   const statusConfig = {
-    occupied: { text: 'Occupied', bg: 'bg-green-600' },
-    vacant_ready: { text: 'Rent Ready', bg: 'bg-yellow-600' },
-    vacant_not_ready: { text: 'Needs Work', bg: 'bg-orange-600' },
-    delinquent: { text: 'Delinquent', bg: 'bg-red-600' },
+    occupied: { bg: 'bg-[var(--good)]', text: 'Occupied' },
+    vacant: { bg: 'bg-[var(--warn)]', text: 'Vacant' },
+    delinquent: { bg: 'bg-[var(--bad)]', text: 'Delinquent' },
   };
   
   const config = statusConfig[status];
@@ -88,7 +68,7 @@ function ActionButton({
 }
 
 export function PortfolioGoogleMap({ propertiesForMap, missingGeoCount = 0 }: PortfolioGoogleMapProps) {
-  const [selectedProperty, setSelectedProperty] = useState<MapProperty | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<DashboardData['propertiesForMap'][0] | null>(null);
   
   // Check for required Google Maps API key
   const hasApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -126,11 +106,11 @@ export function PortfolioGoogleMap({ propertiesForMap, missingGeoCount = 0 }: Po
     },
   ];
 
-  // Friendly empty state if API key missing
+  // Friendly state if API key missing
   if (!hasApiKey) {
     return (
-      <div className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-6">
-        <div className="h-[400px] bg-[var(--panel-elev)] rounded-lg flex items-center justify-center">
+      <div className="ecc-panel p-6">
+        <div className="portfolio-map bg-[var(--panel-elev)] rounded-lg flex items-center justify-center">
           <div className="text-center p-8">
             <div className="text-4xl mb-4">🗺️</div>
             <h3 className="text-lg font-semibold text-[var(--text)] mb-2">
@@ -142,19 +122,11 @@ export function PortfolioGoogleMap({ propertiesForMap, missingGeoCount = 0 }: Po
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="text-center">
                 <div className="text-2xl font-bold text-[var(--good)]">{propertiesForMap.filter(p => p.status === 'occupied').length}</div>
-                <div className="text-xs text-[var(--text-dim)] uppercase tracking-wide">Occupied</div>
+                <div className="text-xs text-[var(--text-dim)]">Occupied</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-[var(--warn)]">{propertiesForMap.filter(p => p.status.includes('vacant')).length}</div>
-                <div className="text-xs text-[var(--text-dim)] uppercase tracking-wide">Vacant</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-[var(--bad)]">{propertiesForMap.filter(p => p.delinquent).length}</div>
-                <div className="text-xs text-[var(--text-dim)] uppercase tracking-wide">Delinquent</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-[var(--text)]">{propertiesForMap.length}</div>
-                <div className="text-xs text-[var(--text-dim)] uppercase tracking-wide">Total</div>
+                <div className="text-2xl font-bold text-[var(--warn)]">{propertiesForMap.filter(p => p.status === 'vacant').length}</div>
+                <div className="text-xs text-[var(--text-dim)]">Vacant</div>
               </div>
             </div>
           </div>
@@ -164,21 +136,27 @@ export function PortfolioGoogleMap({ propertiesForMap, missingGeoCount = 0 }: Po
   }
 
   return (
-    <div className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg overflow-hidden">
-      {/* Header with QA overlay */}
-      <div className="px-6 py-4 border-b border-[var(--line)] flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-[var(--text)]">Portfolio Map</h3>
+    <div className="ecc-panel p-6" data-testid="portfolio-google-map">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="ecc-panel__title text-lg mb-1">
+            Portfolio Map
+          </h2>
+          <p className="text-sm text-[var(--text-dim)]">
+            {propertiesForMap.length} properties with coordinates
+          </p>
+        </div>
+        
         {missingGeoCount > 0 && (
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[var(--warn)]/20 border border-[var(--warn)]/40 rounded-lg">
-            <span className="w-2 h-2 bg-[var(--warn)] rounded-full"></span>
-            <span className="text-xs text-[var(--text)]">
+          <div className="text-xs">
+            <span className="inline-flex items-center px-2 py-1 bg-[var(--altus-gold)] text-[var(--altus-black)] rounded-md font-medium">
               Missing geo: {missingGeoCount} — <button className="underline hover:no-underline">view list</button>
             </span>
           </div>
         )}
       </div>
       
-      <div className="h-[500px]">
+      <div className="portfolio-map">
         <Map
           mapId="genesis-portfolio-map"
           style={{ width: '100%', height: '100%' }}

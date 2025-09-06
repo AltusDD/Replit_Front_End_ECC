@@ -1,5 +1,6 @@
-// FinancialsAndLeasing.tsx - ComposedChart with NOI line and leasing funnel
-import React from 'react';
+// Financials & Leasing - ComposedChart with actionable insights
+
+import { useState } from 'react';
 import { Link } from 'wouter';
 import { 
   ComposedChart, 
@@ -9,113 +10,150 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer
+  ResponsiveContainer,
+  TooltipProps
 } from 'recharts';
-import { fmtMoney, fmtCompact } from '../../../utils/format';
-
-interface CashflowData {
-  periodLabel: string;
-  income: number;
-  expenses: number;
-  noi: number;
-}
-
-interface LeasingFunnel {
-  leads: number;
-  tours: number;
-  applications: number;
-  signed: number;
-}
+import { fmtMoney, fmtCompact } from '@/utils/format';
+import type { DashboardData } from '../hooks/useDashboardData';
 
 interface FinancialsAndLeasingProps {
-  cashflow90: CashflowData[];
-  funnel30: LeasingFunnel;
+  cashflow90: DashboardData['cashflow90'];
+  leasingFunnel30: DashboardData['leasingFunnel30'];
 }
 
-// Custom tooltip for cash flow chart
-function CashflowTooltip({ active, payload, label }: any) {
+// Custom tooltip for cashflow chart
+function CashflowTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload || !payload.length) return null;
   
-  const income = payload.find((p: any) => p.dataKey === 'income')?.value || 0;
-  const expenses = payload.find((p: any) => p.dataKey === 'expenses')?.value || 0;
-  const noi = payload.find((p: any) => p.dataKey === 'noi')?.value || 0;
+  const income = payload.find(p => p.dataKey === 'income')?.value || 0;
+  const expenses = payload.find(p => p.dataKey === 'expenses')?.value || 0;
+  const noi = payload.find(p => p.dataKey === 'noi')?.value || 0;
   
   return (
     <div className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-3 shadow-lg">
       <div className="text-sm font-medium text-[var(--text)] mb-2">{label}</div>
       <div className="space-y-1 text-xs">
         <div className="flex items-center justify-between gap-4">
-          <span className="text-[var(--good)]">Income:</span>
-          <span className="font-medium">{fmtMoney(income)}</span>
+          <span className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-[var(--good)] rounded"></div>
+            Income
+          </span>
+          <span className="font-medium text-[var(--text)]">{fmtMoney(income)}</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <span className="text-[var(--warn)]">Expenses:</span>
-          <span className="font-medium">{fmtMoney(expenses)}</span>
+          <span className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-[var(--warn)] rounded"></div>
+            Expenses
+          </span>
+          <span className="font-medium text-[var(--text)]">{fmtMoney(expenses)}</span>
         </div>
-        <div className="border-t border-[var(--line)] pt-1 mt-1">
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-[var(--altus-gold)] font-medium">NOI:</span>
-            <span className="font-bold">{fmtMoney(noi)}</span>
-          </div>
+        <div className="flex items-center justify-between gap-4">
+          <span className="flex items-center gap-2">
+            <div className="w-3 h-1 bg-[var(--altus-gold)] rounded"></div>
+            NOI
+          </span>
+          <span className="font-medium text-[var(--altus-gold)]">{fmtMoney(noi)}</span>
         </div>
       </div>
     </div>
   );
 }
 
-// Funnel bar component
-function FunnelBar({ 
-  label, 
-  value, 
-  percentage, 
-  color, 
-  href 
+// Range toggle component
+function RangeToggle({ 
+  options, 
+  selected, 
+  onChange 
 }: { 
-  label: string;
-  value: number;
-  percentage: number;
-  color: string;
-  href: string;
+  options: Array<{ value: string; label: string }>; 
+  selected: string; 
+  onChange: (value: string) => void;
 }) {
   return (
-    <Link href={href}>
-      <div className="cursor-pointer group">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-sm font-medium text-[var(--text)] group-hover:text-[var(--altus-gold)] transition-colors">
-            {label}
-          </span>
-          <span className="text-sm font-bold text-[var(--text)]">{value}</span>
-        </div>
-        <div className="bg-[var(--line)] rounded-full h-3 overflow-hidden">
-          <div 
-            className="h-full rounded-full transition-all duration-300 group-hover:brightness-110"
-            style={{ 
-              width: `${percentage}%`, 
-              backgroundColor: color 
-            }}
-          />
-        </div>
-        <div className="text-xs text-[var(--text-dim)] mt-1">{percentage.toFixed(1)}% conversion</div>
-      </div>
-    </Link>
+    <div className="flex items-center gap-1 bg-[var(--panel-elev)] rounded-lg p-1">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          onClick={() => onChange(option.value)}
+          className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+            selected === option.value
+              ? 'bg-[var(--altus-gold)] text-[var(--altus-black)]'
+              : 'text-[var(--text-dim)] hover:text-[var(--text)]'
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
-export function FinancialsAndLeasing({ cashflow90, funnel30 }: FinancialsAndLeasingProps) {
-  // Calculate conversion percentages for funnel
-  const conversionPercentages = {
-    tours: funnel30.leads > 0 ? (funnel30.tours / funnel30.leads) * 100 : 0,
-    applications: funnel30.tours > 0 ? (funnel30.applications / funnel30.tours) * 100 : 0,
-    signed: funnel30.applications > 0 ? (funnel30.signed / funnel30.applications) * 100 : 0,
-  };
+// Leasing funnel component
+function LeasingFunnel({ funnel }: { funnel: DashboardData['leasingFunnel30'] }) {
+  const stages = [
+    { key: 'leads', label: 'Leads', value: funnel.leads },
+    { key: 'tours', label: 'Tours', value: funnel.tours },
+    { key: 'applications', label: 'Applications', value: funnel.applications },
+    { key: 'approved', label: 'Approved', value: funnel.approved },
+    { key: 'signed', label: 'Signed', value: funnel.signed },
+  ];
+  
+  const maxValue = Math.max(...stages.map(s => s.value)) || 1;
   
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-      {/* 90-Day Cash Flow Chart */}
-      <div className="xl:col-span-2 bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-6">
+    <div className="space-y-3">
+      {stages.map((stage, index) => {
+        const percentage = maxValue > 0 ? (stage.value / maxValue) * 100 : 0;
+        const conversionRate = index > 0 ? 
+          (stages[index - 1].value > 0 ? (stage.value / stages[index - 1].value) * 100 : 0) : 
+          100;
+        
+        return (
+          <div key={stage.key} className="flex items-center gap-4">
+            <div className="w-20 text-sm text-[var(--text-dim)] text-right">
+              {stage.label}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-sm font-medium text-[var(--text)]">
+                  {stage.value}
+                </div>
+                {index > 0 && (
+                  <div className="text-xs text-[var(--text-dim)]">
+                    {conversionRate.toFixed(1)}%
+                  </div>
+                )}
+              </div>
+              <div className="h-2 bg-[var(--line)] rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-[var(--altus-gold)] transition-all duration-300"
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function FinancialsAndLeasing({ cashflow90, leasingFunnel30 }: FinancialsAndLeasingProps) {
+  const [selectedRange, setSelectedRange] = useState('30');
+  
+  const rangeOptions = [
+    { value: '30', label: '30d' },
+    { value: '60', label: '60d' },
+    { value: '90', label: '90d' },
+  ];
+  
+  return (
+    <div className="financial-grid" data-testid="financials-and-leasing">
+      {/* Cash Flow Chart */}
+      <div className="ecc-panel p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-lg font-semibold text-[var(--text)] mb-1">
+            <h3 className="ecc-panel__title text-lg mb-1">
               90-Day Cash Flow
             </h3>
             <p className="text-sm text-[var(--text-dim)]">
@@ -192,78 +230,45 @@ export function FinancialsAndLeasing({ cashflow90, funnel30 }: FinancialsAndLeas
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-1 bg-[var(--altus-gold)] rounded"></div>
-            <span className="text-[var(--text-dim)]">Net Operating Income</span>
+            <span className="text-[var(--text-dim)]">NOI</span>
           </div>
         </div>
       </div>
-      
-      {/* 30-Day Leasing Funnel */}
-      <div className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-6">
+
+      {/* Leasing Funnel */}
+      <div className="ecc-panel p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-lg font-semibold text-[var(--text)] mb-1">
+            <h3 className="ecc-panel__title text-lg mb-1">
               Leasing Funnel
             </h3>
             <p className="text-sm text-[var(--text-dim)]">
-              30-day lead conversion
+              Lead conversion and pipeline performance
             </p>
           </div>
-          <Link href="/leasing/analytics">
-            <button className="text-xs text-[var(--altus-gold)] hover:underline">
-              View Details →
+          <RangeToggle
+            options={rangeOptions}
+            selected={selectedRange}
+            onChange={setSelectedRange}
+          />
+        </div>
+        
+        <div className="mb-6">
+          <LeasingFunnel funnel={leasingFunnel30} />
+        </div>
+        
+        {/* CTAs */}
+        <div className="flex gap-3">
+          <Link href="/portfolio/units?status=vacant" className="flex-1">
+            <button className="w-full px-4 py-2 text-sm font-medium bg-[var(--altus-gold)] text-[var(--altus-black)] rounded-lg hover:opacity-90 transition-opacity">
+              View Vacants
             </button>
           </Link>
-        </div>
-        
-        <div className="space-y-4">
-          {/* Leads */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-[var(--text)]">Leads</span>
-              <span className="text-sm font-bold text-[var(--text)]">{funnel30.leads}</span>
-            </div>
-            <div className="bg-[var(--good)] h-3 rounded-full"></div>
-            <div className="text-xs text-[var(--text-dim)] mt-1">Starting point</div>
-          </div>
-          
-          {/* Tours */}
-          <FunnelBar
-            label="Tours Scheduled"
-            value={funnel30.tours}
-            percentage={conversionPercentages.tours}
-            color="var(--altus-gold)"
-            href="/leasing/tours"
-          />
-          
-          {/* Applications */}
-          <FunnelBar
-            label="Applications"
-            value={funnel30.applications}
-            percentage={conversionPercentages.applications}
-            color="var(--warn)"
-            href="/leasing/applications"
-          />
-          
-          {/* Signed */}
-          <FunnelBar
-            label="Leases Signed"
-            value={funnel30.signed}
-            percentage={conversionPercentages.signed}
-            color="var(--good)"
-            href="/portfolio/leases?status=recent"
-          />
-        </div>
-        
-        {/* Overall conversion rate */}
-        <div className="mt-6 pt-4 border-t border-[var(--line)]">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-[var(--altus-gold)] mb-1">
-              {funnel30.leads > 0 ? ((funnel30.signed / funnel30.leads) * 100).toFixed(1) : 0}%
-            </div>
-            <div className="text-xs text-[var(--text-dim)] uppercase tracking-wide">
-              Overall Conversion
-            </div>
-          </div>
+          <Link href="/leases?status=pending" className="flex-1">
+            <button className="w-full px-4 py-2 text-sm font-medium bg-[var(--panel-elev)] text-[var(--text)] border border-[var(--line)] rounded-lg hover:bg-[var(--panel-bg)] transition-colors">
+              View Applications
+            </button>
+          </Link>
         </div>
       </div>
     </div>
