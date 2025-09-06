@@ -2,16 +2,18 @@
   --altus-black:#0b0e12;
   --altus-gold:#d6b36a;
 
-  /* High-contrast cool neutrals */
-  --panel-bg:#171a1f;
-  --panel-elev:#1c2026;
-  --line:#2a2f36;
+  /* Cool gray surfaces */
+  --panel-bg:#1a1d21;     /* primary panel */
+  --panel-elev:#20242a;   /* elevated surface */
+  --line:#2a2d31;         /* borders */
+  --neutral:#7b818a;
 
-  --text:#e8eaf0;
-  --text-dim:#a6adbb;
+  /* Text */
+  --text:#e6e7ea;
+  --text-dim:#a8adb7;
 
-  --good:#2cc38a;
-  --warn:#f3c969;
-  --bad:#ef5953;
-  --neutral:#8b93a3;
+  /* Semantics */
+  --good:#31c48d;  /* green */
+  --warn:#f3c969;  /* yellow */
+  --bad:#ef5953;   /* red */
 }
