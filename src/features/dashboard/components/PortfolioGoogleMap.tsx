@@ -1,11 +1,10 @@
-// PortfolioGoogleMap.tsx - Genesis v2 specification with @vis.gl/react-google-maps
+// PortfolioGoogleMap.tsx - @vis.gl/react-google-maps with clustering, real coords only
 import React, { useState, useMemo } from 'react';
-import { Map, AdvancedMarker, InfoWindow, Pin } from '@vis.gl/react-google-maps';
+import { Map, AdvancedMarker, InfoWindow, Pin, useMap } from '@vis.gl/react-google-maps';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
-import { ActionButton } from './ActionButton';
 
 interface MapProperty {
-  id: string;
+  id: number;
   lat: number;
   lng: number;
   address: string;
@@ -19,45 +18,39 @@ interface MapProperty {
 
 interface PortfolioGoogleMapProps {
   propertiesForMap: MapProperty[];
-  missingGeoCount?: number; // QA overlay count
+  missingGeoCount?: number;
 }
 
-// Custom house SVG pin with dynamic colors per specification
-function HousePinSVG({ status }: { status: MapProperty['status'] }) {
-  const colors = {
-    occupied: '#31c48d',          // Green: occupied & current
-    vacant_ready: '#f3c969',      // Yellow: vacant & rent-ready  
-    vacant_not_ready: '#ff8c42',  // Orange: vacant & not rent-ready
-    delinquent: '#ef5953',        // Red: occupied & delinquent
-  };
-  
-  const color = colors[status];
+// Status-based pin colors per specification
+function getStatusColor(status: MapProperty['status']): string {
+  switch (status) {
+    case 'occupied': return '#2cc38a'; // Green: occupied + current
+    case 'vacant_ready': return '#f3c969'; // Yellow: vacant + rent-ready
+    case 'vacant_not_ready': return '#ff9500'; // Orange: vacant + not rent-ready
+    case 'delinquent': return '#ef5953'; // Red: occupied + delinquent tenant
+    default: return '#8b93a3'; // Neutral fallback
+  }
+}
+
+// Custom property pin with status colors
+function PropertyPin({ status }: { status: MapProperty['status'] }) {
+  const color = getStatusColor(status);
   
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path 
-        d="M12 2L2 8v13a1 1 0 001 1h5v-7h8v7h5a1 1 0 001-1V8l-10-6z" 
-        fill={color}
-        stroke="white"
-        strokeWidth="1.5"
-      />
-      <path 
-        d="M9 13h6v8H9v-8z" 
-        fill={color}
-        stroke="white"
-        strokeWidth="1"
-      />
-    </svg>
+    <div
+      className="w-4 h-4 rounded-full border-2 border-white shadow-lg cursor-pointer transition-transform hover:scale-110"
+      style={{ backgroundColor: color }}
+    />
   );
 }
 
-// Status badges for InfoWindow
+// Status badge for InfoWindow
 function StatusBadge({ status }: { status: MapProperty['status'] }) {
   const statusConfig = {
-    occupied: { text: 'Current', bg: 'bg-green-600' },
+    occupied: { text: 'Occupied', bg: 'bg-green-600' },
     vacant_ready: { text: 'Rent Ready', bg: 'bg-yellow-600' },
     vacant_not_ready: { text: 'Needs Work', bg: 'bg-orange-600' },
-    delinquent: { text: 'Past Due', bg: 'bg-red-600' },
+    delinquent: { text: 'Delinquent', bg: 'bg-red-600' },
   };
   
   const config = statusConfig[status];
@@ -66,6 +59,31 @@ function StatusBadge({ status }: { status: MapProperty['status'] }) {
     <span className={`inline-flex items-center px-2 py-1 text-xs font-medium text-white rounded-full ${config.bg}`}>
       {config.text}
     </span>
+  );
+}
+
+// Action button component
+function ActionButton({ 
+  children, 
+  onClick, 
+  variant = 'primary' 
+}: { 
+  children: React.ReactNode;
+  onClick: () => void;
+  variant?: 'primary' | 'secondary';
+}) {
+  const baseClasses = "px-3 py-1 text-xs font-medium rounded transition-colors";
+  const variantClasses = variant === 'primary'
+    ? "bg-[var(--altus-gold)] text-[var(--altus-black)] hover:opacity-90"
+    : "bg-gray-100 text-gray-700 hover:bg-gray-200";
+  
+  return (
+    <button 
+      onClick={onClick}
+      className={`${baseClasses} ${variantClasses}`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -154,7 +172,7 @@ export function PortfolioGoogleMap({ propertiesForMap, missingGeoCount = 0 }: Po
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-[var(--warn)]/20 border border-[var(--warn)]/40 rounded-lg">
             <span className="w-2 h-2 bg-[var(--warn)] rounded-full"></span>
             <span className="text-xs text-[var(--text)]">
-              {missingGeoCount} properties missing geo — <button className="underline hover:no-underline">view list</button>
+              Missing geo: {missingGeoCount} — <button className="underline hover:no-underline">view list</button>
             </span>
           </div>
         )}
@@ -176,9 +194,7 @@ export function PortfolioGoogleMap({ propertiesForMap, missingGeoCount = 0 }: Po
               position={{ lat: property.lat, lng: property.lng }}
               onClick={() => setSelectedProperty(property)}
             >
-              <Pin background="transparent" borderColor="transparent">
-                <HousePinSVG status={property.status} />
-              </Pin>
+              <PropertyPin status={property.status} />
             </AdvancedMarker>
           ))}
 
@@ -210,24 +226,21 @@ export function PortfolioGoogleMap({ propertiesForMap, missingGeoCount = 0 }: Po
 
                 <div className="flex gap-2 flex-wrap">
                   <ActionButton
-                    size="sm"
-                    onClick={() => window.open(`/portfolio/properties?focus=${selectedProperty.id}`, '_blank')}
+                    onClick={() => window.open(`/card/property/${selectedProperty.id}`, '_blank')}
                   >
-                    View Property
+                    View Details
                   </ActionButton>
                   <ActionButton
-                    size="sm"
                     variant="secondary"
-                    onClick={() => window.open(`/construction?property=${selectedProperty.id}`, '_blank')}
+                    onClick={() => window.open(`/maintenance?property_id=${selectedProperty.id}&status=open`, '_blank')}
                   >
                     Open Work Orders
                   </ActionButton>
                   <ActionButton
-                    size="sm"
                     variant="secondary"
-                    onClick={() => window.open(`/accounting?property=${selectedProperty.id}`, '_blank')}
+                    onClick={() => window.open(`/portfolio/tenants?property_id=${selectedProperty.id}`, '_blank')}
                   >
-                    Open Ledger
+                    View Tenants
                   </ActionButton>
                 </div>
               </div>
