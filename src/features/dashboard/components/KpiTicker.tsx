@@ -153,23 +153,26 @@ export function KpiTicker({ kpis }: KpiTickerProps) {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       {kpiItems.map((kpi) => (
-        <a
+        <div
           key={kpi.id}
-          href={kpi.route}
-          className="ecc-panel p-4 hover:bg-[var(--panel-elev)] transition-all duration-200 cursor-pointer group"
-          onClick={(e) => {
-            e.preventDefault();
-            window.open(kpi.route, '_blank');
+          className="ecc-kpi group"
+          onClick={() => window.open(kpi.route, '_blank')}
+          role="button"
+          tabIndex={0}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              window.open(kpi.route, '_blank');
+            }
           }}
         >
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1 min-w-0">
-              <div className="text-xs text-[var(--text-dim)] uppercase tracking-wide font-medium mb-1">
+              <div className="small-label mb-1">
                 {kpi.label}
               </div>
-              <div className="text-2xl font-bold text-[var(--text)] mb-1">
+              <div className="number-lg mb-1">
                 {kpi.value}
               </div>
               <div className="text-xs text-[var(--text-dim)]">
@@ -185,7 +188,7 @@ export function KpiTicker({ kpis }: KpiTickerProps) {
             <TrendIndicator value={kpi.trend} />
             <MiniSparkline trend={kpi.trend} />
           </div>
-        </a>
+        </div>
       ))}
     </div>
   );
