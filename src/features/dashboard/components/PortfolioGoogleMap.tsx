@@ -125,31 +125,33 @@ export function PortfolioGoogleMap({ propertiesForMap }: PortfolioGoogleMapProps
   // Fallback for missing API key
   if (!hasApiKey) {
     return (
-      <div className="h-[500px] bg-[var(--panel-elev)] rounded-lg flex items-center justify-center">
-        <div className="text-center p-8">
-          <div className="text-4xl mb-4">🗺️</div>
-          <h3 className="text-lg font-semibold text-[var(--text)] mb-2">
-            Google Maps Integration
-          </h3>
-          <p className="text-sm text-[var(--text-dim)] mb-4">
-            Configure <code>VITE_GOOGLE_MAPS_API_KEY</code> to view portfolio properties on an interactive map.
-          </p>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[var(--good)]">{propertiesForMap.filter(p => p.status === 'occupied').length}</div>
-              <div className="text-[var(--text-dim)]">Occupied</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[var(--warn)]">{propertiesForMap.filter(p => p.status.includes('vacant')).length}</div>
-              <div className="text-[var(--text-dim)]">Vacant</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[var(--bad)]">{propertiesForMap.filter(p => p.delinquent).length}</div>
-              <div className="text-[var(--text-dim)]">Delinquent</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[var(--text)]">{propertiesForMap.length}</div>
-              <div className="text-[var(--text-dim)]">Total</div>
+      <div className="ecc-panel p-6">
+        <div className="h-[400px] bg-[var(--panel-elev)] rounded-lg flex items-center justify-center">
+          <div className="text-center p-8">
+            <div className="text-4xl mb-4">🗺️</div>
+            <h3 className="ecc-panel__title mb-2">
+              Google Maps Integration
+            </h3>
+            <p className="text-sm text-[var(--text-dim)] mb-4">
+              Configure <code className="px-2 py-1 bg-[var(--panel-bg)] rounded text-xs">VITE_GOOGLE_MAPS_API_KEY</code> to view portfolio properties on an interactive map.
+            </p>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="text-center">
+                <div className="number-lg text-[var(--good)]">{propertiesForMap.filter(p => p.status === 'occupied').length}</div>
+                <div className="small-label">Occupied</div>
+              </div>
+              <div className="text-center">
+                <div className="number-lg text-[var(--warn)]">{propertiesForMap.filter(p => p.status.includes('vacant')).length}</div>
+                <div className="small-label">Vacant</div>
+              </div>
+              <div className="text-center">
+                <div className="number-lg text-[var(--bad)]">{propertiesForMap.filter(p => p.delinquent).length}</div>
+                <div className="small-label">Delinquent</div>
+              </div>
+              <div className="text-center">
+                <div className="number-lg text-[var(--text)]">{propertiesForMap.length}</div>
+                <div className="small-label">Total</div>
+              </div>
             </div>
           </div>
         </div>
@@ -158,17 +160,18 @@ export function PortfolioGoogleMap({ propertiesForMap }: PortfolioGoogleMapProps
   }
 
   return (
-    <div className="h-[500px] rounded-lg overflow-hidden">
-      <Map
-        mapId="genesis-portfolio-map"
-        style={{ width: '100%', height: '100%' }}
-        defaultCenter={mapCenter}
-        defaultZoom={10}
-        gestureHandling="greedy"
-        disableDefaultUI={true}
-        styles={mapStyles}
-        backgroundColor="var(--panel-bg)"
-      >
+    <div className="ecc-panel overflow-hidden">
+      <div className="h-[500px] rounded-lg overflow-hidden">
+        <Map
+          mapId="genesis-portfolio-map"
+          style={{ width: '100%', height: '100%' }}
+          defaultCenter={mapCenter}
+          defaultZoom={10}
+          gestureHandling="greedy"
+          disableDefaultUI={true}
+          styles={mapStyles}
+          backgroundColor="var(--panel-bg)"
+        >
         {propertiesForMap.map((property) => (
           <AdvancedMarker
             key={property.id}
@@ -229,7 +232,8 @@ export function PortfolioGoogleMap({ propertiesForMap }: PortfolioGoogleMapProps
             </div>
           </InfoWindow>
         )}
-      </Map>
+        </Map>
+      </div>
     </div>
   );
 }
