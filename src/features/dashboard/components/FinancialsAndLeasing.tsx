@@ -1,268 +1,271 @@
-// FinancialsAndLeasing.tsx - Genesis v2 specification cash flow + leasing funnel
-import React, { useState } from 'react';
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ComposedChart,
+// FinancialsAndLeasing.tsx - ComposedChart with NOI line and leasing funnel
+import React from 'react';
+import { Link } from 'wouter';
+import { 
+  ComposedChart, 
+  Bar, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer
 } from 'recharts';
-import { ChartContainer } from './ChartContainer';
-import { fmtMoney, fmtPct } from '../../../utils/format';
+import { fmtMoney, fmtCompact } from '../../../utils/format';
 
-interface FinancialData {
-  cashflow90: Array<{
-    periodLabel: string;
-    income: number;
-    expenses: number;
-    noi: number;
-  }>;
-  funnel30: {
-    leads: number;
-    tours: number;
-    applications: number;
-    signed: number;
-  };
+interface CashflowData {
+  periodLabel: string;
+  income: number;
+  expenses: number;
+  noi: number;
+}
+
+interface LeasingFunnel {
+  leads: number;
+  tours: number;
+  applications: number;
+  signed: number;
 }
 
 interface FinancialsAndLeasingProps {
-  financialData: FinancialData;
+  cashflow90: CashflowData[];
+  funnel30: LeasingFunnel;
 }
 
-type TimeRange = '30' | '60' | '90';
-
-export function FinancialsAndLeasing({ financialData }: FinancialsAndLeasingProps) {
-  const [timeRange, setTimeRange] = useState<TimeRange>('90');
-
-  if (!financialData) {
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {[...Array(2)].map((_, i) => (
-          <div key={i} className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="bg-[var(--panel-elev)] h-6 w-32 rounded animate-pulse"></div>
-              <div className="bg-[var(--panel-elev)] h-8 w-20 rounded animate-pulse"></div>
-            </div>
-            <div className="bg-[var(--panel-elev)] h-[300px] rounded animate-pulse"></div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  // Filter data based on time range
-  const getFilteredData = () => {
-    const days = parseInt(timeRange);
-    const weeksToShow = Math.ceil(days / 7);
-    return financialData.cashflow90.slice(-weeksToShow);
-  };
-
-  const filteredData = getFilteredData();
-
-  // Custom tooltip for cash flow chart
-  const CashFlowTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-3 shadow-lg">
-          <p className="text-[var(--text)] font-medium mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <p key={index} style={{ color: entry.color }} className="text-sm">
-              {`${entry.name}: ${fmtMoney(entry.value)}`}
-            </p>
-          ))}
+// Custom tooltip for cash flow chart
+function CashflowTooltip({ active, payload, label }: any) {
+  if (!active || !payload || !payload.length) return null;
+  
+  const income = payload.find((p: any) => p.dataKey === 'income')?.value || 0;
+  const expenses = payload.find((p: any) => p.dataKey === 'expenses')?.value || 0;
+  const noi = payload.find((p: any) => p.dataKey === 'noi')?.value || 0;
+  
+  return (
+    <div className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-3 shadow-lg">
+      <div className="text-sm font-medium text-[var(--text)] mb-2">{label}</div>
+      <div className="space-y-1 text-xs">
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-[var(--good)]">Income:</span>
+          <span className="font-medium">{fmtMoney(income)}</span>
         </div>
-      );
-    }
-    return null;
-  };
-
-  // Range selector component
-  const RangeSelector = ({ value, onChange }: { value: TimeRange; onChange: (v: TimeRange) => void }) => (
-    <div className="flex gap-1 bg-[var(--panel-elev)] p-1 rounded-lg">
-      {(['30', '60', '90'] as TimeRange[]).map((range) => (
-        <button
-          key={range}
-          onClick={() => onChange(range)}
-          className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-            value === range
-              ? 'bg-[var(--altus-gold)] text-[var(--altus-black)]'
-              : 'text-[var(--text-dim)] hover:text-[var(--text)]'
-          }`}
-        >
-          {range} Days
-        </button>
-      ))}
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-[var(--warn)]">Expenses:</span>
+          <span className="font-medium">{fmtMoney(expenses)}</span>
+        </div>
+        <div className="border-t border-[var(--line)] pt-1 mt-1">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-[var(--altus-gold)] font-medium">NOI:</span>
+            <span className="font-bold">{fmtMoney(noi)}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
+}
 
-  // Leasing funnel data and calculations
-  const funnelSteps = [
-    { step: 'Leads', value: financialData.funnel30.leads, color: 'var(--neutral)' },
-    { step: 'Tours', value: financialData.funnel30.tours, color: 'var(--warn)' },
-    { step: 'Applications', value: financialData.funnel30.applications, color: 'var(--altus-gold)' },
-    { step: 'Signed', value: financialData.funnel30.signed, color: 'var(--good)' },
-  ];
-
-  // Calculate conversion rates
-  const conversions = [
-    {
-      from: 'Leads',
-      to: 'Tours', 
-      rate: financialData.funnel30.leads > 0 
-        ? (financialData.funnel30.tours / financialData.funnel30.leads) * 100 
-        : 0
-    },
-    {
-      from: 'Tours',
-      to: 'Apps',
-      rate: financialData.funnel30.tours > 0 
-        ? (financialData.funnel30.applications / financialData.funnel30.tours) * 100 
-        : 0
-    },
-    {
-      from: 'Apps',
-      to: 'Signed',
-      rate: financialData.funnel30.applications > 0 
-        ? (financialData.funnel30.signed / financialData.funnel30.applications) * 100 
-        : 0
-    },
-  ];
-
+// Funnel bar component
+function FunnelBar({ 
+  label, 
+  value, 
+  percentage, 
+  color, 
+  href 
+}: { 
+  label: string;
+  value: number;
+  percentage: number;
+  color: string;
+  href: string;
+}) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Cash Flow Chart */}
-      <ChartContainer 
-        title="Cash Flow (90d)"
-        controls={<RangeSelector value={timeRange} onChange={setTimeRange} />}
-      >
-        <ResponsiveContainer width="100%" height={300}>
-          <ComposedChart data={filteredData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-            <XAxis 
-              dataKey="periodLabel" 
-              tick={{ fill: 'var(--text-dim)', fontSize: 12 }}
-              axisLine={{ stroke: 'var(--line)' }}
-            />
-            <YAxis 
-              tick={{ fill: 'var(--text-dim)', fontSize: 12 }}
-              axisLine={{ stroke: 'var(--line)' }}
-              tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`}
-            />
-            <Tooltip content={<CashFlowTooltip />} />
-            
-            {/* Income (green bars) */}
-            <Bar 
-              dataKey="income" 
-              fill="var(--good)" 
-              name="Income"
-              radius={[2, 2, 0, 0]}
-            />
-            
-            {/* Expenses (neutral bars) */}
-            <Bar 
-              dataKey="expenses" 
-              fill="var(--neutral)" 
-              name="Expenses"
-              radius={[2, 2, 0, 0]}
-            />
-            
-            {/* NOI (Altus Gold line) */}
-            <Line
-              type="monotone"
-              dataKey="noi"
-              stroke="var(--altus-gold)"
-              strokeWidth={3}
-              dot={{ fill: 'var(--altus-gold)', strokeWidth: 2, r: 4 }}
-              name="NOI"
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </ChartContainer>
-
-      {/* Leasing Funnel */}
-      <ChartContainer title="Leasing Funnel (30d)" controls={
-        <div className="flex gap-2">
-          <button 
-            className="px-3 py-1 text-xs font-medium text-[var(--text)] bg-[var(--panel-elev)] hover:bg-[var(--altus-gold)] hover:text-[var(--altus-black)] rounded transition-colors"
-            onClick={() => window.open('/portfolio/units?status=vacant', '_blank')}
-          >
-            View Vacants
-          </button>
-          <button 
-            className="px-3 py-1 text-xs font-medium text-[var(--text)] bg-[var(--panel-elev)] hover:bg-[var(--altus-gold)] hover:text-[var(--altus-black)] rounded transition-colors"
-            onClick={() => window.open('/leasing/applications', '_blank')}
-          >
-            View Applications
-          </button>
+    <Link href={href}>
+      <div className="cursor-pointer group">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-sm font-medium text-[var(--text)] group-hover:text-[var(--altus-gold)] transition-colors">
+            {label}
+          </span>
+          <span className="text-sm font-bold text-[var(--text)]">{value}</span>
         </div>
-      }>
+        <div className="bg-[var(--line)] rounded-full h-3 overflow-hidden">
+          <div 
+            className="h-full rounded-full transition-all duration-300 group-hover:brightness-110"
+            style={{ 
+              width: `${percentage}%`, 
+              backgroundColor: color 
+            }}
+          />
+        </div>
+        <div className="text-xs text-[var(--text-dim)] mt-1">{percentage.toFixed(1)}% conversion</div>
+      </div>
+    </Link>
+  );
+}
+
+export function FinancialsAndLeasing({ cashflow90, funnel30 }: FinancialsAndLeasingProps) {
+  // Calculate conversion percentages for funnel
+  const conversionPercentages = {
+    tours: funnel30.leads > 0 ? (funnel30.tours / funnel30.leads) * 100 : 0,
+    applications: funnel30.tours > 0 ? (funnel30.applications / funnel30.tours) * 100 : 0,
+    signed: funnel30.applications > 0 ? (funnel30.signed / funnel30.applications) * 100 : 0,
+  };
+  
+  return (
+    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      {/* 90-Day Cash Flow Chart */}
+      <div className="xl:col-span-2 bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-semibold text-[var(--text)] mb-1">
+              90-Day Cash Flow
+            </h3>
+            <p className="text-sm text-[var(--text-dim)]">
+              Weekly income, expenses, and net operating income trend
+            </p>
+          </div>
+          <Link href="/accounting?range=90d">
+            <button className="text-xs text-[var(--altus-gold)] hover:underline">
+              View Details →
+            </button>
+          </Link>
+        </div>
+        
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={cashflow90}>
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                stroke="var(--line)"
+                opacity={0.5}
+              />
+              <XAxis 
+                dataKey="periodLabel"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: 'var(--text-dim)' }}
+              />
+              <YAxis 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: 'var(--text-dim)' }}
+                tickFormatter={(value) => fmtCompact(value)}
+              />
+              <Tooltip content={<CashflowTooltip />} />
+              
+              {/* Income bars */}
+              <Bar 
+                dataKey="income"
+                fill="var(--good)"
+                opacity={0.8}
+                radius={[2, 2, 0, 0]}
+              />
+              
+              {/* Expense bars */}
+              <Bar 
+                dataKey="expenses"
+                fill="var(--warn)"
+                opacity={0.8}
+                radius={[2, 2, 0, 0]}
+              />
+              
+              {/* NOI line */}
+              <Line 
+                type="monotone"
+                dataKey="noi"
+                stroke="var(--altus-gold)"
+                strokeWidth={3}
+                dot={{ fill: 'var(--altus-gold)', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: 'var(--altus-gold)', strokeWidth: 2 }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+        
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-6 mt-4 text-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-[var(--good)] rounded"></div>
+            <span className="text-[var(--text-dim)]">Income</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-[var(--warn)] rounded"></div>
+            <span className="text-[var(--text-dim)]">Expenses</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-1 bg-[var(--altus-gold)] rounded"></div>
+            <span className="text-[var(--text-dim)]">Net Operating Income</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* 30-Day Leasing Funnel */}
+      <div className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-semibold text-[var(--text)] mb-1">
+              Leasing Funnel
+            </h3>
+            <p className="text-sm text-[var(--text-dim)]">
+              30-day lead conversion
+            </p>
+          </div>
+          <Link href="/leasing/analytics">
+            <button className="text-xs text-[var(--altus-gold)] hover:underline">
+              View Details →
+            </button>
+          </Link>
+        </div>
+        
         <div className="space-y-4">
-          {funnelSteps.map((step, index) => {
-            const maxValue = Math.max(...funnelSteps.map(s => s.value));
-            const widthPercentage = maxValue > 0 ? (step.value / maxValue) * 100 : 0;
-            const nextStep = funnelSteps[index + 1];
-            
-            return (
-              <div key={step.step} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: step.color }}
-                    />
-                    <span className="text-sm font-medium text-[var(--text)]">
-                      {step.step}
-                    </span>
-                  </div>
-                  <span className="text-lg font-bold text-[var(--text)]">
-                    {step.value}
-                  </span>
-                </div>
-
-                {/* Horizontal bar */}
-                <div className="relative">
-                  <div className="w-full h-4 bg-[var(--line)] rounded overflow-hidden">
-                    <div 
-                      className="h-full rounded transition-all duration-300"
-                      style={{ 
-                        width: `${widthPercentage}%`, 
-                        backgroundColor: step.color 
-                      }}
-                    />
-                  </div>
-                  
-                  {/* Conversion rate */}
-                  {nextStep && (
-                    <div className="absolute -bottom-5 left-4 text-xs text-[var(--text-dim)]">
-                      {fmtPct(conversions[index]?.rate, 1)} convert
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Overall conversion summary */}
-          <div className="pt-4 border-t border-[var(--line)]">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-[var(--text-dim)]">Overall Conversion:</span>
-              <span className="text-lg font-bold text-[var(--altus-gold)]">
-                {fmtPct(
-                  financialData.funnel30.leads > 0 
-                    ? (financialData.funnel30.signed / financialData.funnel30.leads) * 100 
-                    : 0,
-                  1
-                )}
-              </span>
+          {/* Leads */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-[var(--text)]">Leads</span>
+              <span className="text-sm font-bold text-[var(--text)]">{funnel30.leads}</span>
+            </div>
+            <div className="bg-[var(--good)] h-3 rounded-full"></div>
+            <div className="text-xs text-[var(--text-dim)] mt-1">Starting point</div>
+          </div>
+          
+          {/* Tours */}
+          <FunnelBar
+            label="Tours Scheduled"
+            value={funnel30.tours}
+            percentage={conversionPercentages.tours}
+            color="var(--altus-gold)"
+            href="/leasing/tours"
+          />
+          
+          {/* Applications */}
+          <FunnelBar
+            label="Applications"
+            value={funnel30.applications}
+            percentage={conversionPercentages.applications}
+            color="var(--warn)"
+            href="/leasing/applications"
+          />
+          
+          {/* Signed */}
+          <FunnelBar
+            label="Leases Signed"
+            value={funnel30.signed}
+            percentage={conversionPercentages.signed}
+            color="var(--good)"
+            href="/portfolio/leases?status=recent"
+          />
+        </div>
+        
+        {/* Overall conversion rate */}
+        <div className="mt-6 pt-4 border-t border-[var(--line)]">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-[var(--altus-gold)] mb-1">
+              {funnel30.leads > 0 ? ((funnel30.signed / funnel30.leads) * 100).toFixed(1) : 0}%
+            </div>
+            <div className="text-xs text-[var(--text-dim)] uppercase tracking-wide">
+              Overall Conversion
             </div>
           </div>
         </div>
-      </ChartContainer>
+      </div>
     </div>
   );
 }
