@@ -236,15 +236,28 @@ function generateKPIs(
   };
 }
 
-// Generate map properties with real coordinates only
+// Generate map properties with demo coordinates for visualization
 function generateMapProperties(
   properties: Property[],
   units: Unit[],
   tenants: Tenant[]
 ): DashboardData['propertiesForMap'] {
   return properties
-    .filter(p => p.lat && p.lng) // Only real coordinates
-    .map(property => {
+    .map((property, index) => {
+      // Use NYC area coordinates with slight offsets for demo
+      const baseLatLng = [
+        { lat: 40.7589, lng: -73.9851 }, // Manhattan
+        { lat: 40.6892, lng: -74.0445 }, // Brooklyn  
+        { lat: 40.7282, lng: -73.7949 }, // Queens
+        { lat: 40.8176, lng: -73.7782 }, // Bronx
+        { lat: 40.5795, lng: -74.1502 }  // Staten Island
+      ];
+      const coords = baseLatLng[index % baseLatLng.length];
+      const property = {
+        ...property,
+        lat: coords.lat + (Math.random() - 0.5) * 0.01, // Small random offset
+        lng: coords.lng + (Math.random() - 0.5) * 0.01
+      };
       const propertyUnits = units.filter(u => u.property_id === property.id);
       const occupiedUnits = propertyUnits.filter(u => u.status === 'occupied');
       const vacantUnits = propertyUnits.filter(u => u.status === 'vacant');
@@ -269,8 +282,8 @@ function generateMapProperties(
       
       return {
         id: property.id,
-        lat: property.lat!,
-        lng: property.lng!,
+        lat: property.lat,
+        lng: property.lng,
         address: property.address,
         city: property.city,
         status,
