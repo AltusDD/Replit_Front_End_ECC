@@ -72,7 +72,7 @@ function CityRow({
       <td className="py-3 px-4 text-right">
         <div className="flex items-center justify-end gap-3">
           <span className="text-sm font-medium text-[var(--text)] min-w-[60px]">
-            {fmtPct(occupancy)}
+            {fmtPct(occupancy / 100)}
           </span>
           <div className="w-20">
             <ProgressBar percentage={occupancy} />

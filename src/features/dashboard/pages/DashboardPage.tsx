@@ -1,5 +1,6 @@
 // Dashboard Page - responsive grid with QA overlay
 
+import { useState, useMemo } from 'react';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { KpiTicker } from '../components/KpiTicker';
 import { PortfolioGoogleMap } from '../components/PortfolioGoogleMap';
