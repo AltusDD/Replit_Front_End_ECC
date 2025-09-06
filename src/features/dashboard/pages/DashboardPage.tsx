@@ -5,7 +5,7 @@ import { KpiTicker } from '../components/KpiTicker';
 import { PortfolioGoogleMap } from '../components/PortfolioGoogleMap';
 import { PriorityActionFeed } from '../components/PriorityActionFeed';
 import { FinancialsAndLeasing } from '../components/FinancialsAndLeasing';
-import { OccupancyBreakdown } from '../components/OccupancyBreakdown';
+import { OccupancyByCity } from '../components/OccupancyByCity';
 import '../../../styles/Dashboard.css';
 
 // Loading skeleton components
@@ -161,8 +161,8 @@ export default function DashboardPage() {
           ) : (
             <FinancialsAndLeasing 
               financialData={{
-                incomeVsExpenses90: data.incomeVsExpenses90,
-                leasingFunnel30: data.leasingFunnel30
+                cashflow90: data.cashflow90,
+                funnel30: data.funnel30
               }} 
             />
           )}
@@ -173,7 +173,7 @@ export default function DashboardPage() {
           {loading || !data ? (
             <OccupancySkeleton />
           ) : (
-            <OccupancyBreakdown occByCity={data.occByCity} />
+            <OccupancyByCity occByCity={data.occByCity} />
           )}
         </div>
       </div>

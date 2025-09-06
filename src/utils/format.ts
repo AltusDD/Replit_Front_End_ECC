@@ -1,4 +1,4 @@
-// Global formatting utilities - Genesis specification
+// Genesis v2 Format Helpers - Exact Specification
 
 export const fmtDate = (iso?: string | null) =>
   !iso ? "—" : new Date(iso).toLocaleDateString(undefined, { 
@@ -7,19 +7,21 @@ export const fmtDate = (iso?: string | null) =>
     year: "numeric" 
   }); // Mon D, YYYY
 
-export const fmtMoney = (n?: number | null) => {
-  if (n == null || Number.isNaN(n)) return "—";
-  if (n === 0) return "$0";
-  return n.toLocaleString(undefined, { 
+export const fmtMoney = (n?: number | null) =>
+  n == null || Number.isNaN(n) ? "—" : n === 0 ? "$0" :
+  n.toLocaleString(undefined, { 
     style: "currency", 
     currency: "USD", 
     maximumFractionDigits: 2 
   });
-};
 
-export const fmtPct = (v?: number | null, digits = 1) => 
-  (v == null ? "—" : `${v.toFixed(digits)}%`);
+export const fmtPct = (v?: number | null, d = 1) =>
+  v == null ? "—" : `${v.toFixed(d)}%`;
 
+export const plural = (n: number, s: string) => 
+  `${n} ${n === 1 ? s : `${s}s`}`;
+
+// Additional utilities for dashboard
 export const fmtCompact = (n?: number | null) => {
   if (n == null || Number.isNaN(n)) return "—";
   

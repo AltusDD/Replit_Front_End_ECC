@@ -1,6 +1,6 @@
-// KpiTicker.tsx - Genesis specification with actionable KPIs and mini visuals
+// KpiTicker.tsx - Genesis v2 specification actionable KPIs with visuals
 import React from 'react';
-import { fmtPct, fmtMoney } from '../../../utils/format';
+import { fmtPct } from '../../../utils/format';
 
 interface KpiData {
   occupancyPct: number;
@@ -14,9 +14,9 @@ interface KpiTickerProps {
   kpis: KpiData;
 }
 
-// Mini donut chart for KPIs
+// Mini donut chart for percentages
 function MiniDonut({ percentage, size = 40 }: { percentage: number; size?: number }) {
-  const circumference = 2 * Math.PI * 14; // radius = 14
+  const circumference = 2 * Math.PI * 14;
   const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
   
   return (
@@ -34,7 +34,7 @@ function MiniDonut({ percentage, size = 40 }: { percentage: number; size?: numbe
           cx={size / 2}
           cy={size / 2}
           r={14}
-          stroke="var(--altus-gold)"
+          stroke="var(--good)"
           strokeWidth="3"
           fill="none"
           strokeDasharray={strokeDasharray}
@@ -77,8 +77,8 @@ function MiniSparkline({ trend }: { trend: number }) {
   );
 }
 
-// Trend indicator
-function TrendIndicator({ value }: { value: number }) {
+// Trend badge
+function TrendBadge({ value }: { value: number }) {
   const isPositive = value > 0;
   const color = isPositive ? 'var(--good)' : 'var(--bad)';
   const icon = isPositive ? '▲' : '▼';
@@ -94,32 +94,33 @@ function TrendIndicator({ value }: { value: number }) {
 export function KpiTicker({ kpis }: KpiTickerProps) {
   if (!kpis) {
     return (
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="ecc-panel p-4">
-            <div className="skeleton h-4 w-20 mb-2 rounded"></div>
-            <div className="skeleton h-8 w-16 mb-2 rounded"></div>
-            <div className="skeleton h-3 w-24 rounded"></div>
+          <div key={i} className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-4">
+            <div className="bg-[var(--panel-elev)] h-4 w-20 mb-2 rounded animate-pulse"></div>
+            <div className="bg-[var(--panel-elev)] h-8 w-16 mb-2 rounded animate-pulse"></div>
+            <div className="bg-[var(--panel-elev)] h-3 w-24 rounded animate-pulse"></div>
           </div>
         ))}
       </div>
     );
   }
+
   const kpiItems = [
     {
       id: 'occupancy',
-      label: 'Portfolio Occupancy',
+      label: 'Occupancy',
       value: fmtPct(kpis.occupancyPct, 1),
       secondary: `of all units`,
       route: '/portfolio/units?status=occupied',
       visual: <MiniDonut percentage={kpis.occupancyPct} />,
-      trend: 2.3, // Simulated trend
+      trend: 2.3,
     },
     {
       id: 'vacant',
-      label: 'Rent-Ready Vacant',
-      value: `${kpis.rentReadyVacant.ready}`,
-      secondary: `of ${kpis.rentReadyVacant.vacant} vacant`,
+      label: 'Rent-Ready / Vacant',
+      value: `${kpis.rentReadyVacant.ready} / ${kpis.rentReadyVacant.vacant}`,
+      secondary: `units available`,
       route: '/portfolio/units?status=vacant',
       visual: (
         <div className="text-2xl font-bold text-[var(--warn)]">
@@ -139,9 +140,9 @@ export function KpiTicker({ kpis }: KpiTickerProps) {
     },
     {
       id: 'criticalwo',
-      label: 'Critical Work Orders',
+      label: 'Critical WOs',
       value: kpis.openCriticalWO.toString(),
-      secondary: 'high priority',
+      secondary: 'open issues',
       route: '/construction?priority=high',
       visual: (
         <div className="text-2xl font-bold text-[var(--bad)]">
@@ -157,7 +158,7 @@ export function KpiTicker({ kpis }: KpiTickerProps) {
       {kpiItems.map((kpi) => (
         <div
           key={kpi.id}
-          className="ecc-kpi group"
+          className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-4 cursor-pointer transition-all duration-200 hover:bg-[var(--panel-elev)] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[var(--altus-gold)] focus:ring-offset-2 focus:ring-offset-[var(--altus-black)]"
           onClick={() => window.open(kpi.route, '_blank')}
           role="button"
           tabIndex={0}
@@ -169,10 +170,10 @@ export function KpiTicker({ kpis }: KpiTickerProps) {
         >
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1 min-w-0">
-              <div className="small-label mb-1">
+              <div className="text-xs text-[var(--text-dim)] uppercase tracking-wide font-medium mb-1">
                 {kpi.label}
               </div>
-              <div className="number-lg mb-1">
+              <div className="text-2xl font-bold text-[var(--text)] mb-1">
                 {kpi.value}
               </div>
               <div className="text-xs text-[var(--text-dim)]">
@@ -185,7 +186,7 @@ export function KpiTicker({ kpis }: KpiTickerProps) {
           </div>
           
           <div className="flex items-center justify-between">
-            <TrendIndicator value={kpi.trend} />
+            <TrendBadge value={kpi.trend} />
             <MiniSparkline trend={kpi.trend} />
           </div>
         </div>

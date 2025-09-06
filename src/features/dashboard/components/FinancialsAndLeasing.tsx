@@ -1,4 +1,4 @@
-// FinancialsAndLeasing.tsx - Genesis specification combined financial widgets
+// FinancialsAndLeasing.tsx - Genesis v2 specification cash flow + leasing funnel
 import React, { useState } from 'react';
 import {
   BarChart,
@@ -16,13 +16,13 @@ import { ChartContainer } from './ChartContainer';
 import { fmtMoney, fmtPct } from '../../../utils/format';
 
 interface FinancialData {
-  incomeVsExpenses90: Array<{
-    period: string;
+  cashflow90: Array<{
+    periodLabel: string;
     income: number;
     expenses: number;
     noi: number;
   }>;
-  leasingFunnel30: {
+  funnel30: {
     leads: number;
     tours: number;
     applications: number;
@@ -37,28 +37,29 @@ interface FinancialsAndLeasingProps {
 type TimeRange = '30' | '60' | '90';
 
 export function FinancialsAndLeasing({ financialData }: FinancialsAndLeasingProps) {
+  const [timeRange, setTimeRange] = useState<TimeRange>('90');
+
   if (!financialData) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {[...Array(2)].map((_, i) => (
-          <div key={i} className="ecc-panel p-6">
+          <div key={i} className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="skeleton h-6 w-32 rounded"></div>
-              <div className="skeleton h-8 w-20 rounded"></div>
+              <div className="bg-[var(--panel-elev)] h-6 w-32 rounded animate-pulse"></div>
+              <div className="bg-[var(--panel-elev)] h-8 w-20 rounded animate-pulse"></div>
             </div>
-            <div className="skeleton h-[300px] rounded"></div>
+            <div className="bg-[var(--panel-elev)] h-[300px] rounded animate-pulse"></div>
           </div>
         ))}
       </div>
     );
   }
-  const [timeRange, setTimeRange] = useState<TimeRange>('90');
 
   // Filter data based on time range
   const getFilteredData = () => {
     const days = parseInt(timeRange);
     const weeksToShow = Math.ceil(days / 7);
-    return financialData.incomeVsExpenses90.slice(-weeksToShow);
+    return financialData.cashflow90.slice(-weeksToShow);
   };
 
   const filteredData = getFilteredData();
@@ -93,18 +94,18 @@ export function FinancialsAndLeasing({ financialData }: FinancialsAndLeasingProp
               : 'text-[var(--text-dim)] hover:text-[var(--text)]'
           }`}
         >
-          {range}D
+          {range} Days
         </button>
       ))}
     </div>
   );
 
   // Leasing funnel data and calculations
-  const funnelData = [
-    { step: 'Leads', value: financialData.leasingFunnel30.leads, color: 'var(--chart-blue)' },
-    { step: 'Tours', value: financialData.leasingFunnel30.tours, color: 'var(--altus-gold)' },
-    { step: 'Applications', value: financialData.leasingFunnel30.applications, color: 'var(--chart-green)' },
-    { step: 'Signed', value: financialData.leasingFunnel30.signed, color: 'var(--good)' },
+  const funnelSteps = [
+    { step: 'Leads', value: financialData.funnel30.leads, color: 'var(--neutral)' },
+    { step: 'Tours', value: financialData.funnel30.tours, color: 'var(--warn)' },
+    { step: 'Applications', value: financialData.funnel30.applications, color: 'var(--altus-gold)' },
+    { step: 'Signed', value: financialData.funnel30.signed, color: 'var(--good)' },
   ];
 
   // Calculate conversion rates
@@ -112,38 +113,38 @@ export function FinancialsAndLeasing({ financialData }: FinancialsAndLeasingProp
     {
       from: 'Leads',
       to: 'Tours', 
-      rate: financialData.leasingFunnel30.leads > 0 
-        ? (financialData.leasingFunnel30.tours / financialData.leasingFunnel30.leads) * 100 
+      rate: financialData.funnel30.leads > 0 
+        ? (financialData.funnel30.tours / financialData.funnel30.leads) * 100 
         : 0
     },
     {
       from: 'Tours',
       to: 'Apps',
-      rate: financialData.leasingFunnel30.tours > 0 
-        ? (financialData.leasingFunnel30.applications / financialData.leasingFunnel30.tours) * 100 
+      rate: financialData.funnel30.tours > 0 
+        ? (financialData.funnel30.applications / financialData.funnel30.tours) * 100 
         : 0
     },
     {
       from: 'Apps',
       to: 'Signed',
-      rate: financialData.leasingFunnel30.applications > 0 
-        ? (financialData.leasingFunnel30.signed / financialData.leasingFunnel30.applications) * 100 
+      rate: financialData.funnel30.applications > 0 
+        ? (financialData.funnel30.signed / financialData.funnel30.applications) * 100 
         : 0
     },
   ];
 
   return (
-    <div className="financial-grid">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Cash Flow Chart */}
       <ChartContainer 
-        title="Cash Flow (90 days)"
+        title="Cash Flow (90d)"
         controls={<RangeSelector value={timeRange} onChange={setTimeRange} />}
       >
         <ResponsiveContainer width="100%" height={300}>
           <ComposedChart data={filteredData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
             <XAxis 
-              dataKey="period" 
+              dataKey="periodLabel" 
               tick={{ fill: 'var(--text-dim)', fontSize: 12 }}
               axisLine={{ stroke: 'var(--line)' }}
             />
@@ -184,13 +185,12 @@ export function FinancialsAndLeasing({ financialData }: FinancialsAndLeasingProp
       </ChartContainer>
 
       {/* Leasing Funnel */}
-      <ChartContainer title="Leasing Funnel (30 days)">
+      <ChartContainer title="Leasing Funnel (30d)">
         <div className="space-y-4">
-          {/* Funnel steps with bars */}
-          {funnelData.map((step, index) => {
-            const maxValue = Math.max(...funnelData.map(s => s.value));
+          {funnelSteps.map((step, index) => {
+            const maxValue = Math.max(...funnelSteps.map(s => s.value));
             const widthPercentage = maxValue > 0 ? (step.value / maxValue) * 100 : 0;
-            const nextStep = funnelData[index + 1];
+            const nextStep = funnelSteps[index + 1];
             
             return (
               <div key={step.step} className="space-y-2">
@@ -238,8 +238,8 @@ export function FinancialsAndLeasing({ financialData }: FinancialsAndLeasingProp
               <span className="text-sm text-[var(--text-dim)]">Overall Conversion:</span>
               <span className="text-lg font-bold text-[var(--altus-gold)]">
                 {fmtPct(
-                  financialData.leasingFunnel30.leads > 0 
-                    ? (financialData.leasingFunnel30.signed / financialData.leasingFunnel30.leads) * 100 
+                  financialData.funnel30.leads > 0 
+                    ? (financialData.funnel30.signed / financialData.funnel30.leads) * 100 
                     : 0,
                   1
                 )}
