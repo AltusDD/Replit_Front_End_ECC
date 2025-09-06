@@ -6,8 +6,7 @@ import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import type { DashboardData } from '../hooks/useDashboardData';
 
 interface PortfolioGoogleMapProps {
-  propertiesForMap: DashboardData['propertiesForMap'];
-  missingGeoCount?: number;
+  data: DashboardData;
 }
 
 // Property pin component with status colors
@@ -67,7 +66,9 @@ function ActionButton({
   );
 }
 
-export function PortfolioGoogleMap({ propertiesForMap, missingGeoCount = 0 }: PortfolioGoogleMapProps) {
+export function PortfolioGoogleMap({ data }: PortfolioGoogleMapProps) {
+  const { propertiesForMap } = data;
+  const missingGeoCount = 0; // Calculate if needed
   const [selectedProperty, setSelectedProperty] = useState<DashboardData['propertiesForMap'][0] | null>(null);
   
   // Check for required Google Maps API key
