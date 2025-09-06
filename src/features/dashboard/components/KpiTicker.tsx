@@ -1,46 +1,49 @@
-// KpiTicker.tsx - Genesis v2 specification actionable KPIs with visuals
+// KpiTicker.tsx - 4 actionable KPIs with donut/sparkline, deep links
 import React from 'react';
 import { Link } from 'wouter';
 import { fmtPct, fmtMoney } from '../../../utils/format';
 
-interface KpiData {
-  occupancyPct: number;
-  rentReadyVacant: { ready: number; vacant: number };
-  collectionsRatePct: number;
-  openCriticalWO: number;
-  noiMTD: number;
-}
-
 interface KpiTickerProps {
-  kpis: KpiData;
+  kpis: {
+    occupancyPct: number;
+    rentReadyVacant: { ready: number; vacant: number };
+    collectionsRatePct: number;
+    openCriticalWO: number;
+    noiMTD: number;
+  };
 }
 
-// Mini donut chart for percentages (thicker for better visibility)
-function MiniDonut({ percentage, size = 40 }: { percentage: number; size?: number }) {
-  const circumference = 2 * Math.PI * 12; // Thicker ring
-  const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
+// Simple donut chart component
+function DonutChart({ percentage, size = 48 }: { percentage: number; size?: number }) {
+  const radius = (size - 8) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDasharray = circumference;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
   
   return (
-    <div className="inline-flex items-center justify-center" style={{ width: size, height: size }}>
+    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="transform -rotate-90">
+        {/* Background circle */}
         <circle
           cx={size / 2}
           cy={size / 2}
-          r={12}
+          r={radius}
           stroke="var(--line)"
           strokeWidth="4"
           fill="none"
         />
+        {/* Progress circle */}
         <circle
           cx={size / 2}
           cy={size / 2}
-          r={12}
-          stroke="var(--good)"
+          r={radius}
+          stroke="var(--altus-gold)"
           strokeWidth="4"
           fill="none"
-          strokeDasharray={strokeDasharray}
           strokeLinecap="round"
-          className="transition-all duration-500"
+          strokeDasharray={strokeDasharray}
+          strokeDashoffset={strokeDashoffset}
+          className="transition-all duration-300"
         />
       </svg>
       <span className="absolute text-xs font-bold text-[var(--text)]">
@@ -50,27 +53,27 @@ function MiniDonut({ percentage, size = 40 }: { percentage: number; size?: numbe
   );
 }
 
-// Simple sparkline for daily trends
-function MiniSparkline({ trend }: { trend: number }) {
-  const points = Array.from({ length: 7 }, (_, i) => {
-    const base = 50;
-    const variation = (Math.sin(i * 0.8) * 10) + (trend * i * 2);
-    return Math.max(10, Math.min(90, base + variation));
-  });
+// Simple sparkline component for collections
+function Sparkline({ data }: { data: number[] }) {
+  if (data.length === 0) return null;
   
-  const path = points.map((point, i) => {
-    const x = (i / (points.length - 1)) * 40;
-    const y = 20 - ((point - 10) / 80) * 20;
-    return i === 0 ? `M${x},${y}` : `L${x},${y}`;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  
+  const points = data.map((value, index) => {
+    const x = (index / (data.length - 1)) * 60;
+    const y = 20 - ((value - min) / range) * 16;
+    return `${x},${y}`;
   }).join(' ');
   
   return (
-    <svg width="40" height="20" className="opacity-60">
-      <path
-        d={path}
-        stroke={trend >= 0 ? 'var(--good)' : 'var(--bad)'}
-        strokeWidth="2"
+    <svg width="60" height="20" className="ml-2">
+      <polyline
+        points={points}
         fill="none"
+        stroke="var(--good)"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -78,88 +81,81 @@ function MiniSparkline({ trend }: { trend: number }) {
   );
 }
 
-export function KpiTicker({ kpis }: KpiTickerProps) {
-  if (!kpis) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="ecc-kpi">
-            <div className="skeleton h-4 w-20 mb-2 rounded"></div>
-            <div className="skeleton h-8 w-16 mb-2 rounded"></div>
-            <div className="skeleton h-3 w-24 rounded"></div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
+// Individual KPI card component
+function KpiCard({ 
+  title, 
+  value, 
+  subtitle, 
+  linkTo, 
+  visual 
+}: { 
+  title: string;
+  value: string;
+  subtitle?: string;
+  linkTo: string;
+  visual?: React.ReactNode;
+}) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-      {/* Portfolio Occupancy - Clickable to units overview */}
-      <Link to="/portfolio/units" className="block">
-        <button className="ecc-kpi w-full text-left" data-testid="button-kpi-occupancy">
-          <div className="ecc-kpi__title">Portfolio Occupancy</div>
-          <div className="flex items-center justify-between">
-            <div className="ecc-kpi__value">{fmtPct(kpis.occupancyPct, 1)}</div>
-            <MiniDonut percentage={kpis.occupancyPct} />
+    <Link href={linkTo}>
+      <div className="ecc-kpi" data-testid={`kpi-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <div className="ecc-kpi__title">{title}</div>
+            <div className="ecc-kpi__value">{value}</div>
+            {subtitle && (
+              <div className="text-xs text-[var(--text-dim)] mt-1">{subtitle}</div>
+            )}
           </div>
-          <div className="flex items-center gap-2 mt-2">
-            <MiniSparkline trend={2} />
-            <span className="text-xs text-[var(--good)]">+2.1% vs last month</span>
-          </div>
-        </button>
-      </Link>
-
-      {/* Rent Ready / Vacant - Clickable to vacant units filter */}
-      <Link to="/portfolio/units?status=vacant&rent_ready=true" className="block">
-        <button className="ecc-kpi w-full text-left" data-testid="button-kpi-vacant">
-          <div className="ecc-kpi__title">Rent Ready / Vacant</div>
-          <div className="ecc-kpi__value mb-2">
-            {kpis.rentReadyVacant.ready} / {kpis.rentReadyVacant.vacant}
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-[var(--warn)] flex items-center justify-center">
-              <span className="text-xs font-bold text-[var(--altus-black)]">
-                {kpis.rentReadyVacant.vacant}
-              </span>
+          {visual && (
+            <div className="ml-3">
+              {visual}
             </div>
-            <span className="text-xs text-[var(--text-dim)]">units available</span>
-          </div>
-        </button>
-      </Link>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
 
-      {/* Collections Rate MTD - Clickable to delinquent tenants */}
-      <Link to="/portfolio/tenants?filter=delinquent" className="block">
-        <button className="ecc-kpi w-full text-left" data-testid="button-kpi-collections">
-          <div className="ecc-kpi__title">Collections (MTD)</div>
-          <div className="flex items-center justify-between">
-            <div className="ecc-kpi__value">{fmtPct(kpis.collectionsRatePct, 1)}</div>
-            <MiniDonut percentage={kpis.collectionsRatePct} />
-          </div>
-          <div className="flex items-center gap-2 mt-2">
-            <MiniSparkline trend={-1} />
-            <span className="text-xs text-[var(--warn)]\">Daily receipts trend</span>
-          </div>
-        </button>
-      </Link>
-
-      {/* Critical Work Orders - Clickable to maintenance */}
-      <Link to="/maintenance?priority=high,critical&status=open" className="block">
-        <button className="ecc-kpi w-full text-left" data-testid="button-kpi-workorders">
-          <div className="ecc-kpi__title">Critical Work Orders</div>
-          <div className="ecc-kpi__value mb-2">{kpis.openCriticalWO}</div>
-          <div className="flex items-center gap-2">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-              kpis.openCriticalWO > 5 ? 'bg-[var(--bad)]' : 'bg-[var(--neutral)]'
-            }`}>
-              <span className="text-xs font-bold text-white">!</span>
-            </div>
-            <span className="text-xs text-[var(--text-dim)]">
-              {kpis.openCriticalWO > 5 ? 'Needs attention' : 'Under control'}
-            </span>
-          </div>
-        </button>
-      </Link>
+export function KpiTicker({ kpis }: KpiTickerProps) {
+  // Mock sparkline data for collections (would come from daily receipts)
+  const collectionsSparkline = [85, 82, 89, 87, 91, 88, kpis.collectionsRatePct];
+  
+  return (
+    <div className="grid grid-cols-4 gap-4" data-testid="kpi-ticker">
+      {/* Occupancy with donut chart */}
+      <KpiCard
+        title="Occupancy"
+        value={fmtPct(kpis.occupancyPct)}
+        subtitle="vs last month"
+        linkTo="/portfolio/units?status=occupied"
+        visual={<DonutChart percentage={kpis.occupancyPct} />}
+      />
+      
+      {/* Rent Ready / Vacant */}
+      <KpiCard
+        title="Rent Ready"
+        value={`${kpis.rentReadyVacant.ready}`}
+        subtitle={`of ${kpis.rentReadyVacant.vacant} vacant`}
+        linkTo="/portfolio/units?status=vacant&rent_ready=true"
+      />
+      
+      {/* Collections MTD with sparkline */}
+      <KpiCard
+        title="Collections MTD"
+        value={fmtPct(kpis.collectionsRatePct)}
+        subtitle="daily receipts"
+        linkTo="/accounting?range=mtd&type=rent"
+        visual={<Sparkline data={collectionsSparkline} />}
+      />
+      
+      {/* Critical Work Orders */}
+      <KpiCard
+        title="Critical WOs"
+        value={String(kpis.openCriticalWO)}
+        subtitle="open priority items"
+        linkTo="/maintenance?priority=high,critical&status=open"
+      />
     </div>
   );
 }
