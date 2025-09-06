@@ -127,7 +127,7 @@ export function KpiTicker({ kpis }: KpiTickerProps) {
         title="Occupancy"
         value={fmtPct(kpis.occupancyPct / 100)}
         subtitle="vs last month"
-        linkTo="/portfolio/units?status=occupied"
+        linkTo="/portfolio/properties?city=ALL&vacant=1"
         visual={<DonutChart percentage={kpis.occupancyPct} />}
       />
       
@@ -136,7 +136,7 @@ export function KpiTicker({ kpis }: KpiTickerProps) {
         title="Rent Ready"
         value={`${kpis.rentReadyVacant.ready}`}
         subtitle={`of ${kpis.rentReadyVacant.vacant} vacant`}
-        linkTo="/portfolio/units?status=vacant&rent_ready=true"
+        linkTo="/portfolio/units?status=vacant&rent_ready=1"
       />
       
       {/* Collections MTD with sparkline */}
@@ -144,7 +144,7 @@ export function KpiTicker({ kpis }: KpiTickerProps) {
         title="Collections MTD"
         value={fmtPct(kpis.collectionsRatePct / 100)}
         subtitle="daily receipts"
-        linkTo="/accounting?range=mtd&type=rent"
+        linkTo="/accounting?scope=MTD"
         visual={<Sparkline data={collectionsSparkline} />}
       />
       
@@ -153,7 +153,7 @@ export function KpiTicker({ kpis }: KpiTickerProps) {
         title="Critical WOs"
         value={String(kpis.openCriticalWO)}
         subtitle="open priority items"
-        linkTo="/maintenance?priority=high,critical&status=open"
+        linkTo="/maintenance?priority=high,critical"
       />
     </div>
   );

@@ -210,15 +210,15 @@ export function PortfolioGoogleMap({ propertiesForMap, missingGeoCount = 0 }: Po
                   </ActionButton>
                   <ActionButton
                     variant="secondary"
-                    onClick={() => window.open(`/maintenance?property_id=${selectedProperty.id}&status=open`, '_blank')}
+                    onClick={() => window.open(`/portfolio/units?property_id=${selectedProperty.id}`, '_blank')}
                   >
-                    Open Work Orders
+                    View Unit(s)
                   </ActionButton>
                   <ActionButton
                     variant="secondary"
-                    onClick={() => window.open(`/portfolio/tenants?property_id=${selectedProperty.id}`, '_blank')}
+                    onClick={() => window.open(`/maintenance/new?property_id=${selectedProperty.id}`, '_blank')}
                   >
-                    View Tenants
+                    New WO
                   </ActionButton>
                 </div>
               </div>
