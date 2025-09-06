@@ -228,8 +228,8 @@ function generateMapProperties(
       const coords = baseLatLng[index % baseLatLng.length];
       const propertyWithCoords = {
         ...property,
-        lat: coords.lat + (Math.random() - 0.5) * 0.01, // Small random offset
-        lng: coords.lng + (Math.random() - 0.5) * 0.01
+        lat: coords.lat,
+        lng: coords.lng
       };
       const propertyUnits = units.filter(u => u.property_id === property.id);
       const occupiedUnits = propertyUnits.filter(u => u.status === 'occupied');
