@@ -1,4 +1,4 @@
-// Genesis v2 Dashboard Data Hook - StrictMode-safe with silent AbortErrors
+// Genesis v2 Dashboard Data Hook - Live Data Only with QA Overlay
 import { useState, useEffect, useMemo } from 'react';
 import { fetchJSON, isAbortError, guardAsync } from '../../../utils/net';
 
@@ -14,6 +14,8 @@ interface PropertyData {
   units: number;
   occPct: number;
   active: boolean;
+  lat?: number; // Real coordinates for map (optional)
+  lng?: number; // Real coordinates for map (optional)
 }
 
 interface UnitData {
@@ -47,6 +49,24 @@ interface TenantData {
   unitLabel: string | null;
   type: string;
   balance: number;
+}
+
+// QA Overlay for debugging missing data
+export interface QAOverlay {
+  api: {
+    properties: number;
+    units: number;
+    leases: number;
+    tenants: number;
+    workorders: number;
+    transactions: number;
+  };
+  missing: {
+    geo: number;
+    tenantEmail: number;
+    ownerPhone: number;
+  };
+  lastUpdated: string;
 }
 
 // Exact dashboard data shape per specification
@@ -121,6 +141,9 @@ export interface DashboardData {
       ageDays: number;
     }>;
   };
+  
+  // QA overlay (only when ?debug=1)
+  qa?: QAOverlay;
 }
 
 export interface UseDashboardDataResult {
@@ -176,12 +199,13 @@ function calculateKPIs(
   };
 }
 
-// Generate map properties with coordinates
+// Generate map properties with coordinates - LIVE DATA ONLY, track missing geo
 function generateMapProperties(
   properties: PropertyData[], 
-  tenants: TenantData[]
+  tenants: TenantData[],
+  qaOverlay: { missing: QAOverlay['missing'] }
 ): DashboardData['propertiesForMap'] {
-  // City coordinates for Texas properties
+  // City coordinates for Texas properties - fallback only
   const cityCoords: Record<string, [number, number]> = {
     'Austin': [30.2672, -97.7431],
     'Dallas': [32.7767, -96.7970],
@@ -195,41 +219,46 @@ function generateMapProperties(
     'Lubbock': [33.5779, -101.8552],
   };
 
-  return properties.map(property => {
-    const baseCoords = cityCoords[property.city] || [29.7604, -95.3698];
-    
-    // Add small random offset for visual clustering
-    const latOffset = (Math.random() - 0.5) * 0.02;
-    const lngOffset = (Math.random() - 0.5) * 0.02;
-    
-    // Determine property status
-    const tenantsAtProperty = tenants.filter(t => 
-      t.propertyName === property.name && t.balance > 50
-    );
-    
-    let status: DashboardData['propertiesForMap'][0]['status'] = 'vacant_not_ready';
-    let delinquent = false;
-    
-    if (property.occPct >= 90) {
-      status = tenantsAtProperty.length > 0 ? 'delinquent' : 'occupied';
-      delinquent = tenantsAtProperty.length > 0;
-    } else if (property.occPct > 10) {
-      status = 'vacant_ready'; // Partially occupied, available units ready
-    }
-    
-    return {
-      id: property.id,
-      lat: baseCoords[0] + latOffset,
-      lng: baseCoords[1] + lngOffset,
-      address: `${property.name}, ${property.city}, ${property.state} ${property.zip}`,
-      city: property.city,
-      state: property.state,
-      status,
-      delinquent,
-      rentReady: true, // Simplified until rent_ready field available
-      currentTenant: delinquent ? tenantsAtProperty[0]?.name : undefined,
-    };
-  });
+  return properties
+    .map(property => {
+      // Check if property has real lat/lng data
+      const hasRealGeo = property.lat && property.lng;
+      
+      if (!hasRealGeo) {
+        qaOverlay.missing.geo++;
+        // Skip properties without real coordinates - no mock data
+        return null;
+      }
+      
+      // Determine property status from live data
+      const tenantsAtProperty = tenants.filter(t => 
+        t.propertyName === property.name && t.balance > 50
+      );
+      
+      let status: DashboardData['propertiesForMap'][0]['status'] = 'vacant_not_ready';
+      let delinquent = false;
+      
+      if (property.occPct >= 90) {
+        status = tenantsAtProperty.length > 0 ? 'delinquent' : 'occupied';
+        delinquent = tenantsAtProperty.length > 0;
+      } else if (property.occPct > 10) {
+        status = 'vacant_ready'; // Partially occupied, available units ready
+      }
+      
+      return {
+        id: property.id,
+        lat: property.lat,
+        lng: property.lng,
+        address: `${property.name}, ${property.city}, ${property.state} ${property.zip}`,
+        city: property.city,
+        state: property.state,
+        status,
+        delinquent,
+        rentReady: true, // Simplified until rent_ready field available
+        currentTenant: delinquent ? tenantsAtProperty[0]?.name : undefined,
+      };
+    })
+    .filter(Boolean) as DashboardData['propertiesForMap'];
 }
 
 // Generate time series (simplified until transactions available)
@@ -322,7 +351,7 @@ export function useDashboardData(): UseDashboardDataResult {
       
       const startTime = performance.now();
       
-      // Fetch all portfolio data in parallel using same endpoints as Portfolio V3
+      // Fetch all portfolio data in parallel - LIVE DATA ONLY
       const [properties, units, leases, tenants] = await Promise.all([
         fetchJSON<PropertyData[]>('/api/portfolio/properties', { signal: ac.signal }),
         fetchJSON<UnitData[]>('/api/portfolio/units', { signal: ac.signal }),
@@ -332,10 +361,28 @@ export function useDashboardData(): UseDashboardDataResult {
       
       if (!aliveRef()) return; // StrictMode: don't set state after unmount
       
-      // Calculate all derived data
+      // Initialize QA overlay for tracking missing data
+      const qaOverlay: QAOverlay = {
+        api: {
+          properties: properties.length,
+          units: units.length,
+          leases: leases.length,
+          tenants: tenants.length,
+          workorders: 0, // TODO: add when endpoint available
+          transactions: 0, // TODO: add when endpoint available
+        },
+        missing: {
+          geo: 0,
+          tenantEmail: tenants.filter(t => !t.email).length,
+          ownerPhone: 0, // TODO: add when owner data available
+        },
+        lastUpdated: new Date().toISOString(),
+      };
+      
+      // Calculate all derived data - LIVE ONLY
       const kpis = calculateKPIs(properties, units, tenants);
-      const propertiesForMap = generateMapProperties(properties, tenants);
-      const cashflow90 = generateCashflow90();
+      const propertiesForMap = generateMapProperties(properties, tenants, qaOverlay);
+      const cashflow90 = generateCashflow90(); // TODO: use real transaction data
       const actionFeed = generateActionFeed(leases, tenants, properties);
       
       // City occupancy breakdown
@@ -373,6 +420,7 @@ export function useDashboardData(): UseDashboardDataResult {
         funnel30,
         occByCity,
         actionFeed,
+        ...(isDebugMode && { qa: qaOverlay }),
       };
       
       if (!aliveRef()) return; // Double-check before setState
