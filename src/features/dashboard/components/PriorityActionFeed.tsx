@@ -44,14 +44,14 @@ function ActionSection({
   emptyMessage: string;
 }) {
   return (
-    <div className="mb-8 last:mb-0">
-      <h4 className="flex items-center gap-2 text-sm font-semibold text-[var(--text)] mb-4 uppercase tracking-wide">
+    <div className="action-section">
+      <h4 className="flex items-center gap-2 small-label mb-4">
         <span>{icon}</span>
         {title}
       </h4>
       
       {items.length === 0 ? (
-        <div className="bg-[var(--panel-elev)] rounded-lg p-6 text-center">
+        <div className="action-empty bg-[var(--panel-elev)] rounded-lg p-6">
           <div className="text-[var(--text-dim)] text-sm">
             {emptyMessage}
           </div>
@@ -83,20 +83,22 @@ function ActionItem({
 export function PriorityActionFeed({ actionFeed }: PriorityActionFeedProps) {
   if (!actionFeed) {
     return (
-      <div className="space-y-6">
-        {[...Array(3)].map((_, sectionIndex) => (
-          <div key={sectionIndex}>
-            <div className="skeleton h-4 w-32 mb-4 rounded"></div>
-            <div className="space-y-3">
-              {[...Array(2)].map((_, itemIndex) => (
-                <div key={itemIndex} className="bg-[var(--panel-elev)] rounded-lg p-4">
-                  <div className="skeleton h-4 w-24 mb-2 rounded"></div>
-                  <div className="skeleton h-3 w-32 rounded"></div>
-                </div>
-              ))}
+      <div className="ecc-panel p-6">
+        <div className="space-y-6">
+          {[...Array(3)].map((_, sectionIndex) => (
+            <div key={sectionIndex}>
+              <div className="skeleton h-4 w-32 mb-4 rounded"></div>
+              <div className="space-y-3">
+                {[...Array(2)].map((_, itemIndex) => (
+                  <div key={itemIndex} className="bg-[var(--panel-elev)] rounded-lg p-4">
+                    <div className="skeleton h-4 w-24 mb-2 rounded"></div>
+                    <div className="skeleton h-3 w-32 rounded"></div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   }
@@ -214,27 +216,29 @@ export function PriorityActionFeed({ actionFeed }: PriorityActionFeedProps) {
   ));
 
   return (
-    <div className="space-y-6">
-      <ActionSection
-        title="Delinquency Alerts"
-        icon="🆘"
-        items={delinquencyItems}
-        emptyMessage="No delinquent tenants. Great job on collections!"
-      />
-      
-      <ActionSection
-        title="Lease Renewals (≤45 days)"
-        icon="⚠️"
-        items={renewalItems}
-        emptyMessage="No leases expiring soon. You're ahead of the game!"
-      />
-      
-      <ActionSection
-        title="Maintenance Hotlist"
-        icon="🛠️"
-        items={maintenanceItems}
-        emptyMessage="No critical maintenance issues. All systems running smoothly!"
-      />
+    <div className="ecc-panel p-6">
+      <div className="space-y-6">
+        <ActionSection
+          title="Delinquency Alerts"
+          icon="🆘"
+          items={delinquencyItems}
+          emptyMessage="No delinquent tenants. Great job on collections!"
+        />
+        
+        <ActionSection
+          title="Lease Renewals (≤45 days)"
+          icon="⚠️"
+          items={renewalItems}
+          emptyMessage="No leases expiring soon. You're ahead of the game!"
+        />
+        
+        <ActionSection
+          title="Maintenance Hotlist"
+          icon="🛠️"
+          items={maintenanceItems}
+          emptyMessage="No critical maintenance issues. All systems running smoothly!"
+        />
+      </div>
     </div>
   );
 }
