@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { fetchJSON, isAbortError } from '@/utils/net';
+import { occupancy, rentReadyVacant, collectionsMTD, noiMTD } from '@/features/shared/portfolioMath';
 
 // Live API interfaces
 export interface Property {
@@ -163,7 +164,7 @@ function getMTDRange() {
   return { start: monthStart, end: now };
 }
 
-// Generate KPIs from live data
+// Generate KPIs from live data using centralized math
 function generateKPIs(
   properties: Property[],
   units: Unit[],
@@ -172,67 +173,39 @@ function generateKPIs(
   workOrders: WorkOrder[],
   transactions: Transaction[]
 ): DashboardData['kpis'] {
-  const rentableUnits = units.filter(u => properties.find(p => p.id === u.property_id)?.active);
-  const occupiedUnits = rentableUnits.filter(u => u.status === 'occupied');
-  const vacantUnits = rentableUnits.filter(u => u.status === 'vacant');
-  const rentReadyUnits = vacantUnits.filter(u => u.rent_ready);
+  // Filter to active properties only
+  const activePropertyIds = new Set(properties.filter(p => p.active).map(p => p.id));
+  const rentableUnits = units.filter(u => activePropertyIds.has(u.property_id));
   
-  const occupancyPct = rentableUnits.length > 0 
-    ? (occupiedUnits.length / rentableUnits.length) * 100 
-    : 0;
+  // Use centralized occupancy calculation
+  const { occ, total, ratio } = occupancy(rentableUnits);
+  const occupancyPct = ratio * 100;
   
-  // Collections MTD calculation
-  const { start: mtdStart, end: mtdEnd } = getMTDRange();
-  const mtdReceipts = transactions
-    .filter(t => t.type === 'rent')
-    .filter(t => {
-      const date = new Date(t.posted_on);
-      return date >= mtdStart && date <= mtdEnd;
-    })
-    .reduce((sum, t) => sum + t.amount_cents, 0) / 100;
+  // Use centralized rent ready calculation
+  const { ready, vac } = rentReadyVacant(rentableUnits);
   
-  const activeLeasesForMTD = leases.filter(l => l.status === 'active');
-  const mtdBilled = activeLeasesForMTD.reduce((sum, l) => sum + (l.rent_cents / 100), 0);
-  
-  const collectionsRatePct = mtdBilled > 0 ? (mtdReceipts / mtdBilled) * 100 : 0;
+  // Use centralized collections calculation
+  const { billed_cents, receipts_cents, ratio: collectionsRatio } = collectionsMTD(transactions);
+  const collectionsRatePct = collectionsRatio * 100;
   
   // Critical work orders
   const openCriticalWO = workOrders.filter(wo => 
     ['High', 'Critical'].includes(wo.priority) && wo.status !== 'completed'
   ).length;
   
-  // NOI MTD
-  const mtdIncome = transactions
-    .filter(t => t.type === 'rent')
-    .filter(t => {
-      const date = new Date(t.posted_on);
-      return date >= mtdStart && date <= mtdEnd;
-    })
-    .reduce((sum, t) => sum + t.amount_cents, 0) / 100;
-    
-  const mtdExpenses = transactions
-    .filter(t => t.type === 'expense')
-    .filter(t => {
-      const date = new Date(t.posted_on);
-      return date >= mtdStart && date <= mtdEnd;
-    })
-    .reduce((sum, t) => sum + t.amount_cents, 0) / 100;
-  
-  const noiMTD = mtdIncome - mtdExpenses;
+  // Use centralized NOI calculation
+  const { noi_cents } = noiMTD(transactions);
   
   return {
     occupancyPct,
-    rentReadyVacant: { 
-      ready: rentReadyUnits.length, 
-      vacant: vacantUnits.length 
-    },
+    rentReadyVacant: { ready, vacant: vac },
     collectionsRatePct,
     collectionsDebug: { 
-      receipts: mtdReceipts, 
-      billed: mtdBilled 
+      receipts: receipts_cents / 100, 
+      billed: billed_cents / 100 
     },
     openCriticalWO,
-    noiMTD,
+    noiMTD: noi_cents / 100,
   };
 }
 
@@ -478,7 +451,7 @@ export function useDashboardData(): UseDashboardDataResult {
           fetchJSON<Lease[]>('/api/portfolio/leases', ac.signal),
           fetchJSON<Tenant[]>('/api/portfolio/tenants', ac.signal),
           fetchJSON<WorkOrder[]>('/api/maintenance/workorders', ac.signal).catch(() => [] as WorkOrder[]),
-          fetchJSON<Transaction[]>('/api/accounting/transactions?last=90d', ac.signal).catch(() => [] as Transaction[])
+          fetchJSON<Transaction[]>('/api/accounting/transactions?range=90d', ac.signal).catch(() => [] as Transaction[])
         ]);
         
         if (!mounted) return;
@@ -529,7 +502,7 @@ export function useDashboardData(): UseDashboardDataResult {
         console.error('Dashboard data fetch failed:', e);
         setError(e instanceof Error ? e.message : 'Failed to fetch dashboard data');
       } finally {
-        if (mounted) {
+        if (mounted && !ac.signal.aborted) {
           setLoading(false);
         }
       }

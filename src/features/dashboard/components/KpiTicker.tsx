@@ -125,7 +125,7 @@ export function KpiTicker({ kpis }: KpiTickerProps) {
       {/* Occupancy with donut chart */}
       <KpiCard
         title="Occupancy"
-        value={fmtPct(kpis.occupancyPct)}
+        value={fmtPct(kpis.occupancyPct / 100)}
         subtitle="vs last month"
         linkTo="/portfolio/units?status=occupied"
         visual={<DonutChart percentage={kpis.occupancyPct} />}
@@ -142,7 +142,7 @@ export function KpiTicker({ kpis }: KpiTickerProps) {
       {/* Collections MTD with sparkline */}
       <KpiCard
         title="Collections MTD"
-        value={fmtPct(kpis.collectionsRatePct)}
+        value={fmtPct(kpis.collectionsRatePct / 100)}
         subtitle="daily receipts"
         linkTo="/accounting?range=mtd&type=rent"
         visual={<Sparkline data={collectionsSparkline} />}
