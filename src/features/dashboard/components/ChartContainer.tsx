@@ -17,7 +17,7 @@ export function ChartContainer({
   return (
     <div className={`ecc-panel ${className}`}>
       <div className="flex items-center justify-between p-6 pb-4">
-        <h3 className="text-lg font-semibold text-[var(--text)]">{title}</h3>
+        <h3 className="ecc-panel__title">{title}</h3>
         {controls && (
           <div className="flex items-center gap-3">
             {controls}

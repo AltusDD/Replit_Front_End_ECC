@@ -92,6 +92,19 @@ function TrendIndicator({ value }: { value: number }) {
 }
 
 export function KpiTicker({ kpis }: KpiTickerProps) {
+  if (!kpis) {
+    return (
+      <div className="grid grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="ecc-panel p-4">
+            <div className="skeleton h-4 w-20 mb-2 rounded"></div>
+            <div className="skeleton h-8 w-16 mb-2 rounded"></div>
+            <div className="skeleton h-3 w-24 rounded"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
   const kpiItems = [
     {
       id: 'occupancy',

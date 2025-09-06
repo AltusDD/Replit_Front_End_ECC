@@ -81,6 +81,25 @@ function ActionItem({
 }
 
 export function PriorityActionFeed({ actionFeed }: PriorityActionFeedProps) {
+  if (!actionFeed) {
+    return (
+      <div className="space-y-6">
+        {[...Array(3)].map((_, sectionIndex) => (
+          <div key={sectionIndex}>
+            <div className="skeleton h-4 w-32 mb-4 rounded"></div>
+            <div className="space-y-3">
+              {[...Array(2)].map((_, itemIndex) => (
+                <div key={itemIndex} className="bg-[var(--panel-elev)] rounded-lg p-4">
+                  <div className="skeleton h-4 w-24 mb-2 rounded"></div>
+                  <div className="skeleton h-3 w-32 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
   // Delinquency alerts section
   const delinquencyItems = actionFeed.delinquentsTop.slice(0, 3).map((item) => (
     <ActionItem key={item.tenantId}>

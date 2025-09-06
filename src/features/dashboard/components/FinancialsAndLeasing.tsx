@@ -37,6 +37,21 @@ interface FinancialsAndLeasingProps {
 type TimeRange = '30' | '60' | '90';
 
 export function FinancialsAndLeasing({ financialData }: FinancialsAndLeasingProps) {
+  if (!financialData) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className="ecc-panel p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="skeleton h-6 w-32 rounded"></div>
+              <div className="skeleton h-8 w-20 rounded"></div>
+            </div>
+            <div className="skeleton h-[300px] rounded"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
   const [timeRange, setTimeRange] = useState<TimeRange>('90');
 
   // Filter data based on time range

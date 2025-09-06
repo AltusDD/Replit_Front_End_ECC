@@ -69,6 +69,21 @@ function StatusBadge({ status }: { status: MapProperty['status'] }) {
 }
 
 export function PortfolioGoogleMap({ propertiesForMap }: PortfolioGoogleMapProps) {
+  if (!propertiesForMap || propertiesForMap.length === 0) {
+    return (
+      <div className="h-[500px] bg-[var(--panel-bg)] rounded-lg flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="text-4xl mb-4">🏢</div>
+          <h3 className="text-lg font-semibold text-[var(--text)] mb-2">
+            No Properties Found
+          </h3>
+          <p className="text-sm text-[var(--text-dim)]">
+            Portfolio data is loading or no properties are available.
+          </p>
+        </div>
+      </div>
+    );
+  }
   const [selectedProperty, setSelectedProperty] = useState<MapProperty | null>(null);
   
   // Check for Google Maps API key
