@@ -133,7 +133,7 @@ export function FinancialsAndLeasing({ financialData }: FinancialsAndLeasingProp
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="financial-grid">
       {/* Cash Flow Chart */}
       <ChartContainer 
         title="Cash Flow (90 days)"
