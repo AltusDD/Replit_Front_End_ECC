@@ -4,16 +4,16 @@
   --altus-black: #0b0e12;
   --altus-gold:  #d6b36a;
 
-  /* Surfaces (slightly cooler neutrals) */
-  --panel-bg:   #171a1f;     /* card bg */
-  --panel-elev: #1c2026;     /* elevated card bg */
+  /* Surfaces (cool neutral) */
+  --panel-bg:   #171a1f;     /* cards */
+  --panel-elev: #1c2026;     /* raised cards */
   --line:       #2a2f36;     /* borders */
 
-  --text:       #e8eaf0;     /* primary text */
-  --text-dim:   #a6adbb;     /* secondary text */
+  --text:       #e8eaf0;     /* primary */
+  --text-dim:   #a6adbb;     /* secondary */
 
-  --good:       #2cc38a;     /* success */
-  --warn:       #f3c969;     /* warning */
-  --bad:        #ef5953;     /* error */
-  --neutral:    #8b93a3;     /* neutral gray */
+  --good:       #2cc38a;
+  --warn:       #f3c969;
+  --bad:        #ef5953;
+  --neutral:    #8b93a3;
 }
