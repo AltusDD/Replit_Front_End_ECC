@@ -1,20 +1,17 @@
 // Network utilities for Genesis Dashboard
 
-export const isAbortError = (e: any): boolean =>
-  !!e && (e.name === "AbortError" || e.code === 20 || String(e).includes("AbortError"));
+export const isAbortError = (e: unknown): boolean =>
+  e instanceof DOMException && e.name === "AbortError";
 
-export async function fetchJSON<T = any>(
-  url: string,
-  signal?: AbortSignal
-): Promise<T> {
-  const res = await fetch(url, { 
-    credentials: 'include',
-    signal 
+// Dev mode AbortError suppression (optional, dev-only)
+if (import.meta.env.DEV) {
+  window.addEventListener("unhandledrejection", (ev) => {
+    if (isAbortError(ev.reason)) ev.preventDefault();
   });
-  
-  if (!res.ok) {
-    throw new Error(`${res.status} ${res.statusText} for ${url}`);
-  }
-  
-  return (await res.json()) as T;
+}
+
+export async function fetchJSON<T>(url: string, signal?: AbortSignal): Promise<T> {
+  const res = await fetch(url, { signal, credentials: "include" });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json() as Promise<T>;
 }

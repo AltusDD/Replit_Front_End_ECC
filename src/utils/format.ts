@@ -19,22 +19,12 @@ export const fmtMoney = (n?: number | null) => {
 
 export const fmtPct = (n?: number | null, dp = 1) => {
   if (n == null || Number.isNaN(n)) return "—";
-  return `${n.toFixed(dp)}%`;
+  return `${(n * 100).toFixed(dp)}%`;
 };
 
 export const fmtCompact = (n?: number | null) => {
   if (n == null || Number.isNaN(n)) return "—";
-  
-  const absN = Math.abs(n);
-  const sign = n < 0 ? "-" : "";
-  
-  if (absN >= 1000000) {
-    return `${sign}${(absN / 1000000).toFixed(1)}M`;
-  } else if (absN >= 1000) {
-    return `${sign}${(absN / 1000).toFixed(1)}K`;
-  } else {
-    return `${sign}${absN.toLocaleString()}`;
-  }
+  return Intl.NumberFormat(undefined, { notation: "compact" }).format(n);
 };
 
 // Legacy aliases for compatibility
