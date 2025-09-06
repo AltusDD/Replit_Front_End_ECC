@@ -1,19 +1,17 @@
-/* Genesis v2 Tokens - High Contrast Cooler Neutrals */
+:root{
+  --altus-black:#0b0e12;
+  --altus-gold:#d6b36a;
 
-:root {
-  --altus-black: #0b0e12;
-  --altus-gold:  #d6b36a;
+  /* High-contrast cool neutrals */
+  --panel-bg:#171a1f;
+  --panel-elev:#1c2026;
+  --line:#2a2f36;
 
-  /* Surfaces (cool neutral) */
-  --panel-bg:   #171a1f;     /* cards */
-  --panel-elev: #1c2026;     /* raised cards */
-  --line:       #2a2f36;     /* borders */
+  --text:#e8eaf0;
+  --text-dim:#a6adbb;
 
-  --text:       #e8eaf0;     /* primary */
-  --text-dim:   #a6adbb;     /* secondary */
-
-  --good:       #2cc38a;
-  --warn:       #f3c969;
-  --bad:        #ef5953;
-  --neutral:    #8b93a3;
+  --good:#2cc38a;
+  --warn:#f3c969;
+  --bad:#ef5953;
+  --neutral:#8b93a3;
 }
