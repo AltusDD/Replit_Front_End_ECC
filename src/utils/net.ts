@@ -6,11 +6,9 @@ export async function fetchJSON<T = any>(
   input: RequestInfo | URL,
   init?: RequestInit & { signal?: AbortSignal }
 ): Promise<T> {
-  const res = await fetch(input, init);
+  const res = await fetch(input, { credentials:"include", ...init });
   if (!res.ok) {
-    // Preserve real errors; these are not aborts
-    const text = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status} ${res.statusText}: ${text}`);
+    throw new Error(`${res.status} ${res.statusText} for ${input}`);
   }
   return (await res.json()) as T;
 }
