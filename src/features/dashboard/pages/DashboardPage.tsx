@@ -141,7 +141,10 @@ export default function DashboardPage() {
             {loading || !data ? (
               <MapSkeleton />
             ) : (
-              <PortfolioGoogleMap propertiesForMap={data.propertiesForMap} />
+              <PortfolioGoogleMap 
+                propertiesForMap={data.propertiesForMap}
+                missingGeoCount={debugInfo?.missingGeoCount || 0}
+              />
             )}
           </div>
           
@@ -173,7 +176,10 @@ export default function DashboardPage() {
           {loading || !data ? (
             <OccupancySkeleton />
           ) : (
-            <OccupancyByCity occByCity={data.occByCity} />
+            <OccupancyByCity 
+              occupancyData={data.occupancy30?.byCity}
+              loading={false}
+            />
           )}
         </div>
       </div>
