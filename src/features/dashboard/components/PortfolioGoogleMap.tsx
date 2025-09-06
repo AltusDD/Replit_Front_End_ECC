@@ -1,6 +1,7 @@
 // PortfolioGoogleMap.tsx - Genesis v2 specification with @vis.gl/react-google-maps
 import React, { useState, useMemo } from 'react';
 import { Map, AdvancedMarker, InfoWindow, Pin } from '@vis.gl/react-google-maps';
+import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { ActionButton } from './ActionButton';
 
 interface MapProperty {
@@ -18,6 +19,7 @@ interface MapProperty {
 
 interface PortfolioGoogleMapProps {
   propertiesForMap: MapProperty[];
+  missingGeoCount?: number; // QA overlay count
 }
 
 // Custom house SVG pin with dynamic colors per specification
@@ -67,7 +69,7 @@ function StatusBadge({ status }: { status: MapProperty['status'] }) {
   );
 }
 
-export function PortfolioGoogleMap({ propertiesForMap }: PortfolioGoogleMapProps) {
+export function PortfolioGoogleMap({ propertiesForMap, missingGeoCount = 0 }: PortfolioGoogleMapProps) {
   const [selectedProperty, setSelectedProperty] = useState<MapProperty | null>(null);
   
   // Check for required Google Maps API key
@@ -145,6 +147,19 @@ export function PortfolioGoogleMap({ propertiesForMap }: PortfolioGoogleMapProps
 
   return (
     <div className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg overflow-hidden">
+      {/* Header with QA overlay */}
+      <div className="px-6 py-4 border-b border-[var(--line)] flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-[var(--text)]">Portfolio Map</h3>
+        {missingGeoCount > 0 && (
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[var(--warn)]/20 border border-[var(--warn)]/40 rounded-lg">
+            <span className="w-2 h-2 bg-[var(--warn)] rounded-full"></span>
+            <span className="text-xs text-[var(--text)]">
+              {missingGeoCount} properties missing geo — <button className="underline hover:no-underline">view list</button>
+            </span>
+          </div>
+        )}
+      </div>
+      
       <div className="h-[500px]">
         <Map
           mapId="genesis-portfolio-map"
