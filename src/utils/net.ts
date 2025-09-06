@@ -8,3 +8,12 @@ export async function fetchJSON<T>(url: string, signal?: AbortSignal): Promise<T
 
 export const isAbortError = (e: unknown) =>
   (e as any)?.name === "AbortError" || /aborted|abort/i.test((e as any)?.message || "");
+
+// Dev mode AbortError suppression
+if (import.meta.env.DEV) {
+  window.addEventListener("unhandledrejection", (ev) => {
+    if (isAbortError(ev.reason)) {
+      ev.preventDefault();
+    }
+  });
+}

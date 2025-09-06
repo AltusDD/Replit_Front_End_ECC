@@ -511,8 +511,8 @@ export function useDashboardData(): UseDashboardDataResult {
     fetchDashboardData();
     
     return () => {
-      ac.abort();
       mounted = false;
+      ac.abort();
     };
   }, [isDebugMode]);
   
