@@ -1,5 +1,6 @@
 // PriorityActionFeed.tsx - Genesis v2 specification with action buttons
 import React from 'react';
+import { Link } from 'wouter';
 import { fmtDate, fmtMoney } from '../../../utils/format';
 import { ActionButton } from './ActionButton';
 
@@ -67,11 +68,12 @@ function ActionItem({
   );
 }
 
-// Empty state component
-function EmptyState({ message }: { message: string }) {
+// Positive empty state component
+function EmptyState({ message, icon }: { message: string; icon: string }) {
   return (
     <div className="bg-[var(--panel-elev)] rounded-lg p-6 text-center">
-      <div className="text-[var(--text-dim)] text-sm">
+      <div className="text-2xl mb-2">{icon}</div>
+      <div className="text-[var(--text)] text-sm font-medium">
         {message}
       </div>
     </div>
@@ -113,7 +115,7 @@ export function PriorityActionFeed({ actionFeed }: PriorityActionFeedProps) {
           emptyMessage="No delinquent tenants. Great job on collections! 🎉"
         >
           {delinquentsTop.length === 0 ? (
-            <EmptyState message="No delinquent tenants. Great job on collections! 🎉" />
+            <EmptyState message="No delinquent tenants. Great job on collections!" icon="🎉" />
           ) : (
             delinquentsTop.slice(0, 3).map((item) => (
               <ActionItem key={item.tenantId}>
@@ -163,7 +165,7 @@ export function PriorityActionFeed({ actionFeed }: PriorityActionFeedProps) {
           emptyMessage="No leases expiring soon. You're ahead of the game! 🎯"
         >
           {leasesExpiring45.length === 0 ? (
-            <EmptyState message="No leases expiring soon. You're ahead of the game! 🎯" />
+            <EmptyState message="No leases expiring soon. You're ahead of the game!" icon="🎯" />
           ) : (
             leasesExpiring45.slice(0, 3).map((item) => (
               <ActionItem key={item.leaseId}>
