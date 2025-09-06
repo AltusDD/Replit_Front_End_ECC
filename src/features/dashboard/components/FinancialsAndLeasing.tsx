@@ -185,7 +185,22 @@ export function FinancialsAndLeasing({ financialData }: FinancialsAndLeasingProp
       </ChartContainer>
 
       {/* Leasing Funnel */}
-      <ChartContainer title="Leasing Funnel (30d)">
+      <ChartContainer title="Leasing Funnel (30d)" controls={
+        <div className="flex gap-2">
+          <button 
+            className="px-3 py-1 text-xs font-medium text-[var(--text)] bg-[var(--panel-elev)] hover:bg-[var(--altus-gold)] hover:text-[var(--altus-black)] rounded transition-colors"
+            onClick={() => window.open('/portfolio/units?status=vacant', '_blank')}
+          >
+            View Vacants
+          </button>
+          <button 
+            className="px-3 py-1 text-xs font-medium text-[var(--text)] bg-[var(--panel-elev)] hover:bg-[var(--altus-gold)] hover:text-[var(--altus-black)] rounded transition-colors"
+            onClick={() => window.open('/leasing/applications', '_blank')}
+          >
+            View Applications
+          </button>
+        </div>
+      }>
         <div className="space-y-4">
           {funnelSteps.map((step, index) => {
             const maxValue = Math.max(...funnelSteps.map(s => s.value));

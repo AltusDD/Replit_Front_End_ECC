@@ -214,7 +214,7 @@ export function PriorityActionFeed({ actionFeed }: PriorityActionFeedProps) {
           emptyMessage="No critical maintenance issues. All systems running smoothly! ✨"
         >
           {workOrdersHotlist.length === 0 ? (
-            <EmptyState message="No critical maintenance issues. All systems running smoothly! ✨" />
+            <EmptyState message="No critical maintenance issues. All systems running smoothly!" icon="✨" />
           ) : (
             workOrdersHotlist.slice(0, 3).map((item) => (
               <ActionItem key={item.woId}>
