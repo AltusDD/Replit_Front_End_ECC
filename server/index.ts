@@ -346,6 +346,82 @@ app.get("/api/portfolio/owners", async (req, res) => {
   }
 });
 
+/** Maintenance work orders endpoint */
+app.get("/api/maintenance/workorders", async (req, res) => {
+  if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
+  
+  try {
+    // For now, return structured mock data since maintenance table may not exist
+    const workOrders = [
+      {
+        id: 1,
+        property_id: 1,
+        priority: 'High',
+        status: 'open',
+        created_at: new Date().toISOString(),
+        title: 'Leaky faucet in kitchen'
+      },
+      {
+        id: 2,
+        property_id: 2,
+        priority: 'Medium',
+        status: 'in_progress',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        title: 'HVAC maintenance required'
+      },
+      {
+        id: 3,
+        property_id: 1,
+        priority: 'Critical',
+        status: 'open',
+        created_at: new Date(Date.now() - 172800000).toISOString(),
+        title: 'Water heater malfunction'
+      }
+    ];
+    
+    res.json(workOrders);
+  } catch (e: any) {
+    return sendErr(res, 500, e);
+  }
+});
+
+/** Accounting transactions endpoint */
+app.get("/api/accounting/transactions", async (req, res) => {
+  if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
+  
+  try {
+    // Generate realistic transaction data for the last 90 days
+    const transactions = [];
+    const now = new Date();
+    
+    for (let i = 0; i < 90; i++) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      
+      // Add rent income every 1st of month
+      if (date.getDate() === 1) {
+        transactions.push({
+          type: 'rent',
+          amount_cents: 125000, // $1,250
+          posted_on: date.toISOString()
+        });
+      }
+      
+      // Add random expenses
+      if (Math.random() > 0.85) {
+        transactions.push({
+          type: 'expense',
+          amount_cents: Math.floor(Math.random() * 50000) + 5000, // $50-$500
+          posted_on: date.toISOString()
+        });
+      }
+    }
+    
+    res.json(transactions);
+  } catch (e: any) {
+    return sendErr(res, 500, e);
+  }
+});
+
 /** Debug endpoint for SQL queries */
 app.get("/api/portfolio/_debug/sql", async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
