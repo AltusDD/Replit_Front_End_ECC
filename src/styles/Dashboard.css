@@ -2,36 +2,31 @@
 
 @import url('./tokens.css');
 
-.ecc-panel {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--panel-bg);
-  box-shadow: 0 8px 24px rgba(0,0,0,.35);
-}
-
-.ecc-panel__title {
-  color: var(--text);
-  font-weight: 600;
-  letter-spacing: .5px;
-}
-
-.ecc-kpi {
+.ecc-panel{
   background: var(--panel-bg);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 16px 18px;
-  min-height: 96px;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  box-shadow: 0 1px 0 rgba(0,0,0,.35);
 }
-
-.ecc-kpi:hover {
+.ecc-panel__title{font-weight:600;letter-spacing:.4px}
+.ecc-kpi{
   background: var(--panel-elev);
-  transform: translateY(-1px);
+  border: 1px solid var(--line);
 }
+.ecc-kpi:hover{transform:translateY(-1px)}
+.sparkline path{stroke:var(--altus-gold)}
+.donut__track{stroke:rgba(255,255,255,.08)}
+.donut__value{stroke:var(--altus-gold)}
+.badge--good{color:var(--good)}
+.badge--bad{color:var(--bad)}
+.badge--warn{color:var(--warn)}
+.chart-income{fill:var(--good)}
+.chart-expense{fill:var(--neutral)}
+.chart-noi{stroke:var(--altus-gold)}
+.table th{color:var(--text-dim);letter-spacing:.06em;text-transform:uppercase}
+.table tr:hover{background:var(--panel-elev)}
+.skeleton{background:linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.08),rgba(255,255,255,.04));background-size:200% 100%;animation:s 1.2s infinite}
+@keyframes s{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 .ecc-kpi:focus-visible {
   outline: 2px solid var(--altus-gold);
