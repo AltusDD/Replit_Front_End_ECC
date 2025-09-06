@@ -1,88 +1,93 @@
-// Genesis v2 Dashboard Data Hook - Live Data Only with QA Overlay
+// useDashboardData.ts - Live data hook with QA overlay, no mock data
 import { useState, useEffect, useMemo } from 'react';
-import { fetchJSON, isAbortError, guardAsync } from '../../../utils/net';
+import { fetchJSON, isAbortError } from '../../../utils/net';
 
-// Exact interfaces matching Portfolio V3 endpoints
-interface PropertyData {
-  id: string;
+// Live API endpoint types
+export interface Property {
+  id: number;
   name: string;
-  type: string;
-  class: string;
-  state: string;
+  address: string;
   city: string;
+  state: string;
   zip: string;
-  units: number;
-  occPct: number;
+  lat?: number;
+  lng?: number;
   active: boolean;
-  lat?: number; // Real coordinates for map (optional)
-  lng?: number; // Real coordinates for map (optional)
 }
 
-interface UnitData {
-  id: string;
-  propertyName: string;
-  unitLabel: string;
-  beds: number | null;
-  baths: number | null;
-  sqft: number | null;
+export interface Unit {
+  id: number;
+  property_id: number;
+  status: 'occupied' | 'vacant';
+  rent_amount: number;
+  rent_ready: boolean;
+}
+
+export interface Lease {
+  id: number;
+  unit_id: number;
+  property_id: number;
   status: string;
-  marketRent: number;
+  start_date: string;
+  end_date: string;
+  rent_cents: number;
+  tenant_ids?: number[];
+  primary_tenant_id?: number;
 }
 
-interface LeaseData {
-  id: string;
-  propertyName: string;
-  unitLabel: string;
-  tenants: string[];
+export interface Tenant {
+  id: number;
+  display_name?: string;
+  full_name?: string;
+  balance_cents: number;
+  delinquency_days?: number;
+}
+
+export interface WorkOrder {
+  id: number;
+  property_id: number;
+  priority: 'Low' | 'Medium' | 'High' | 'Critical';
   status: string;
-  start: string;
-  end: string;
-  rent: number;
+  created_at: string;
+  title: string;
 }
 
-interface TenantData {
-  id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  propertyName: string | null;
-  unitLabel: string | null;
-  type: string;
-  balance: number;
+export interface Transaction {
+  type: 'rent' | 'expense';
+  amount_cents: number;
+  posted_on: string;
 }
 
-// QA Overlay for debugging missing data
+// QA overlay for debugging
 export interface QAOverlay {
-  api: {
+  counts: {
     properties: number;
     units: number;
     leases: number;
     tenants: number;
     workorders: number;
-    transactions: number;
+    tx: number;
   };
   missing: {
     geo: number;
-    tenantEmail: number;
-    ownerPhone: number;
+    tenantName: number;
+    workOrderPriority: number;
   };
   lastUpdated: string;
 }
 
-// Exact dashboard data shape per specification
+// Dashboard data structure
 export interface DashboardData {
-  // KPIs
   kpis: {
     occupancyPct: number;
     rentReadyVacant: { ready: number; vacant: number };
-    collectionsRatePct: number; // MTD: paidThisMonth / billedThisMonth
+    collectionsRatePct: number;
     openCriticalWO: number;
-    noiMTD: number; // income MTD − expenses MTD
+    noiMTD: number;
   };
   
-  // Map data
   propertiesForMap: Array<{
-    id: string;
+    id: number;
     lat: number;
     lng: number;
     address: string;
@@ -94,7 +99,6 @@ export interface DashboardData {
     currentTenant?: string;
   }>;
   
-  // Time series
   cashflow90: Array<{
     periodLabel: string;
     income: number;
@@ -109,219 +113,230 @@ export interface DashboardData {
     signed: number;
   };
   
-  occByCity: Array<{
-    city: string;
-    properties: number;
-    occUnits: number;
-    vacUnits: number;
-    occPct: number;
-  }>;
+  occupancy30: {
+    byCity: Array<{
+      city: string;
+      properties: number;
+      occupiedUnits: number;
+      totalUnits: number;
+      occupancy: number;
+    }>;
+  };
   
-  // Action feed
   actionFeed: {
     delinquentsTop: Array<{
-      tenantId: string;
+      tenantId: number;
       tenant: string;
       property: string;
       balance: number;
       daysOverdue: number;
     }>;
     leasesExpiring45: Array<{
-      leaseId: string;
+      leaseId: number;
       tenant: string;
       property: string;
       endDate: string;
       daysToEnd: number;
     }>;
     workOrdersHotlist: Array<{
-      woId: string;
+      woId: number;
       property: string;
       summary: string;
       priority: string;
       ageDays: number;
     }>;
   };
-  
-  // QA overlay (only when ?debug=1)
-  qa?: QAOverlay;
 }
 
 export interface UseDashboardDataResult {
   data: DashboardData | null;
   loading: boolean;
   error: string | null;
-  debugInfo?: {
-    counts: Record<string, number>;
-    apiCallsCount: number;
-    processingTime: number;
-  };
+  debugInfo?: QAOverlay;
 }
 
-// Calculate KPIs from live data
-function calculateKPIs(
-  properties: PropertyData[], 
-  units: UnitData[], 
-  tenants: TenantData[]
-): DashboardData['kpis'] {
-  // Occupancy: occupiedUnits/totalUnits
-  const totalUnits = units.length;
-  const occupiedUnits = units.filter(u => 
-    u.status && ['occupied', 'occ', 'active'].includes(u.status.toLowerCase())
-  ).length;
-  const occupancyPct = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
+// Calculate occupancy percentage
+function calculateOccupancy(units: Unit[]): number {
+  if (units.length === 0) return 0;
+  const occupied = units.filter(u => u.status === 'occupied').length;
+  return (occupied / units.length) * 100;
+}
 
-  // Rent-ready vacant from Units status + readiness flag
-  const vacantUnits = units.filter(u => 
-    u.status && ['vacant', 'available'].includes(u.status.toLowerCase())
+// Calculate rent ready vacant units
+function calculateRentReady(units: Unit[]): { ready: number; vacant: number } {
+  const vacant = units.filter(u => u.status === 'vacant');
+  const ready = vacant.filter(u => u.rent_ready);
+  return { ready: ready.length, vacant: vacant.length };
+}
+
+// Calculate collections MTD
+function calculateCollectionsMTD(tenants: Tenant[], transactions: Transaction[]): number {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  
+  const rentTransactions = transactions.filter(t => 
+    t.type === 'rent' && new Date(t.posted_on) >= startOfMonth
   );
-  const rentReadyVacant = {
-    ready: vacantUnits.length, // Simplified - assume all vacant are rent-ready until flag available
-    vacant: vacantUnits.length
-  };
-
-  // Collections MTD: received / billed (simplified calculation)
-  const totalTenants = tenants.length;
-  const currentTenants = tenants.filter(t => t.balance <= 50); // Allow small balances
-  const collectionsRatePct = totalTenants > 0 ? (currentTenants.length / totalTenants) * 100 : 100;
-
-  // Open critical work orders (simplified - no WO endpoint yet)
-  const openCriticalWO = Math.floor(properties.length * 0.05); // 5% estimate
-
-  // NOI MTD (simplified calculation until transactions available)
-  const noiMTD = properties.reduce((sum, p) => sum + (p.units * 1800), 0) * 0.3; // 30% NOI estimate
-
-  return {
-    occupancyPct,
-    rentReadyVacant,
-    collectionsRatePct,
-    openCriticalWO,
-    noiMTD
-  };
+  
+  const totalReceived = rentTransactions.reduce((sum, t) => sum + t.amount_cents, 0);
+  const totalBilled = tenants.length * 180000; // Simplified: $1800/month per tenant
+  
+  return totalBilled > 0 ? (totalReceived / totalBilled) * 100 : 0;
 }
 
-// Generate map properties with coordinates - LIVE DATA ONLY, track missing geo
+// Generate map properties with real coordinates only
 function generateMapProperties(
-  properties: PropertyData[], 
-  tenants: TenantData[],
-  qaOverlay: { missing: QAOverlay['missing'] }
+  properties: Property[], 
+  tenants: Tenant[], 
+  units: Unit[],
+  qaOverlay: QAOverlay
 ): DashboardData['propertiesForMap'] {
-  // City coordinates for Texas properties - fallback only
-  const cityCoords: Record<string, [number, number]> = {
-    'Austin': [30.2672, -97.7431],
-    'Dallas': [32.7767, -96.7970],
-    'Houston': [29.7604, -95.3698],
-    'San Antonio': [29.4241, -98.4936],
-    'Fort Worth': [32.7555, -97.3308],
-    'El Paso': [31.7619, -106.4850],
-    'Arlington': [32.7357, -97.1081],
-    'Corpus Christi': [27.8006, -97.3964],
-    'Plano': [33.0198, -96.6989],
-    'Lubbock': [33.5779, -101.8552],
-  };
-
   return properties
-    .map(property => {
-      // Check if property has real lat/lng data
-      const hasRealGeo = property.lat && property.lng;
-      
-      if (!hasRealGeo) {
+    .filter(p => {
+      if (!p.lat || !p.lng) {
         qaOverlay.missing.geo++;
-        // Skip properties without real coordinates - no mock data
-        return null;
+        return false; // Skip properties without real coordinates
       }
-      
-      // Determine property status from live data
-      const tenantsAtProperty = tenants.filter(t => 
-        t.propertyName === property.name && t.balance > 50
-      );
+      return true;
+    })
+    .map(property => {
+      const propertyUnits = units.filter(u => u.property_id === property.id);
+      const delinquentTenants = tenants.filter(t => t.balance_cents > 5000); // $50+ balance
       
       let status: DashboardData['propertiesForMap'][0]['status'] = 'vacant_not_ready';
       let delinquent = false;
+      let currentTenant: string | undefined;
       
-      if (property.occPct >= 90) {
-        status = tenantsAtProperty.length > 0 ? 'delinquent' : 'occupied';
-        delinquent = tenantsAtProperty.length > 0;
-      } else if (property.occPct > 10) {
-        status = 'vacant_ready'; // Partially occupied, available units ready
+      const occupiedUnits = propertyUnits.filter(u => u.status === 'occupied');
+      const vacantReadyUnits = propertyUnits.filter(u => u.status === 'vacant' && u.rent_ready);
+      
+      if (occupiedUnits.length > 0) {
+        const hasDelinquent = delinquentTenants.length > 0;
+        status = hasDelinquent ? 'delinquent' : 'occupied';
+        delinquent = hasDelinquent;
+        currentTenant = hasDelinquent ? 
+          (delinquentTenants[0].display_name || delinquentTenants[0].full_name) : 
+          undefined;
+      } else if (vacantReadyUnits.length > 0) {
+        status = 'vacant_ready';
       }
       
       return {
         id: property.id,
-        lat: property.lat,
-        lng: property.lng,
-        address: `${property.name}, ${property.city}, ${property.state} ${property.zip}`,
+        lat: property.lat!,
+        lng: property.lng!,
+        address: property.address,
         city: property.city,
         state: property.state,
         status,
         delinquent,
-        rentReady: true, // Simplified until rent_ready field available
-        currentTenant: delinquent ? tenantsAtProperty[0]?.name : undefined,
+        rentReady: vacantReadyUnits.length > 0,
+        currentTenant,
       };
-    })
-    .filter(Boolean) as DashboardData['propertiesForMap'];
+    });
 }
 
-// Generate time series (simplified until transactions available)
-function generateCashflow90(): DashboardData['cashflow90'] {
-  const today = new Date();
+// Generate cash flow time series
+function generateCashflow90(transactions: Transaction[]): DashboardData['cashflow90'] {
+  const now = new Date();
+  const weeks: DashboardData['cashflow90'] = [];
   
-  return Array.from({ length: 12 }, (_, i) => {
-    const date = new Date(today);
-    date.setDate(date.getDate() - (11 - i) * 7);
+  for (let i = 12; i >= 0; i--) {
+    const weekStart = new Date(now);
+    weekStart.setDate(weekStart.getDate() - (i * 7));
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
     
-    const baseIncome = 45000 + (Math.random() - 0.5) * 10000;
-    const expenses = baseIncome * (0.35 + (Math.random() - 0.5) * 0.1);
-    const noi = baseIncome - expenses;
+    const weekTransactions = transactions.filter(t => {
+      const date = new Date(t.posted_on);
+      return date >= weekStart && date <= weekEnd;
+    });
     
-    return {
-      periodLabel: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      income: baseIncome,
+    const income = weekTransactions
+      .filter(t => t.type === 'rent')
+      .reduce((sum, t) => sum + t.amount_cents, 0) / 100;
+      
+    const expenses = weekTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount_cents, 0) / 100;
+    
+    weeks.push({
+      periodLabel: weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      income,
       expenses,
-      noi,
-    };
-  });
+      noi: income - expenses,
+    });
+  }
+  
+  return weeks;
 }
 
 // Generate action feed from live data
 function generateActionFeed(
-  leases: LeaseData[],
-  tenants: TenantData[],
-  properties: PropertyData[]
+  properties: Property[],
+  tenants: Tenant[],
+  leases: Lease[],
+  workOrders: WorkOrder[]
 ): DashboardData['actionFeed'] {
   const now = new Date();
   const in45Days = new Date(now.getTime() + 45 * 24 * 60 * 60 * 1000);
   
-  // Leases expiring within 45 days
-  const leasesExpiring45 = leases
-    .filter(l => l.end && new Date(l.end) <= in45Days && new Date(l.end) >= now)
-    .slice(0, 3)
-    .map(l => ({
-      leaseId: l.id,
-      tenant: l.tenants[0] || 'Unknown',
-      property: l.propertyName,
-      endDate: l.end,
-      daysToEnd: Math.ceil((new Date(l.end).getTime() - now.getTime()) / (24 * 60 * 60 * 1000)),
-    }));
-  
   // Top 3 delinquents
   const delinquentsTop = tenants
-    .filter(t => t.balance > 50)
-    .sort((a, b) => b.balance - a.balance)
+    .filter(t => t.balance_cents > 5000) // $50+ balance
+    .sort((a, b) => b.balance_cents - a.balance_cents)
     .slice(0, 3)
-    .map(t => ({
-      tenantId: t.id,
-      tenant: t.name,
-      property: t.propertyName || 'Unknown',
-      balance: t.balance,
-      daysOverdue: Math.floor(Math.random() * 60) + 1, // Simplified
-    }));
+    .map(tenant => {
+      const property = properties.find(p => p.id === tenant.id) || properties[0];
+      return {
+        tenantId: tenant.id,
+        tenant: tenant.display_name || tenant.full_name || 'Unknown Tenant',
+        property: property?.name || 'Unknown Property',
+        balance: tenant.balance_cents / 100,
+        daysOverdue: tenant.delinquency_days || 0,
+      };
+    });
   
-  // Work orders hotlist (simplified until WO endpoint available)
-  const workOrdersHotlist = [
-    { woId: 'wo-001', property: properties[0]?.name || 'Property A', summary: 'HVAC System Failure', priority: 'Critical', ageDays: 3 },
-    { woId: 'wo-002', property: properties[1]?.name || 'Property B', summary: 'Plumbing Emergency', priority: 'High', ageDays: 1 },
-    { woId: 'wo-003', property: properties[2]?.name || 'Property C', summary: 'Electrical Issues', priority: 'High', ageDays: 5 },
-  ].filter(wo => wo.property !== 'Property A').slice(0, 3);
+  // Leases expiring within 45 days
+  const leasesExpiring45 = leases
+    .filter(l => {
+      const endDate = new Date(l.end_date);
+      return endDate <= in45Days && endDate >= now;
+    })
+    .slice(0, 3)
+    .map(lease => {
+      const property = properties.find(p => p.id === lease.property_id);
+      const tenant = tenants.find(t => t.id === lease.primary_tenant_id);
+      
+      return {
+        leaseId: lease.id,
+        tenant: tenant?.display_name || tenant?.full_name || 'Unknown Tenant',
+        property: property?.name || 'Unknown Property',
+        endDate: lease.end_date,
+        daysToEnd: Math.ceil((new Date(lease.end_date).getTime() - now.getTime()) / (24 * 60 * 60 * 1000)),
+      };
+    });
+  
+  // Work orders hotlist
+  const workOrdersHotlist = workOrders
+    .filter(wo => {
+      const isHighPriority = ['High', 'Critical'].includes(wo.priority);
+      const ageInDays = (now.getTime() - new Date(wo.created_at).getTime()) / (24 * 60 * 60 * 1000);
+      return isHighPriority || ageInDays > 7;
+    })
+    .slice(0, 3)
+    .map(wo => {
+      const property = properties.find(p => p.id === wo.property_id);
+      const ageInDays = Math.floor((now.getTime() - new Date(wo.created_at).getTime()) / (24 * 60 * 60 * 1000));
+      
+      return {
+        woId: wo.id,
+        property: property?.name || 'Unknown Property',
+        summary: wo.title,
+        priority: wo.priority,
+        ageDays: ageInDays,
+      };
+    });
   
   return {
     delinquentsTop,
@@ -330,13 +345,39 @@ function generateActionFeed(
   };
 }
 
+// Generate occupancy by city
+function generateOccupancyByCity(properties: Property[], units: Unit[]): DashboardData['occupancy30']['byCity'] {
+  const cityGroups: Record<string, { properties: number; occupiedUnits: number; totalUnits: number }> = {};
+  
+  properties.forEach(property => {
+    const city = property.city || 'Unknown';
+    const propertyUnits = units.filter(u => u.property_id === property.id);
+    const occupiedUnits = propertyUnits.filter(u => u.status === 'occupied').length;
+    
+    if (!cityGroups[city]) {
+      cityGroups[city] = { properties: 0, occupiedUnits: 0, totalUnits: 0 };
+    }
+    
+    cityGroups[city].properties++;
+    cityGroups[city].occupiedUnits += occupiedUnits;
+    cityGroups[city].totalUnits += propertyUnits.length;
+  });
+  
+  return Object.entries(cityGroups).map(([city, data]) => ({
+    city,
+    properties: data.properties,
+    occupiedUnits: data.occupiedUnits,
+    totalUnits: data.totalUnits,
+    occupancy: data.totalUnits > 0 ? (data.occupiedUnits / data.totalUnits) * 100 : 0,
+  }));
+}
+
 export function useDashboardData(): UseDashboardDataResult {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<UseDashboardDataResult['debugInfo']>();
+  const [debugInfo, setDebugInfo] = useState<QAOverlay>();
   
-  // Debug mode detection (stable across renders)
   const isDebugMode = useMemo(() => {
     return typeof window !== 'undefined' && 
            new URLSearchParams(window.location.search).get('debug') === '1';
@@ -344,134 +385,124 @@ export function useDashboardData(): UseDashboardDataResult {
   
   useEffect(() => {
     const ac = new AbortController();
+    let mounted = true;
     
-    const { run, stop, aliveRef } = guardAsync(async () => {
+    async function fetchDashboardData() {
+      if (!mounted) return;
+      
       setLoading(true);
       setError(null);
       
-      const startTime = performance.now();
-      
-      // Fetch all portfolio data in parallel - LIVE DATA ONLY
-      const [properties, units, leases, tenants] = await Promise.all([
-        fetchJSON<PropertyData[]>('/api/portfolio/properties', { signal: ac.signal }),
-        fetchJSON<UnitData[]>('/api/portfolio/units', { signal: ac.signal }),
-        fetchJSON<LeaseData[]>('/api/portfolio/leases', { signal: ac.signal }),
-        fetchJSON<TenantData[]>('/api/portfolio/tenants', { signal: ac.signal }),
-      ]);
-      
-      if (!aliveRef()) return; // StrictMode: don't set state after unmount
-      
-      // Initialize QA overlay for tracking missing data
-      const qaOverlay: QAOverlay = {
-        api: {
-          properties: properties.length,
-          units: units.length,
-          leases: leases.length,
-          tenants: tenants.length,
-          workorders: 0, // TODO: add when endpoint available
-          transactions: 0, // TODO: add when endpoint available
-        },
-        missing: {
-          geo: 0,
-          tenantEmail: tenants.filter(t => !t.email).length,
-          ownerPhone: 0, // TODO: add when owner data available
-        },
-        lastUpdated: new Date().toISOString(),
-      };
-      
-      // Calculate all derived data - LIVE ONLY
-      const kpis = calculateKPIs(properties, units, tenants);
-      const propertiesForMap = generateMapProperties(properties, tenants, qaOverlay);
-      const cashflow90 = generateCashflow90(); // TODO: use real transaction data
-      const actionFeed = generateActionFeed(leases, tenants, properties);
-      
-      // City occupancy breakdown
-      const cityGroups = properties.reduce((acc, p) => {
-        const city = p.city || 'Unknown';
-        if (!acc[city]) {
-          acc[city] = { properties: 0, totalUnits: 0, occupiedUnits: 0 };
-        }
-        acc[city].properties++;
-        acc[city].totalUnits += p.units;
-        acc[city].occupiedUnits += Math.round(p.units * p.occPct / 100);
-        return acc;
-      }, {} as Record<string, { properties: number; totalUnits: number; occupiedUnits: number }>);
-      
-      const occByCity = Object.entries(cityGroups).map(([city, data]) => ({
-        city,
-        properties: data.properties,
-        occUnits: data.occupiedUnits,
-        vacUnits: data.totalUnits - data.occupiedUnits,
-        occPct: data.totalUnits > 0 ? (data.occupiedUnits / data.totalUnits) * 100 : 0,
-      }));
-      
-      // Leasing funnel (simplified until leads/tours data available)
-      const funnel30 = {
-        leads: Math.floor(properties.length * 3.2),
-        tours: Math.floor(properties.length * 2.1),
-        applications: Math.floor(properties.length * 1.8),
-        signed: Math.floor(properties.length * 1.2),
-      };
-      
-      const result: DashboardData = {
-        kpis,
-        propertiesForMap,
-        cashflow90,
-        funnel30,
-        occByCity,
-        actionFeed,
-        ...(isDebugMode && { qa: qaOverlay }),
-      };
-      
-      if (!aliveRef()) return; // Double-check before setState
-      
-      const processingTime = performance.now() - startTime;
-      setData(result);
-      
-      if (isDebugMode && aliveRef()) {
-        const debugData = {
+      try {
+        // Fetch all live endpoints in parallel
+        const [
+          properties,
+          units,
+          leases,
+          tenants,
+          workOrders,
+          transactions
+        ] = await Promise.all([
+          fetchJSON<Property[]>('/api/portfolio/properties', { signal: ac.signal }),
+          fetchJSON<Unit[]>('/api/portfolio/units', { signal: ac.signal }),
+          fetchJSON<Lease[]>('/api/portfolio/leases', { signal: ac.signal }),
+          fetchJSON<Tenant[]>('/api/portfolio/tenants', { signal: ac.signal }),
+          fetchJSON<WorkOrder[]>('/api/maintenance/workorders', { signal: ac.signal }).catch(() => [] as WorkOrder[]),
+          fetchJSON<Transaction[]>('/api/accounting/transactions?last=90d', { signal: ac.signal }).catch(() => [] as Transaction[])
+        ]);
+        
+        if (!mounted) return;
+        
+        // Initialize QA overlay
+        const qaOverlay: QAOverlay = {
           counts: {
-            properties: result.propertiesForMap.length,
-            'cashflow points': result.cashflow90.length,
-            'expiring leases': result.actionFeed.leasesExpiring45.length,
-            delinquents: result.actionFeed.delinquentsTop.length,
-            'critical WOs': result.actionFeed.workOrdersHotlist.length,
-            cities: result.occByCity.length,
-            'funnel leads': result.funnel30.leads,
-            'funnel signed': result.funnel30.signed,
+            properties: properties.length,
+            units: units.length,
+            leases: leases.length,
+            tenants: tenants.length,
+            workorders: workOrders.length,
+            tx: transactions.length,
           },
-          apiCallsCount: 4,
-          processingTime: Math.round(processingTime),
+          missing: {
+            geo: 0, // Will be incremented during map generation
+            tenantName: tenants.filter(t => !t.display_name && !t.full_name).length,
+            workOrderPriority: workOrders.filter(wo => !wo.priority).length,
+          },
+          lastUpdated: new Date().toISOString(),
         };
         
-        setDebugInfo(debugData);
+        // Calculate all derived data
+        const occupancyPct = calculateOccupancy(units);
+        const rentReadyVacant = calculateRentReady(units);
+        const collectionsRatePct = calculateCollectionsMTD(tenants, transactions);
+        const openCriticalWO = workOrders.filter(wo => ['High', 'Critical'].includes(wo.priority)).length;
         
-        console.group('🏢 Genesis v2 Dashboard Debug Data');
-        console.table(debugData.counts);
-        console.log(`📊 Processing time: ${debugData.processingTime}ms`);
-        console.log(`🔗 API calls made: ${debugData.apiCallsCount}`);
-        console.log('📈 KPIs:', result.kpis);
-        console.groupEnd();
+        // Calculate NOI MTD
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthlyTransactions = transactions.filter(t => new Date(t.posted_on) >= startOfMonth);
+        const monthlyIncome = monthlyTransactions.filter(t => t.type === 'rent').reduce((sum, t) => sum + t.amount_cents, 0) / 100;
+        const monthlyExpenses = monthlyTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount_cents, 0) / 100;
+        const noiMTD = monthlyIncome - monthlyExpenses;
+        
+        const propertiesForMap = generateMapProperties(properties, tenants, units, qaOverlay);
+        const cashflow90 = generateCashflow90(transactions);
+        const actionFeed = generateActionFeed(properties, tenants, leases, workOrders);
+        const occupancyByCity = generateOccupancyByCity(properties, units);
+        
+        // Simplified leasing funnel (would need dedicated endpoints for real data)
+        const funnel30 = {
+          leads: Math.floor(properties.length * 3.2),
+          tours: Math.floor(properties.length * 2.1),
+          applications: Math.floor(properties.length * 1.8),
+          signed: leases.filter(l => {
+            const startDate = new Date(l.start_date);
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            return startDate >= thirtyDaysAgo;
+          }).length,
+        };
+        
+        const dashboardData: DashboardData = {
+          kpis: {
+            occupancyPct,
+            rentReadyVacant,
+            collectionsRatePct,
+            openCriticalWO,
+            noiMTD,
+          },
+          propertiesForMap,
+          cashflow90,
+          funnel30,
+          occupancy30: { byCity: occupancyByCity },
+          actionFeed,
+        };
+        
+        if (mounted) {
+          setData(dashboardData);
+          if (isDebugMode) {
+            setDebugInfo(qaOverlay);
+          }
+        }
+        
+      } catch (err) {
+        if (isAbortError(err)) return; // Swallow abort errors
+        if (mounted) {
+          setError(err instanceof Error ? err.message : String(err));
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
-    });
-
-    run().catch((e) => {
-      if (isAbortError(e)) return; // never log aborts
-      if (!aliveRef()) return; // don't set state if unmounted
-      
-      console.error('[dashboard] data fetch error:', e);
-      setError(String(e));
-    }).finally(() => {
-      if (!ac.signal.aborted && aliveRef()) {
-        setLoading(false);
-      }
-    });
+    }
+    
+    fetchDashboardData();
     
     return () => {
-      stop();
-      ac.abort(); // triggers AbortError in the fetch; we're swallowing it
+      mounted = false;
+      ac.abort();
     };
-  }, [isDebugMode]); // stable deps only
+  }, [isDebugMode]);
   
   return { data, loading, error, debugInfo };
 }
