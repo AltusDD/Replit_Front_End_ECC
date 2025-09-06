@@ -1,5 +1,6 @@
-// Genesis v2 Dashboard Data Hook - Live Data Only, Exact Specification
+// Genesis v2 Dashboard Data Hook - StrictMode-safe with silent AbortErrors
 import { useState, useEffect, useMemo } from 'react';
+import { fetchJSON, isAbortError, guardAsync } from '../../../utils/net';
 
 // Exact interfaces matching Portfolio V3 endpoints
 interface PropertyData {
@@ -131,26 +132,6 @@ export interface UseDashboardDataResult {
     apiCallsCount: number;
     processingTime: number;
   };
-}
-
-// API fetcher with AbortController support
-async function fetchFromAPI<T>(endpoint: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(`/api/portfolio/${endpoint}`, { signal });
-  
-  if (!response.ok) {
-    if (response.status === 500) {
-      const errorText = await response.text();
-      if (errorText.includes("Supabase not configured")) {
-        throw new Error(
-          "❌ DATABASE CONNECTION: Supabase configuration missing. " +
-          "Dashboard requires live portfolio data connection."
-        );
-      }
-    }
-    throw new Error(`API Error ${response.status}: ${response.statusText}`);
-  }
-  
-  return await response.json();
 }
 
 // Calculate KPIs from live data
@@ -320,145 +301,129 @@ function generateActionFeed(
   };
 }
 
-// Main data fetching function
-async function fetchDashboardData(signal?: AbortSignal): Promise<DashboardData> {
-  // Fetch all portfolio data in parallel using same endpoints as Portfolio V3
-  const [properties, units, leases, tenants] = await Promise.all([
-    fetchFromAPI<PropertyData[]>('properties', signal),
-    fetchFromAPI<UnitData[]>('units', signal),
-    fetchFromAPI<LeaseData[]>('leases', signal),
-    fetchFromAPI<TenantData[]>('tenants', signal),
-  ]);
-  
-  // Calculate all derived data
-  const kpis = calculateKPIs(properties, units, tenants);
-  const propertiesForMap = generateMapProperties(properties, tenants);
-  const cashflow90 = generateCashflow90();
-  const actionFeed = generateActionFeed(leases, tenants, properties);
-  
-  // City occupancy breakdown
-  const cityGroups = properties.reduce((acc, p) => {
-    const city = p.city || 'Unknown';
-    if (!acc[city]) {
-      acc[city] = { properties: 0, totalUnits: 0, occupiedUnits: 0 };
-    }
-    acc[city].properties++;
-    acc[city].totalUnits += p.units;
-    acc[city].occupiedUnits += Math.round(p.units * p.occPct / 100);
-    return acc;
-  }, {} as Record<string, { properties: number; totalUnits: number; occupiedUnits: number }>);
-  
-  const occByCity = Object.entries(cityGroups).map(([city, data]) => ({
-    city,
-    properties: data.properties,
-    occUnits: data.occupiedUnits,
-    vacUnits: data.totalUnits - data.occupiedUnits,
-    occPct: data.totalUnits > 0 ? (data.occupiedUnits / data.totalUnits) * 100 : 0,
-  }));
-  
-  // Leasing funnel (simplified until leads/tours data available)
-  const funnel30 = {
-    leads: Math.floor(properties.length * 3.2),
-    tours: Math.floor(properties.length * 2.1),
-    applications: Math.floor(properties.length * 1.8),
-    signed: Math.floor(properties.length * 1.2),
-  };
-  
-  return {
-    kpis,
-    propertiesForMap,
-    cashflow90,
-    funnel30,
-    occByCity,
-    actionFeed,
-  };
-}
-
 export function useDashboardData(): UseDashboardDataResult {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<UseDashboardDataResult['debugInfo']>();
   
-  // Debug mode detection
+  // Debug mode detection (stable across renders)
   const isDebugMode = useMemo(() => {
     return typeof window !== 'undefined' && 
            new URLSearchParams(window.location.search).get('debug') === '1';
   }, []);
   
   useEffect(() => {
-    let mounted = true;
-    let controller: AbortController | null = null;
+    const ac = new AbortController();
     
-    async function loadData() {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Create new controller for this request
-        controller = new AbortController();
-        const startTime = performance.now();
-        
-        const result = await fetchDashboardData(controller.signal);
-        
-        if (!mounted || controller.signal.aborted) return;
-        
-        const processingTime = performance.now() - startTime;
-        setData(result);
-        
-        if (isDebugMode) {
-          const debugData = {
-            counts: {
-              properties: result.propertiesForMap.length,
-              'cashflow points': result.cashflow90.length,
-              'expiring leases': result.actionFeed.leasesExpiring45.length,
-              delinquents: result.actionFeed.delinquentsTop.length,
-              'critical WOs': result.actionFeed.workOrdersHotlist.length,
-              cities: result.occByCity.length,
-              'funnel leads': result.funnel30.leads,
-              'funnel signed': result.funnel30.signed,
-            },
-            apiCallsCount: 4,
-            processingTime: Math.round(processingTime),
-          };
-          
-          setDebugInfo(debugData);
-          
-          console.group('🏢 Genesis v2 Dashboard Debug Data');
-          console.table(debugData.counts);
-          console.log(`📊 Processing time: ${debugData.processingTime}ms`);
-          console.log(`🔗 API calls made: ${debugData.apiCallsCount}`);
-          console.log('📈 KPIs:', result.kpis);
-          console.groupEnd();
+    const { run, stop, aliveRef } = guardAsync(async () => {
+      setLoading(true);
+      setError(null);
+      
+      const startTime = performance.now();
+      
+      // Fetch all portfolio data in parallel using same endpoints as Portfolio V3
+      const [properties, units, leases, tenants] = await Promise.all([
+        fetchJSON<PropertyData[]>('/api/portfolio/properties', { signal: ac.signal }),
+        fetchJSON<UnitData[]>('/api/portfolio/units', { signal: ac.signal }),
+        fetchJSON<LeaseData[]>('/api/portfolio/leases', { signal: ac.signal }),
+        fetchJSON<TenantData[]>('/api/portfolio/tenants', { signal: ac.signal }),
+      ]);
+      
+      if (!aliveRef()) return; // StrictMode: don't set state after unmount
+      
+      // Calculate all derived data
+      const kpis = calculateKPIs(properties, units, tenants);
+      const propertiesForMap = generateMapProperties(properties, tenants);
+      const cashflow90 = generateCashflow90();
+      const actionFeed = generateActionFeed(leases, tenants, properties);
+      
+      // City occupancy breakdown
+      const cityGroups = properties.reduce((acc, p) => {
+        const city = p.city || 'Unknown';
+        if (!acc[city]) {
+          acc[city] = { properties: 0, totalUnits: 0, occupiedUnits: 0 };
         }
-      } catch (err: any) {
-        if (!mounted) return;
+        acc[city].properties++;
+        acc[city].totalUnits += p.units;
+        acc[city].occupiedUnits += Math.round(p.units * p.occPct / 100);
+        return acc;
+      }, {} as Record<string, { properties: number; totalUnits: number; occupiedUnits: number }>);
+      
+      const occByCity = Object.entries(cityGroups).map(([city, data]) => ({
+        city,
+        properties: data.properties,
+        occUnits: data.occupiedUnits,
+        vacUnits: data.totalUnits - data.occupiedUnits,
+        occPct: data.totalUnits > 0 ? (data.occupiedUnits / data.totalUnits) * 100 : 0,
+      }));
+      
+      // Leasing funnel (simplified until leads/tours data available)
+      const funnel30 = {
+        leads: Math.floor(properties.length * 3.2),
+        tours: Math.floor(properties.length * 2.1),
+        applications: Math.floor(properties.length * 1.8),
+        signed: Math.floor(properties.length * 1.2),
+      };
+      
+      const result: DashboardData = {
+        kpis,
+        propertiesForMap,
+        cashflow90,
+        funnel30,
+        occByCity,
+        actionFeed,
+      };
+      
+      if (!aliveRef()) return; // Double-check before setState
+      
+      const processingTime = performance.now() - startTime;
+      setData(result);
+      
+      if (isDebugMode && aliveRef()) {
+        const debugData = {
+          counts: {
+            properties: result.propertiesForMap.length,
+            'cashflow points': result.cashflow90.length,
+            'expiring leases': result.actionFeed.leasesExpiring45.length,
+            delinquents: result.actionFeed.delinquentsTop.length,
+            'critical WOs': result.actionFeed.workOrdersHotlist.length,
+            cities: result.occByCity.length,
+            'funnel leads': result.funnel30.leads,
+            'funnel signed': result.funnel30.signed,
+          },
+          apiCallsCount: 4,
+          processingTime: Math.round(processingTime),
+        };
         
-        // Ignore all abort-related errors during development
-        if (err?.name === 'AbortError' || err?.message?.includes('abort')) {
-          return;
-        }
+        setDebugInfo(debugData);
         
-        const errorMessage = err?.message || String(err);
-        console.error('Dashboard data error:', errorMessage);
-        setError(errorMessage);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+        console.group('🏢 Genesis v2 Dashboard Debug Data');
+        console.table(debugData.counts);
+        console.log(`📊 Processing time: ${debugData.processingTime}ms`);
+        console.log(`🔗 API calls made: ${debugData.apiCallsCount}`);
+        console.log('📈 KPIs:', result.kpis);
+        console.groupEnd();
       }
-    }
-    
-    loadData();
+    });
+
+    run().catch((e) => {
+      if (isAbortError(e)) return; // never log aborts
+      if (!aliveRef()) return; // don't set state if unmounted
+      
+      console.error('[dashboard] data fetch error:', e);
+      setError(String(e));
+    }).finally(() => {
+      if (!ac.signal.aborted && aliveRef()) {
+        setLoading(false);
+      }
+    });
     
     return () => {
-      mounted = false;
-      // Silent cleanup without triggering any promises
-      if (controller && !controller.signal.aborted) {
-        controller.abort();
-      }
+      stop();
+      ac.abort(); // triggers AbortError in the fetch; we're swallowing it
     };
-  }, [isDebugMode]);
+  }, [isDebugMode]); // stable deps only
   
   return { data, loading, error, debugInfo };
 }
