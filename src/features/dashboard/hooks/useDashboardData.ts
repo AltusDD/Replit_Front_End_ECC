@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { fetchJSON, isAbortError } from '@/utils/net';
 import { occupancy, rentReadyVacant, collectionsMTD, noiMTD } from '@/features/shared/portfolioMath';
 
-// Live API interfaces - matching server PropertyOut format
+// Live API interfaces - matching actual server response
 export interface Property {
   id: number;
   name: string;
@@ -16,13 +16,9 @@ export interface Property {
   units: number;
   occPct: number;
   active: boolean;
-  // Add optional fields for map
-  lat?: number;
-  lng?: number;
-  address?: string;
 }
 
-// Matching server UnitOut format
+// Matching actual server UnitOut format
 export interface Unit {
   id: number;
   propertyName: string;
@@ -32,30 +28,30 @@ export interface Unit {
   sqft: number | null;
   status: string | null;
   marketRent: number | null;
-  // Add for backwards compatibility 
-  property_id?: number;
-  rent_amount?: number;
-  rent_ready?: boolean;
 }
 
+// Matching actual server LeaseOut format
 export interface Lease {
   id: number;
-  unit_id: number;
-  property_id: number;
+  propertyName: string;
+  unitLabel: string;
+  tenants: string[];
   status: string;
-  start_date: string;
-  end_date: string;
-  rent_cents: number;
-  tenant_ids?: number[];
-  primary_tenant_id?: number;
+  start: string | null;
+  end: string | null;
+  rent: number | null;
 }
 
+// Matching actual server TenantOut format
 export interface Tenant {
   id: number;
-  display_name?: string;
-  full_name?: string;
-  balance_cents: number;
-  delinquency_days?: number;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  propertyName: string | null;
+  unitLabel: string | null;
+  type: string;
+  balance: number | null;
 }
 
 export interface WorkOrder {
@@ -177,13 +173,7 @@ function getMTDRange() {
   return { start: monthStart, end: now };
 }
 
-// Helper function to extract property ID from name
-function extractPropertyIdFromName(propertyName: string, properties: Property[]): number {
-  const property = properties.find(p => p.name === propertyName);
-  return property?.id || 0;
-}
-
-// Generate KPIs from live data using centralized math
+// Generate KPIs from live data using actual API structure
 function generateKPIs(
   properties: Property[],
   units: Unit[],
@@ -192,106 +182,112 @@ function generateKPIs(
   workOrders: WorkOrder[],
   transactions: Transaction[]
 ): DashboardData['kpis'] {
-  // Filter to active properties only
-  const activePropertyIds = new Set(properties.filter(p => p.active).map(p => p.id));
-  // Handle both old and new unit formats
-  const rentableUnits = units.filter(u => {
-    const propId = u.property_id || extractPropertyIdFromName(u.propertyName, properties);
-    return activePropertyIds.has(propId);
+  // Use the occupancy data already calculated by the server
+  const activeProperties = properties.filter(p => p.active);
+  
+  // Calculate portfolio-wide occupancy from property data
+  const totalUnits = activeProperties.reduce((sum, p) => sum + p.units, 0);
+  const totalOccupied = activeProperties.reduce((sum, p) => sum + Math.round((p.units * p.occPct) / 100), 0);
+  const occupancyPct = totalUnits > 0 ? (totalOccupied / totalUnits) * 100 : 0;
+  
+  // Calculate rent-ready vacant units
+  const unitsWithRent = units.filter(u => u.marketRent && u.marketRent > 0);
+  const totalVacant = totalUnits - totalOccupied;
+  const rentReady = unitsWithRent.length;
+  
+  // Calculate collections from transactions
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const mtdTransactions = transactions.filter(t => {
+    const date = new Date(t.posted_on);
+    return date >= monthStart && date <= now;
   });
   
-  // Convert units to expected format for calculations
-  const normalizedUnits = rentableUnits.map(u => ({
-    ...u,
-    property_id: u.property_id || extractPropertyIdFromName(u.propertyName, properties),
-    status: u.status === 'occupied' ? 'occupied' : 'vacant',
-    rent_ready: u.status === 'vacant' && u.marketRent && u.marketRent > 0
-  }));
+  const rentIncome = mtdTransactions
+    .filter(t => t.type === 'rent')
+    .reduce((sum, t) => sum + t.amount_cents, 0);
   
-  // Use centralized occupancy calculation with normalized units
-  const { occ, total, ratio } = occupancy(normalizedUnits);
-  const occupancyPct = ratio * 100;
+  // Use market rent as billed amount (simplified)
+  const expectedRent = activeProperties.reduce((sum, p) => {
+    const propertyUnits = units.filter(u => u.propertyName === p.name);
+    return sum + propertyUnits.reduce((unitSum, u) => unitSum + (u.marketRent || 0), 0);
+  }, 0) * 100; // Convert to cents
   
-  // Use centralized rent ready calculation
-  const { ready, vac } = rentReadyVacant(normalizedUnits);
-  
-  // Use centralized collections calculation
-  const { billed_cents, receipts_cents, ratio: collectionsRatio } = collectionsMTD(transactions);
-  const collectionsRatePct = collectionsRatio * 100;
+  const collectionsRatePct = expectedRent > 0 ? (rentIncome / expectedRent) * 100 : 0;
   
   // Critical work orders
   const openCriticalWO = workOrders.filter(wo => 
     ['High', 'Critical'].includes(wo.priority) && wo.status !== 'completed'
   ).length;
   
-  // Use centralized NOI calculation
-  const { noi_cents } = noiMTD(transactions);
+  // Calculate NOI from transactions
+  const income = mtdTransactions
+    .filter(t => t.type === 'rent')
+    .reduce((sum, t) => sum + t.amount_cents, 0);
+  const expenses = mtdTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount_cents, 0);
+  const noiMTD = (income - expenses) / 100;
   
   return {
     occupancyPct,
-    rentReadyVacant: { ready, vacant: vac },
+    rentReadyVacant: { ready: rentReady, vacant: totalVacant },
     collectionsRatePct,
     collectionsDebug: { 
-      receipts: receipts_cents / 100, 
-      billed: billed_cents / 100 
+      receipts: rentIncome / 100, 
+      billed: expectedRent / 100 
     },
     openCriticalWO,
-    noiMTD: noi_cents / 100,
+    noiMTD,
   };
 }
 
-// Generate map properties with demo coordinates for visualization
+// Generate map properties - for now use geographical centers for states  
 function generateMapProperties(
   properties: Property[],
   units: Unit[],
   tenants: Tenant[]
 ): DashboardData['propertiesForMap'] {
+  // Simple state coordinate mapping
+  const stateCoords: Record<string, { lat: number; lng: number }> = {
+    'GA': { lat: 32.1656, lng: -82.9001 }, // Georgia center
+    'IN': { lat: 40.2732, lng: -86.1349 }, // Indiana center  
+    'IL': { lat: 40.6331, lng: -89.3985 }, // Illinois center
+  };
+  
   return properties
+    .filter(p => p.active && p.state && stateCoords[p.state])
     .map((property, index) => {
-      // Use NYC area coordinates with slight offsets for demo
-      const baseLatLng = [
-        { lat: 40.7589, lng: -73.9851 }, // Manhattan
-        { lat: 40.6892, lng: -74.0445 }, // Brooklyn  
-        { lat: 40.7282, lng: -73.7949 }, // Queens
-        { lat: 40.8176, lng: -73.7782 }, // Bronx
-        { lat: 40.5795, lng: -74.1502 }  // Staten Island
-      ];
-      const coords = baseLatLng[index % baseLatLng.length];
-      const propertyWithCoords = {
-        ...property,
-        lat: coords.lat,
-        lng: coords.lng
-      };
-      const propertyUnits = units.filter(u => u.property_id === property.id);
-      const occupiedUnits = propertyUnits.filter(u => u.status === 'occupied');
-      const vacantUnits = propertyUnits.filter(u => u.status === 'vacant');
-      const rentReadyUnits = vacantUnits.filter(u => u.rent_ready);
+      const stateCenter = stateCoords[property.state!];
+      // Add small offset based on index to separate pins
+      const offsetLat = (index % 10 - 5) * 0.1;
+      const offsetLng = (Math.floor(index / 10) % 10 - 5) * 0.1;
       
-      // Determine status based on occupancy and delinquency
-      let status: 'occupied' | 'vacant' | 'delinquent' = 'vacant';
+      // Determine status based on occupancy percentage and delinquent tenants
+      let status: 'occupied' | 'vacant' | 'delinquent' = property.occPct > 50 ? 'occupied' : 'vacant';
       let currentTenant: string | undefined;
       
-      if (occupiedUnits.length > 0) {
-        status = 'occupied';
-        // Check for delinquent tenants
-        const delinquentTenant = tenants.find(t => 
-          t.balance_cents > 0 && 
-          occupiedUnits.some(u => u.id === t.id) // Simplified lookup
-        );
-        if (delinquentTenant) {
-          status = 'delinquent';
-          currentTenant = delinquentTenant.display_name || delinquentTenant.full_name;
-        }
+      // Check for delinquent tenants at this property
+      const propertyTenants = tenants.filter(t => t.propertyName === property.name);
+      const delinquentTenant = propertyTenants.find(t => t.balance && t.balance > 50);
+      
+      if (delinquentTenant && property.occPct > 0) {
+        status = 'delinquent';
+        currentTenant = delinquentTenant.name;
       }
+      
+      // Check if vacant units are rent ready
+      const propertyUnits = units.filter(u => u.propertyName === property.name);
+      const rentReady = propertyUnits.some(u => u.marketRent && u.marketRent > 0);
       
       return {
         id: property.id,
-        lat: propertyWithCoords.lat,
-        lng: propertyWithCoords.lng,
-        address: property.address,
-        city: property.city,
+        lat: stateCenter.lat + offsetLat,
+        lng: stateCenter.lng + offsetLng,
+        address: property.name, // Use name as address
+        city: property.city || '',
         status,
-        rentReady: rentReadyUnits.length > 0,
+        rentReady,
         currentTenant,
       };
     });
