@@ -108,14 +108,9 @@ export interface UseDashboardDataResult {
 
 // Helper to check environment requirements
 function checkEnvironment(): void {
-  // Check if we're using the built-in database (preferred approach)
-  if (!process.env.DATABASE_URL) {
-    throw new Error(
-      "❌ ENVIRONMENT ERROR: DATABASE_URL is required for live data. " +
-      "Please ensure the PostgreSQL database is configured. " +
-      "Live data mode requires database connection - no mock data allowed."
-    );
-  }
+  // Frontend environment check - database connection is handled by the backend
+  // No environment variables needed on frontend side for live data mode
+  // The API endpoints will handle database connection validation
 }
 
 // API client for portfolio endpoints
