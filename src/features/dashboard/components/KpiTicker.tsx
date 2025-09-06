@@ -118,7 +118,7 @@ function KpiCard({
 }
 
 export function KpiTicker({ kpis }: KpiTickerProps) {
-  // Mock sparkline data for collections (would come from daily receipts)
+  // Daily receipts trend - would come from live daily collections data
   const collectionsSparkline = [85, 82, 89, 87, 91, 88, kpis.collectionsRatePct];
   
   return (
