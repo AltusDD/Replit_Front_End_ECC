@@ -96,7 +96,7 @@ function KpiCard({
 }) {
   return (
     <Link href={linkTo}>
-      <div className="ecc-kpi" data-testid={`kpi-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+      <div className="ecc-kpi p-4 rounded-lg" role="button" tabIndex={0} data-testid={`kpi-${title.toLowerCase().replace(/\s+/g, '-')}`}>
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="ecc-kpi__title">{title}</div>

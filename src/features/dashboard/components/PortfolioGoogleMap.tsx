@@ -121,26 +121,11 @@ export function PortfolioGoogleMap({ propertiesForMap, missingGeoCount = 0 }: Po
   // Friendly state if API key missing
   if (!hasApiKey) {
     return (
-      <div className="ecc-panel p-6">
-        <div className="portfolio-map bg-[var(--panel-elev)] rounded-lg flex items-center justify-center">
-          <div className="text-center p-8">
-            <div className="text-4xl mb-4">🗺️</div>
-            <h3 className="text-lg font-semibold text-[var(--text)] mb-2">
-              Google Maps Integration
-            </h3>
-            <p className="text-sm text-[var(--text-dim)] mb-4">
-              Configure <code className="px-2 py-1 bg-[var(--panel-bg)] rounded text-xs">VITE_GOOGLE_MAPS_API_KEY</code> to view portfolio properties on an interactive map with clustering.
-            </p>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-[var(--good)]">{propertiesForMap.filter(p => p.status === 'occupied').length}</div>
-                <div className="text-xs text-[var(--text-dim)]">Occupied</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-[var(--warn)]">{propertiesForMap.filter(p => p.status === 'vacant').length}</div>
-                <div className="text-xs text-[var(--text-dim)]">Vacant</div>
-              </div>
-            </div>
+      <div className="portfolio-map ecc-panel p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="mb-2 font-medium">Google Maps Integration</div>
+          <div className="text-sm text-[var(--text-dim)]">
+            Set <code>VITE_GOOGLE_MAPS_API_KEY</code> to render the live portfolio map with clustering.
           </div>
         </div>
       </div>

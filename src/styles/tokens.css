@@ -1,19 +1,14 @@
-:root{
-  --altus-black:#0b0e12;
-  --altus-gold:#d6b36a;
-
-  /* Cool gray surfaces */
-  --panel-bg:#1a1d21;     /* primary panel */
-  --panel-elev:#20242a;   /* elevated surface */
-  --line:#2a2d31;         /* borders */
-  --neutral:#7b818a;
-
-  /* Text */
-  --text:#e6e7ea;
-  --text-dim:#a8adb7;
-
-  /* Semantics */
-  --good:#31c48d;  /* green */
-  --warn:#f3c969;  /* yellow */
-  --bad:#ef5953;   /* red */
+:root {
+  --altus-black: #0b0e12;
+  --altus-gold:  #d6b36a;
+  /* Approved light-grey panels (no brown tint) */
+  --panel-bg:    #1c2026;  /* card background */
+  --panel-elev:  #232833;  /* elevated surfaces */
+  --line:        #2f3640;  /* borders */
+  --text:        #e9ecf1;  /* primary text */
+  --text-dim:    #a9b1bc;  /* secondary */
+  --good:        #2fc78d;
+  --warn:        #f3c969;
+  --bad:         #ef5953;
+  --neutral:     #8a93a1;
 }

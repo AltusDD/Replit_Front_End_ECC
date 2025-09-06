@@ -2,15 +2,16 @@
 
 @import url('./tokens.css');
 
-.ecc-panel{
+.ecc-panel {
   background: var(--panel-bg);
   border: 1px solid var(--line);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.26);
   border-radius: 12px;
-  box-shadow: 0 1px 0 rgba(0,0,0,.35);
 }
 .ecc-panel__title{font-weight:600;letter-spacing:.4px}
-.ecc-kpi{
-  background: var(--panel-elev);
+/* KPI: higher contrast chip */
+.ecc-kpi {
+  background: rgba(255,255,255,0.02);
   border: 1px solid var(--line);
 }
 .ecc-kpi:hover{transform:translateY(-1px)}
@@ -32,6 +33,10 @@
   outline: 2px solid var(--altus-gold);
   outline-offset: 2px;
 }
+
+.ecc-kpi_title { color: var(--text-dim); }
+.ecc-kpi_value { color: var(--text); font-weight: 600; font-size: 24px; }
+.ecc-kpi_note  { color: var(--text-dim); }
 
 .ecc-kpi__title {
   font-size: 12px;
@@ -78,10 +83,9 @@
   fill: var(--text-dim);
 }
 
-/* Map container heights */
+/* Map: consistent height + no scroll bleed */
 .portfolio-map {
   height: 520px;
-  border-radius: 12px;
   overflow: hidden;
 }
 

@@ -113,7 +113,7 @@ export function PriorityActionFeed({ actionFeed }: PriorityActionFeedProps) {
                 icon="✅"
               />
             ) : (
-              actionFeed.delinquentsTop.map((delinquent) => (
+              actionFeed.delinquentsTop.slice(0,3).map((delinquent) => (
                 <ActionItem
                   key={delinquent.tenantId}
                   href={`/card/tenant/${delinquent.tenantId}`}
@@ -173,7 +173,7 @@ export function PriorityActionFeed({ actionFeed }: PriorityActionFeedProps) {
                 icon="📋"
               />
             ) : (
-              actionFeed.leasesExpiring45.map((lease) => (
+              actionFeed.leasesExpiring45.slice(0,3).map((lease) => (
                 <ActionItem
                   key={lease.leaseId}
                   href={`/card/lease/${lease.leaseId}`}
@@ -233,7 +233,7 @@ export function PriorityActionFeed({ actionFeed }: PriorityActionFeedProps) {
                 icon="🔧"
               />
             ) : (
-              actionFeed.workOrdersHotlist.map((wo) => (
+              actionFeed.workOrdersHotlist.slice(0,3).map((wo) => (
                 <ActionItem
                   key={wo.woId}
                   href={`/card/workorder/${wo.woId}`}
