@@ -253,7 +253,7 @@ function generateMapProperties(
         { lat: 40.5795, lng: -74.1502 }  // Staten Island
       ];
       const coords = baseLatLng[index % baseLatLng.length];
-      const property = {
+      const propertyWithCoords = {
         ...property,
         lat: coords.lat + (Math.random() - 0.5) * 0.01, // Small random offset
         lng: coords.lng + (Math.random() - 0.5) * 0.01
@@ -282,8 +282,8 @@ function generateMapProperties(
       
       return {
         id: property.id,
-        lat: property.lat,
-        lng: property.lng,
+        lat: propertyWithCoords.lat,
+        lng: propertyWithCoords.lng,
         address: property.address,
         city: property.city,
         status,
