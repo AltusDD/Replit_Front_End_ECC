@@ -143,7 +143,7 @@ export default function DashboardPage() {
             ) : (
               <PortfolioGoogleMap 
                 propertiesForMap={data.propertiesForMap}
-                missingGeoCount={debugInfo?.missingGeoCount || 0}
+missingGeoCount={debugInfo?.missing?.geo || 0}
               />
             )}
           </div>
@@ -163,10 +163,8 @@ export default function DashboardPage() {
             <FinancialsSkeleton />
           ) : (
             <FinancialsAndLeasing 
-              financialData={{
-                cashflow90: data.cashflow90,
-                funnel30: data.funnel30
-              }} 
+              cashflow90={data.cashflow90}
+              funnel30={data.funnel30}
             />
           )}
         </div>
@@ -177,8 +175,7 @@ export default function DashboardPage() {
             <OccupancySkeleton />
           ) : (
             <OccupancyByCity 
-              occupancyData={data.occupancy30?.byCity}
-              loading={false}
+              occupancy30={data.occupancy30}
             />
           )}
         </div>
