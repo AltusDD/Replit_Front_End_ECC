@@ -122,18 +122,125 @@ export function useDashboardData() {
           occPct: v.occ + v.vac ? (v.occ / (v.occ + v.vac)) * 100 : 0,
         })).sort((a,b) => a.city.localeCompare(b.city));
 
+        // Generate map properties - use simple state-based coordinates
+        const stateCoords: Record<string, { lat: number; lng: number }> = {
+          'GA': { lat: 32.1656, lng: -82.9001 },
+          'IN': { lat: 40.2732, lng: -86.1349 },  
+          'IL': { lat: 40.6331, lng: -89.3985 },
+        };
+        
+        const propertiesForMap = properties
+          .filter((p: any) => p.state && stateCoords[p.state])
+          .map((property: any, index: number) => {
+            const stateCenter = stateCoords[property.state!];
+            const offsetLat = (index % 10 - 5) * 0.1;
+            const offsetLng = (Math.floor(index / 10) % 10 - 5) * 0.1;
+            
+            // Determine status based on occupancy and delinquent tenants
+            const propertyUnits = units.filter((u: any) => 
+              String(u.property_id ?? u.propertyId) === String(property.id)
+            );
+            const occupied = propertyUnits.some((u: any) => 
+              (u.status ?? "").toString().toLowerCase() === "occupied"
+            );
+            const delinquent = tenants.some((t: any) => 
+              String(t.property_id ?? t.propertyId) === String(property.id) &&
+              (toNum(t.balance_cents) ?? toNum(t.balance) ?? 0) > 0
+            );
+            
+            let status: 'occupied' | 'vacant' | 'delinquent' = occupied ? 'occupied' : 'vacant';
+            if (delinquent && occupied) status = 'delinquent';
+            
+            const rentReady = propertyUnits.some((u: any) => 
+              (u.status ?? "").toString().toLowerCase() === "vacant" &&
+              toNum(u.marketRent) && toNum(u.marketRent)! > 0
+            );
+            
+            return {
+              id: property.id,
+              lat: stateCenter.lat + offsetLat,
+              lng: stateCenter.lng + offsetLng,
+              address: property.name || property.address || 'Unknown Property',
+              city: property.city || '',
+              status,
+              rentReady,
+            };
+          });
+
+        // Generate cash flow data - simplified for 90 days
+        const cashflow90 = [];
+        for (let i = 12; i >= 0; i--) {
+          const weekStart = new Date();
+          weekStart.setDate(weekStart.getDate() - (i * 7));
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekEnd.getDate() + 6);
+          
+          const weekTxns = transactions.filter((t: any) => {
+            const date = new Date(t.date || t.posted_at || t.created_at);
+            return date >= weekStart && date <= weekEnd;
+          });
+          
+          const income = weekTxns
+            .filter((t: any) => (t.type || t.kind || "").toString().toLowerCase() === "payment")
+            .reduce((sum: number, t: any) => sum + (toNum(t.amount_cents) ?? toNum(t.amount) ?? 0), 0) / 100;
+            
+          const expenses = weekTxns
+            .filter((t: any) => (t.type || t.kind || "").toString().toLowerCase() === "charge")
+            .reduce((sum: number, t: any) => sum + (toNum(t.amount_cents) ?? toNum(t.amount) ?? 0), 0) / 100;
+          
+          cashflow90.push({
+            periodLabel: weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            income,
+            expenses,
+            noi: income - expenses,
+          });
+        }
+
         setState({
           kpis: {
-            occupancy,
-            rentReady,
-            collectionsMTD,
-            criticalWOs,
+            occupancyPct: occupancy,
+            rentReadyVacant: { ready: rentReady, vacant: totalUnits - occupiedUnits },
+            collectionsRatePct: collectionsMTD,
+            collectionsDebug: { receipts: paid / 100, billed: billed / 100 },
+            openCriticalWO: criticalWOs,
+            noiMTD: (paid - billed) / 100,
           },
-          actionFeed: { delinquents, expiring, hotlist },
-          occupancyByCity: occByCity,
-          // keep existing fields (map, charts) populated downstream from live arrays only
-          raw: { properties, units, leases, tenants, workorders, transactions },
-        } as any);
+          propertiesForMap,
+          actionFeed: {
+            delinquentsTop: delinquents.map((t: any) => ({
+              tenantId: t.id,
+              tenant: t.name || t.display_name || t.full_name || 'Unknown Tenant',
+              property: properties.find((p: any) => String(p.id) === String(t.property_id ?? t.propertyId))?.name || 'Unknown Property',
+              balance: t.balance || 0,
+              daysOverdue: t.delinquency_days || Math.floor((Date.now() - new Date(t.updated_at || t.created_at).getTime()) / 86400000),
+            })),
+            leasesExpiring45: expiring.map((l: any) => ({
+              leaseId: l.id,
+              tenant: tenants.find((t: any) => String(t.id) === String(l.tenant_id ?? l.primary_tenant_id))?.name || 'Unknown Tenant',
+              property: properties.find((p: any) => String(p.id) === String(l.property_id ?? l.propertyId))?.name || 'Unknown Property',
+              endDate: l.endDate,
+              daysToEnd: Math.ceil((new Date(l.endDate).getTime() - Date.now()) / 86400000),
+            })),
+            workOrdersHotlist: hotlist.map((w: any) => ({
+              woId: w.id,
+              property: properties.find((p: any) => String(p.id) === String(w.property_id ?? w.propertyId))?.name || 'Unknown Property',
+              summary: w.title || w.description || 'Work Order',
+              priority: (w.priority || 'medium').toString(),
+              ageDays: Math.floor((Date.now() - new Date(w.created_at || w.createdAt).getTime()) / 86400000),
+            })),
+          },
+          cashflow90,
+          leasingFunnel30: {
+            leads: 0,
+            tours: 0,
+            applications: 0,
+            approved: 0,
+            signed: 0,
+          },
+          occupancy30: {
+            byCity: occByCity,
+          },
+        });
       } catch (e) {
         if (isAbortError(e)) return;
         setError(e as Error);
