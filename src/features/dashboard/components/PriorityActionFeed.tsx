@@ -1,26 +1,25 @@
-// PriorityActionFeed.tsx - Genesis v2 specification with action buttons
+// PriorityActionFeed.tsx - 3 priority queues with clear CTAs and positive empty states
 import React from 'react';
 import { Link } from 'wouter';
-import { fmtDate, fmtMoney } from '../../../utils/format';
-import { ActionButton } from './ActionButton';
+import { fmtMoney, fmtDate } from '../../../utils/format';
 
 interface ActionFeedData {
   delinquentsTop: Array<{
-    tenantId: string;
+    tenantId: number;
     tenant: string;
     property: string;
     balance: number;
     daysOverdue: number;
   }>;
   leasesExpiring45: Array<{
-    leaseId: string;
+    leaseId: number;
     tenant: string;
     property: string;
     endDate: string;
     daysToEnd: number;
   }>;
   workOrdersHotlist: Array<{
-    woId: string;
+    woId: number;
     property: string;
     summary: string;
     priority: string;
@@ -32,224 +31,252 @@ interface PriorityActionFeedProps {
   actionFeed: ActionFeedData;
 }
 
-// Section component with empty states
-function ActionSection({ 
-  title, 
-  icon, 
+// Action item component with CTA
+function ActionItem({ 
   children, 
-  emptyMessage 
+  href, 
+  priority = 'normal' 
 }: { 
-  title: string;
-  icon: string;
   children: React.ReactNode;
-  emptyMessage: string;
+  href: string;
+  priority?: 'normal' | 'high' | 'critical';
 }) {
+  const priorityClasses = {
+    normal: 'border-[var(--line)] hover:border-[var(--text-dim)]',
+    high: 'border-[var(--warn)]/40 hover:border-[var(--warn)]',
+    critical: 'border-[var(--bad)]/40 hover:border-[var(--bad)]',
+  };
+  
   return (
-    <div className="mb-8 last:mb-0">
-      <h4 className="flex items-center gap-2 text-sm font-semibold text-[var(--text)] mb-4 uppercase tracking-wide">
-        <span>{icon}</span>
-        {title}
-      </h4>
-      {children}
-    </div>
+    <Link href={href}>
+      <div className={`p-3 rounded-lg border ${priorityClasses[priority]} bg-[var(--panel-elev)] hover:bg-[var(--panel-elev-hover)] transition-colors cursor-pointer`}>
+        {children}
+      </div>
+    </Link>
   );
 }
 
-// Individual action item wrapper
-function ActionItem({ 
-  children 
-}: { 
-  children: React.ReactNode;
-}) {
+// Priority badge
+function PriorityBadge({ priority }: { priority: string }) {
+  const priorityConfig: Record<string, { text: string; classes: string }> = {
+    Critical: { text: 'Critical', classes: 'bg-[var(--bad)] text-white' },
+    High: { text: 'High', classes: 'bg-[var(--warn)] text-[var(--altus-black)]' },
+    Medium: { text: 'Medium', classes: 'bg-[var(--neutral)] text-white' },
+    Low: { text: 'Low', classes: 'bg-[var(--text-dim)] text-white' },
+  };
+  
+  const config = priorityConfig[priority] || priorityConfig.Medium;
+  
   return (
-    <div className="bg-[var(--panel-elev)] border border-[var(--line)] rounded-lg p-4 mb-3 last:mb-0">
-      {children}
-    </div>
+    <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${config.classes}`}>
+      {config.text}
+    </span>
   );
 }
 
 // Positive empty state component
-function EmptyState({ message, icon }: { message: string; icon: string }) {
+function EmptyState({ 
+  title, 
+  message, 
+  icon 
+}: { 
+  title: string;
+  message: string;
+  icon: string;
+}) {
   return (
-    <div className="bg-[var(--panel-elev)] rounded-lg p-6 text-center">
-      <div className="text-2xl mb-2">{icon}</div>
-      <div className="text-[var(--text)] text-sm font-medium">
-        {message}
-      </div>
+    <div className="p-6 text-center bg-[var(--panel-elev)] rounded-lg border border-[var(--line)]">
+      <div className="text-3xl mb-3">{icon}</div>
+      <h4 className="text-sm font-medium text-[var(--text)] mb-1">{title}</h4>
+      <p className="text-xs text-[var(--text-dim)]">{message}</p>
+    </div>
+  );
+}
+
+// Section header with count
+function SectionHeader({ title, count }: { title: string; count: number }) {
+  return (
+    <div className="flex items-center justify-between mb-3">
+      <h3 className="text-sm font-semibold text-[var(--text)] uppercase tracking-wide">
+        {title}
+      </h3>
+      <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold bg-[var(--altus-gold)] text-[var(--altus-black)] rounded-full">
+        {count}
+      </span>
     </div>
   );
 }
 
 export function PriorityActionFeed({ actionFeed }: PriorityActionFeedProps) {
-  if (!actionFeed) {
-    return (
-      <div className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-6">
-        <div className="space-y-6">
-          {[...Array(3)].map((_, sectionIndex) => (
-            <div key={sectionIndex}>
-              <div className="bg-[var(--panel-elev)] h-4 w-32 mb-4 rounded animate-pulse"></div>
-              <div className="space-y-3">
-                {[...Array(2)].map((_, itemIndex) => (
-                  <div key={itemIndex} className="bg-[var(--panel-elev)] rounded-lg p-4">
-                    <div className="bg-[var(--panel-bg)] h-4 w-24 mb-2 rounded animate-pulse"></div>
-                    <div className="bg-[var(--panel-bg)] h-3 w-32 rounded animate-pulse"></div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const { delinquentsTop, leasesExpiring45, workOrdersHotlist } = actionFeed;
-
   return (
     <div className="bg-[var(--panel-bg)] border border-[var(--line)] rounded-lg p-6">
-      <div className="space-y-6">
-        {/* Delinquency Alerts */}
-        <ActionSection
-          title="Delinquency Alerts"
-          icon="🆘"
-          emptyMessage="No delinquent tenants. Great job on collections! 🎉"
-        >
-          {delinquentsTop.length === 0 ? (
-            <EmptyState message="No delinquent tenants. Great job on collections!" icon="🎉" />
-          ) : (
-            delinquentsTop.slice(0, 3).map((item) => (
-              <ActionItem key={item.tenantId}>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-[var(--text)] truncate">
-                      {item.tenant}
-                    </div>
-                    <div className="text-sm text-[var(--text-dim)] truncate">
-                      {item.property}
-                    </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-sm font-medium text-[var(--bad)]">
-                        {fmtMoney(item.balance)}
-                      </span>
-                      <span className="text-xs text-[var(--text-dim)]">
-                        • {item.daysOverdue} days overdue
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 ml-4">
-                    <ActionButton
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => window.open(`/communications/send?tenant=${item.tenantId}&template=payment_reminder`, '_blank')}
-                    >
-                      Send Reminder
-                    </ActionButton>
-                    <ActionButton
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => window.open(`/legal/eviction?tenant=${item.tenantId}`, '_blank')}
-                    >
-                      Start Eviction
-                    </ActionButton>
-                  </div>
-                </div>
-              </ActionItem>
-            ))
-          )}
-        </ActionSection>
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-[var(--text)] mb-1">Priority Action Feed</h2>
+        <p className="text-sm text-[var(--text-dim)]">
+          Real-time alerts requiring immediate attention
+        </p>
+      </div>
 
-        {/* Lease Renewals */}
-        <ActionSection
-          title="Lease Renewals (≤45d)"
-          icon="⚠️"
-          emptyMessage="No leases expiring soon. You're ahead of the game! 🎯"
-        >
-          {leasesExpiring45.length === 0 ? (
-            <EmptyState message="No leases expiring soon. You're ahead of the game!" icon="🎯" />
-          ) : (
-            leasesExpiring45.slice(0, 3).map((item) => (
-              <ActionItem key={item.leaseId}>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-[var(--text)] truncate">
-                      {item.tenant}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Delinquent Tenants Queue */}
+        <div>
+          <SectionHeader 
+            title="Delinquent Tenants" 
+            count={actionFeed.delinquentsTop.length} 
+          />
+          
+          <div className="space-y-3">
+            {actionFeed.delinquentsTop.length === 0 ? (
+              <EmptyState
+                title="All Current"
+                message="No delinquent tenants requiring collection action"
+                icon="✅"
+              />
+            ) : (
+              actionFeed.delinquentsTop.map((delinquent) => (
+                <ActionItem
+                  key={delinquent.tenantId}
+                  href={`/card/tenant/${delinquent.tenantId}`}
+                  priority={delinquent.daysOverdue > 30 ? 'critical' : 'high'}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-[var(--text)] mb-1">
+                        {delinquent.tenant}
+                      </div>
+                      <div className="text-xs text-[var(--text-dim)] mb-2">
+                        {delinquent.property}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-[var(--bad)]">
+                          {fmtMoney(delinquent.balance)}
+                        </span>
+                        <span className="text-xs text-[var(--text-dim)]">
+                          {delinquent.daysOverdue} days overdue
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-sm text-[var(--text-dim)] truncate">
-                      {item.property}
-                    </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-sm text-[var(--warn)]">
-                        Expires {fmtDate(item.endDate)}
-                      </span>
-                      <span className="text-xs text-[var(--text-dim)]">
-                        • {item.daysToEnd} days
-                      </span>
+                    <div className="ml-2">
+                      <div className={`w-3 h-3 rounded-full ${
+                        delinquent.daysOverdue > 30 ? 'bg-[var(--bad)]' : 'bg-[var(--warn)]'
+                      }`} />
                     </div>
                   </div>
-                  <div className="flex gap-2 ml-4">
-                    <ActionButton
-                      size="sm"
-                      onClick={() => window.open(`/leasing/renewal?lease=${item.leaseId}`, '_blank')}
-                    >
-                      Prepare Renewal
-                    </ActionButton>
-                    <ActionButton
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => window.open(`/leasing/vacancy?lease=${item.leaseId}`, '_blank')}
-                    >
-                      Do Not Renew
-                    </ActionButton>
-                  </div>
-                </div>
-              </ActionItem>
-            ))
-          )}
-        </ActionSection>
+                </ActionItem>
+              ))
+            )}
+            
+            {actionFeed.delinquentsTop.length > 0 && (
+              <Link href="/portfolio/tenants?filter=delinquent">
+                <button className="w-full p-2 text-xs text-[var(--altus-gold)] border border-[var(--altus-gold)]/40 rounded-lg hover:bg-[var(--altus-gold)]/10 transition-colors">
+                  View All Delinquent Accounts →
+                </button>
+              </Link>
+            )}
+          </div>
+        </div>
 
-        {/* Maintenance Hotlist */}
-        <ActionSection
-          title="Maintenance Hotlist"
-          icon="🛠️"
-          emptyMessage="No critical maintenance issues. All systems running smoothly! ✨"
-        >
-          {workOrdersHotlist.length === 0 ? (
-            <EmptyState message="No critical maintenance issues. All systems running smoothly!" icon="✨" />
-          ) : (
-            workOrdersHotlist.slice(0, 3).map((item) => (
-              <ActionItem key={item.woId}>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-[var(--text)] truncate">
-                      {item.summary}
+        {/* Expiring Leases Queue */}
+        <div>
+          <SectionHeader 
+            title="Expiring Leases" 
+            count={actionFeed.leasesExpiring45.length} 
+          />
+          
+          <div className="space-y-3">
+            {actionFeed.leasesExpiring45.length === 0 ? (
+              <EmptyState
+                title="All Renewed"
+                message="No leases expiring in the next 45 days"
+                icon="📋"
+              />
+            ) : (
+              actionFeed.leasesExpiring45.map((lease) => (
+                <ActionItem
+                  key={lease.leaseId}
+                  href={`/card/lease/${lease.leaseId}`}
+                  priority={lease.daysToEnd <= 14 ? 'high' : 'normal'}
+                >
+                  <div>
+                    <div className="text-sm font-medium text-[var(--text)] mb-1">
+                      {lease.tenant}
                     </div>
-                    <div className="text-sm text-[var(--text-dim)] truncate">
-                      {item.property}
+                    <div className="text-xs text-[var(--text-dim)] mb-2">
+                      {lease.property}
                     </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className={`text-sm font-medium ${
-                        item.priority === 'Critical' ? 'text-[var(--bad)]' : 'text-[var(--warn)]'
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-[var(--text)]">
+                        Expires {fmtDate(lease.endDate)}
+                      </span>
+                      <span className={`text-xs ${
+                        lease.daysToEnd <= 14 ? 'text-[var(--bad)]' : 'text-[var(--warn)]'
                       }`}>
-                        {item.priority}
-                      </span>
-                      <span className="text-xs text-[var(--text-dim)]">
-                        • {item.ageDays} days old
+                        ({lease.daysToEnd} days)
                       </span>
                     </div>
                   </div>
-                  <div className="flex gap-2 ml-4">
-                    <ActionButton
-                      size="sm"
-                      onClick={() => window.open(`/maintenance/assign-vendor?wo=${item.woId}`, '_blank')}
-                    >
-                      Assign Vendor
-                    </ActionButton>
+                </ActionItem>
+              ))
+            )}
+            
+            {actionFeed.leasesExpiring45.length > 0 && (
+              <Link href="/portfolio/leases?status=expiring">
+                <button className="w-full p-2 text-xs text-[var(--altus-gold)] border border-[var(--altus-gold)]/40 rounded-lg hover:bg-[var(--altus-gold)]/10 transition-colors">
+                  View All Expiring Leases →
+                </button>
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* Work Orders Hotlist */}
+        <div>
+          <SectionHeader 
+            title="Work Order Hotlist" 
+            count={actionFeed.workOrdersHotlist.length} 
+          />
+          
+          <div className="space-y-3">
+            {actionFeed.workOrdersHotlist.length === 0 ? (
+              <EmptyState
+                title="All Clear"
+                message="No critical work orders requiring immediate attention"
+                icon="🔧"
+              />
+            ) : (
+              actionFeed.workOrdersHotlist.map((wo) => (
+                <ActionItem
+                  key={wo.woId}
+                  href={`/card/workorder/${wo.woId}`}
+                  priority={wo.priority === 'Critical' ? 'critical' : 'high'}
+                >
+                  <div>
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="text-sm font-medium text-[var(--text)]">
+                        {wo.summary}
+                      </div>
+                      <PriorityBadge priority={wo.priority} />
+                    </div>
+                    <div className="text-xs text-[var(--text-dim)] mb-2">
+                      {wo.property}
+                    </div>
+                    <div className="text-xs font-medium text-[var(--text)]">
+                      {wo.ageDays} {wo.ageDays === 1 ? 'day' : 'days'} old
+                    </div>
                   </div>
-                </div>
-              </ActionItem>
-            ))
-          )}
-        </ActionSection>
+                </ActionItem>
+              ))
+            )}
+            
+            {actionFeed.workOrdersHotlist.length > 0 && (
+              <Link href="/maintenance?priority=high,critical&status=open">
+                <button className="w-full p-2 text-xs text-[var(--altus-gold)] border border-[var(--altus-gold)]/40 rounded-lg hover:bg-[var(--altus-gold)]/10 transition-colors">
+                  View All Critical Work Orders →
+                </button>
+              </Link>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
