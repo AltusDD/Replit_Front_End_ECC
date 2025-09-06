@@ -2,23 +2,37 @@
    Import this once in your app entry (e.g., src/app/main.tsx or App.tsx) */
 
 :root{
-  /* Palette (Dark) */
-  --bg:            #0B0F14;  /* app background */
-  --surface:       #0F141A;  /* panels/cards */
-  --surface-2:     #121A22;  /* elevated panels / hero bands */
-  --border:        #232A33;
+  /* Genesis v2 Palette - Cooler Neutrals */
+  --bg:            #0b0e12;  /* Genesis altus-black */
+  --surface:       #171a1f;  /* Genesis panel-bg */
+  --surface-2:     #1c2026;  /* Genesis panel-elev */
+  --border:        #2a2f36;  /* Genesis line */
 
-  --text:          #F2F5F7;
-  --text-subtle:   #C9D1D9;  /* labels, captions */
-  --text-muted:    #AEB8C7;  /* helper text only */
+  --text:          #e8eaf0;  /* Genesis text */
+  --text-subtle:   #a6adbb;  /* Genesis text-dim */
+  --text-muted:    #a6adbb;  /* Genesis text-dim */
 
-  --gold:          #F7C948;  /* Empire Gold */
-  --gold-700:      #E2B33C;  /* hover/pressed */
+  --gold:          #d6b36a;  /* Genesis Altus Gold */
+  --gold-700:      #c7a55a;  /* hover/pressed Altus Gold */
+  
+  /* Genesis compatibility aliases */
+  --altus-black:   #0b0e12;
+  --altus-gold:    #d6b36a;
+  --panel-bg:      #171a1f;
+  --panel-elev:    #1c2026;
+  --line:          #2a2f36;
+  --text-dim:      #a6adbb;
   --link:          #8AB4FF;  /* hyperlinks only */
 
-  --success:       #32D296;
-  --warning:       #FFB020;
-  --danger:        #FF6B6B;
+  --success:       #2cc38a;  /* Genesis good */
+  --warning:       #f3c969;  /* Genesis warn */
+  --danger:        #ef5953;  /* Genesis bad */
+  
+  /* Genesis compatibility aliases */
+  --good:          #2cc38a;
+  --warn:          #f3c969;
+  --bad:           #ef5953;
+  --neutral:       #8b93a3;
   --info:          #5CC8FF;
 
   /* Component Anatomy */

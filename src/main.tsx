@@ -5,6 +5,7 @@ import App from "./App";
 // Global styles (single import point)
 import "./styles/theme.css";
 import "./styles/app.css";
+import "./styles/Dashboard.css";
 
 /**
  * Dev-only, opt-in mobile console:
