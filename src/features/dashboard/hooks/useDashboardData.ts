@@ -299,14 +299,13 @@ function generateTimeSeries(): {
 async function fetchDashboardData(signal?: AbortSignal): Promise<DashboardData> {
   const startTime = performance.now();
   
-  try {
-    // Fetch all portfolio data in parallel
-    const [properties, units, leases, tenants] = await Promise.all([
-      fetchFromAPI<PropertyData[]>('properties', signal),
-      fetchFromAPI<UnitData[]>('units', signal),
-      fetchFromAPI<LeaseData[]>('leases', signal),
-      fetchFromAPI<TenantData[]>('tenants', signal),
-    ]);
+  // Fetch all portfolio data in parallel
+  const [properties, units, leases, tenants] = await Promise.all([
+    fetchFromAPI<PropertyData[]>('properties', signal),
+    fetchFromAPI<UnitData[]>('units', signal),
+    fetchFromAPI<LeaseData[]>('leases', signal),
+    fetchFromAPI<TenantData[]>('tenants', signal),
+  ]);
     
     // Calculate core KPIs
     const occupancyPct = calculateOccupancyPct(properties, units);
@@ -394,11 +393,6 @@ async function fetchDashboardData(signal?: AbortSignal): Promise<DashboardData> 
         ].filter(wo => wo.property !== 'Property A'),
       },
     };
-  } catch (error) {
-    const processingTime = performance.now() - startTime;
-    console.error(`Dashboard data fetch failed after ${processingTime.toFixed(2)}ms:`, error);
-    throw error;
-  }
 }
 
 export function useDashboardData(): UseDashboardDataResult {
@@ -417,27 +411,22 @@ export function useDashboardData(): UseDashboardDataResult {
   
   useEffect(() => {
     let mounted = true;
+    let controller: AbortController | null = null;
     
     async function loadData() {
-      // Cancel any previous request
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      
-      abortControllerRef.current = new AbortController();
-      
       try {
         setLoading(true);
         setError(null);
         
+        // Create new controller for this request
+        controller = new AbortController();
         const startTime = performance.now();
         
-        const result = await fetchDashboardData(abortControllerRef.current.signal);
+        const result = await fetchDashboardData(controller.signal);
         
-        if (!mounted) return;
+        if (!mounted || controller.signal.aborted) return;
         
         const processingTime = performance.now() - startTime;
-        
         setData(result);
         
         if (isDebugMode) {
@@ -451,7 +440,7 @@ export function useDashboardData(): UseDashboardDataResult {
               'critical WOs': result.actionFeed.workOrdersHotlist.length,
               cities: result.occByCity.length,
             },
-            apiCallsCount: 4, // properties, units, leases, tenants
+            apiCallsCount: 4,
             processingTime: Math.round(processingTime),
           };
           
@@ -465,21 +454,17 @@ export function useDashboardData(): UseDashboardDataResult {
           console.log('🗺️ Google Maps ready:', checkGoogleMapsAPI());
           console.groupEnd();
         }
-      } catch (err) {
+      } catch (err: any) {
         if (!mounted) return;
         
-        if (err instanceof Error) {
-          // Don't handle AbortError as real errors during HMR
-          if (err.name === 'AbortError') {
-            return; // Silently ignore abort errors
-          }
-          
-          console.error('Dashboard data error:', err);
-          setError(err.message);
-        } else {
-          console.error('Dashboard data error:', err);
-          setError(String(err));
+        // Ignore all abort-related errors during development
+        if (err?.name === 'AbortError' || err?.message?.includes('abort')) {
+          return;
         }
+        
+        const errorMessage = err?.message || String(err);
+        console.error('Dashboard data error:', errorMessage);
+        setError(errorMessage);
       } finally {
         if (mounted) {
           setLoading(false);
@@ -491,13 +476,9 @@ export function useDashboardData(): UseDashboardDataResult {
     
     return () => {
       mounted = false;
-      // Clean abort without triggering promise rejections
-      if (abortControllerRef.current) {
-        try {
-          abortControllerRef.current.abort();
-        } catch (e) {
-          // Ignore cleanup errors
-        }
+      // Silent cleanup without triggering any promises
+      if (controller && !controller.signal.aborted) {
+        controller.abort();
       }
     };
   }, [isDebugMode]);
