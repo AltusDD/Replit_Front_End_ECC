@@ -10,7 +10,7 @@ export const fmtDate = (iso?: string | null) =>
 export const fmtMoney = (n?: number | null) => {
   if (n == null || Number.isNaN(n)) return "—";
   if (n === 0) return "$0";
-  return (typeof n === "number" ? n : 0).toLocaleString(undefined, { 
+  return n.toLocaleString(undefined, { 
     style: "currency", 
     currency: "USD", 
     maximumFractionDigits: 0 
@@ -22,10 +22,6 @@ export const fmtPct = (n?: number | null, dp = 1) => {
   return `${n.toFixed(dp)}%`;
 };
 
-export const plural = (n: number, s: string) => 
-  `${n} ${n === 1 ? s : `${s}s`}`;
-
-// Additional utilities for dashboard
 export const fmtCompact = (n?: number | null) => {
   if (n == null || Number.isNaN(n)) return "—";
   
@@ -40,17 +36,3 @@ export const fmtCompact = (n?: number | null) => {
     return `${sign}${absN.toLocaleString()}`;
   }
 };
-
-export const fmtDays = (days?: number | null) => {
-  if (days == null || Number.isNaN(days)) return "—";
-  
-  const absDays = Math.abs(days);
-  if (absDays === 1) return "1 day";
-  return `${Math.round(absDays)} days`;
-};
-
-// Legacy aliases for compatibility with existing portfolio pages
-export const dash = "—";
-export const money = fmtMoney;
-export const percent = fmtPct;
-export const shortDate = fmtDate;
