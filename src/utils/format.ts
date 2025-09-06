@@ -7,16 +7,20 @@ export const fmtDate = (iso?: string | null) =>
     year: "numeric" 
   }); // Mon D, YYYY
 
-export const fmtMoney = (n?: number | null) =>
-  n == null || Number.isNaN(n) ? "—" : n === 0 ? "$0" :
-  n.toLocaleString(undefined, { 
+export const fmtMoney = (n?: number | null) => {
+  if (n == null || Number.isNaN(n)) return "—";
+  if (n === 0) return "$0";
+  return (typeof n === "number" ? n : 0).toLocaleString(undefined, { 
     style: "currency", 
     currency: "USD", 
-    maximumFractionDigits: 2 
+    maximumFractionDigits: 0 
   });
+};
 
-export const fmtPct = (v?: number | null, d = 1) =>
-  v == null ? "—" : `${v.toFixed(d)}%`;
+export const fmtPct = (n?: number | null, dp = 1) => {
+  if (n == null || Number.isNaN(n)) return "—";
+  return `${n.toFixed(dp)}%`;
+};
 
 export const plural = (n: number, s: string) => 
   `${n} ${n === 1 ? s : `${s}s`}`;

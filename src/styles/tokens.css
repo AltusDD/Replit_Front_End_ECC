@@ -1,19 +1,19 @@
-/* Genesis v2 Tokens - Approved Neutrals (No Brown Tint) */
+/* Genesis v2 Tokens - High Contrast Cooler Neutrals */
 
 :root {
   --altus-black: #0b0e12;
   --altus-gold:  #d6b36a;
 
-  /* Approved neutrals */
-  --panel-bg:   #1a1d21;    /* card/panel background */
-  --panel-elev: #20242a;    /* elevated surface */
-  --line:       #2a2d31;
+  /* Surfaces (slightly cooler neutrals) */
+  --panel-bg:   #171a1f;     /* card bg */
+  --panel-elev: #1c2026;     /* elevated card bg */
+  --line:       #2a2f36;     /* borders */
 
-  --text:       #e6e7ea;
-  --text-dim:   #a8adb7;
+  --text:       #e8eaf0;     /* primary text */
+  --text-dim:   #a6adbb;     /* secondary text */
 
-  --good:       #31c48d;   /* green */
-  --warn:       #f3c969;   /* yellow */
-  --bad:        #ef5953;   /* red */
-  --neutral:    #7b818a;
+  --good:       #2cc38a;     /* success */
+  --warn:       #f3c969;     /* warning */
+  --bad:        #ef5953;     /* error */
+  --neutral:    #8b93a3;     /* neutral gray */
 }

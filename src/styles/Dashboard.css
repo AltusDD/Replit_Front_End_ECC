@@ -5,8 +5,8 @@
 .ecc-panel {
   background: var(--panel-bg);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  box-shadow: 0 10px 20px rgba(0,0,0,.25);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
 }
 
 .ecc-panel__title {
@@ -19,9 +19,13 @@
   background: var(--panel-bg);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 14px 16px;
+  padding: 16px 18px;
+  min-height: 96px;
   transition: all 0.2s ease;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .ecc-kpi:hover {
@@ -32,6 +36,21 @@
 .ecc-kpi:focus-visible {
   outline: 2px solid var(--altus-gold);
   outline-offset: 2px;
+}
+
+.ecc-kpi__title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.ecc-kpi__value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
 }
 
 .small-label { 
