@@ -1,5 +1,5 @@
 import React from "react";
-import { Route, Switch, Redirect } from "wouter";
+import { Route, Switch } from "wouter";
 import Sidebar from "./components/Sidebar";
 
 /**
@@ -50,7 +50,15 @@ export default function App() {
       <main className="ecc-main" role="main" id="main">
         <Switch>
           {/* Home -> Dashboard */}
-          <Route path="/" component={() => <Redirect to="/dashboard" />} />
+          <Route path="/">
+            {() => {
+              // Redirect to dashboard using wouter's approach
+              if (typeof window !== 'undefined') {
+                window.location.pathname = '/dashboard';
+              }
+              return null;
+            }}
+          </Route>
           <Route path="/dashboard" component={DashboardPage} />
 
           {/* -------- Portfolio V3 (ACTIVE) -------- */}
