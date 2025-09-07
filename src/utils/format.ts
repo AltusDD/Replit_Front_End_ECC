@@ -30,6 +30,11 @@ export const fmtPct = (n?: number | null, digits = 1): string => {
   return `${n.toFixed(digits)}%`;
 };
 
+export const fmtCompact = (n?: number | null): string => {
+  if (n == null || Number.isNaN(n)) return "—";
+  return Intl.NumberFormat(undefined, { notation: "compact" }).format(n);
+};
+
 export function pct(n?: number | null, digits = 1): string {
   if (n == null || Number.isNaN(n)) return "—";
   return `${n.toFixed(digits)}%`;
