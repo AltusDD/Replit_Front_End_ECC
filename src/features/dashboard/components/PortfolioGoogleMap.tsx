@@ -1,7 +1,7 @@
 // Genesis Grade Portfolio Google Map - Interactive Property Visualization
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { Map, AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
 import type { MapProperty } from '../hooks/useDashboardData';
 import { ActionButton } from './ActionButton';
 
@@ -245,39 +245,41 @@ export function PortfolioGoogleMap({ propertiesForMap }: PortfolioGoogleMapProps
       </div>
       
       <div className="portfolio-map">
-        <Map
-          mapId="genesis-portfolio-map"
-          style={{ width: '100%', height: '100%' }}
-          defaultCenter={mapCenter}
-          defaultZoom={10}
-          gestureHandling="greedy"
-          disableDefaultUI={true}
-          styles={darkMapStyles}
-          onLoad={setMapInstance}
-        >
-          {propertiesForMap.map((property) => (
-            <AdvancedMarker
-              key={property.id}
-              position={{ lat: property.lat, lng: property.lng }}
-              onClick={() => handleMarkerClick(property)}
-            >
-              <PropertyPin status={property.status} />
-            </AdvancedMarker>
-          ))}
+        <APIProvider apiKey={hasApiKey}>
+          <Map
+            mapId="genesis-portfolio-map"
+            style={{ width: '100%', height: '100%' }}
+            defaultCenter={mapCenter}
+            defaultZoom={10}
+            gestureHandling="greedy"
+            disableDefaultUI={true}
+            styles={darkMapStyles}
+            onLoad={setMapInstance}
+          >
+            {propertiesForMap.map((property) => (
+              <AdvancedMarker
+                key={property.id}
+                position={{ lat: property.lat, lng: property.lng }}
+                onClick={() => handleMarkerClick(property)}
+              >
+                <PropertyPin status={property.status} />
+              </AdvancedMarker>
+            ))}
 
-          {selectedProperty && (
-            <InfoWindow
-              position={{ lat: selectedProperty.lat, lng: selectedProperty.lng }}
-              onCloseClick={handleInfoWindowClose}
-              maxWidth={300}
-            >
-              <PropertyInfoWindow 
-                property={selectedProperty} 
-                onClose={handleInfoWindowClose}
-              />
-            </InfoWindow>
-          )}
-        </Map>
+            {selectedProperty && (
+              <InfoWindow
+                position={{ lat: selectedProperty.lat, lng: selectedProperty.lng }}
+                onCloseClick={handleInfoWindowClose}
+                maxWidth={300}
+              >
+                <PropertyInfoWindow 
+                  property={selectedProperty} 
+                  onClose={handleInfoWindowClose}
+                />
+              </InfoWindow>
+            )}
+          </Map>
+        </APIProvider>
       </div>
     </div>
   );
