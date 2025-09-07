@@ -119,13 +119,13 @@ export function useDashboardData() {
           fetchJSON<any[]>('/api/accounting/transactions', controller.signal).catch(() => [])
         ]);
         
-        console.log('Live Dashboard Data Fetched:', { 
-          properties: properties.length, 
-          units: units.length, 
-          leases: leases.length, 
-          tenants: tenants.length,
-          workorders: workorders.length,
-          transactions: transactions.length
+        console.log('✅ Raw API Data Received:', { 
+          properties: properties.slice(0, 2), // Show first 2 for debugging
+          units: units.slice(0, 2),
+          leases: leases.slice(0, 2), 
+          tenants: tenants.slice(0, 2),
+          workorders,
+          transactions: transactions.slice(0, 2)
         });
 
         // Ensure we have arrays
@@ -292,25 +292,39 @@ export function useDashboardData() {
           }
         });
         
-        // Critical work orders from live data
+        // Critical work orders from live data with proper property lookup
         workordersArray
           .filter(wo => {
             const priority = (wo.priority ?? wo.priority_level ?? '').toString().toLowerCase();
             return priority === 'critical' || priority === 'high' || priority === 'urgent';
           })
           .forEach(wo => {
-            const unit = unitsArray.find(u => u.id === (wo.unit_id ?? wo.unitId));
-            const property = propertiesArray.find(p => 
-              p.id === (unit?.property_id ?? unit?.propertyId ?? wo.property_id ?? wo.propertyId)
+            // First try to find property directly by work order property_id
+            let property = propertiesArray.find(p => 
+              p.id === (wo.property_id ?? wo.propertyId)
             );
+            
+            // If not found, look through unit relationship
+            if (!property) {
+              const unit = unitsArray.find(u => u.id === (wo.unit_id ?? wo.unitId));
+              if (unit) {
+                property = propertiesArray.find(p => 
+                  p.id === (unit.property_id ?? unit.propertyId)
+                );
+              }
+            }
+            
+            const unit = unitsArray.find(u => u.id === (wo.unit_id ?? wo.unitId));
+            const propertyAddress = property?.address ?? property?.street_address ?? property?.full_address ?? 'Unknown Property';
+            const unitName = unit?.name ?? unit?.unit_number ?? unit?.unit_name ?? 'Unit';
             
             actionFeed.push({
               id: `maintenance-${wo.id}`,
               type: 'maintenance',
               priority: (wo.priority ?? wo.priority_level ?? '').toString().toLowerCase() === 'critical' ? 'critical' : 'high',
-              title: wo.title ?? wo.description ?? wo.issue ?? 'Maintenance Required',
-              subtitle: `${property?.address ?? 'Property'} - ${unit?.name ?? unit?.unit_number ?? 'Unit'}`,
-              meta: `${(wo.priority ?? wo.priority_level ?? 'High').toUpperCase()}`,
+              title: wo.title ?? wo.description ?? wo.issue ?? wo.summary ?? 'Maintenance Required',
+              subtitle: `${propertyAddress} - ${unitName}`,
+              meta: `${(wo.priority ?? wo.priority_level ?? 'High').toUpperCase()} - ${wo.status ?? 'Open'}`,
               actions: [
                 { label: 'Assign', href: `/workorders/${wo.id}`, variant: 'primary' },
                 { label: 'Details', href: `/workorders/${wo.id}/details`, variant: 'secondary' }
@@ -431,6 +445,17 @@ export function useDashboardData() {
       .filter(item => item.type === 'maintenance')
       .map(item => ({ id: item.id, title: item.title, subtitle: item.subtitle, meta: item.meta })) : []
   };
+
+  // Debug logging for transformed data
+  console.log('➡️ Transformed Data for UI:', { 
+    kpiData, 
+    mapDataCount: mapData.length,
+    feedData: {
+      delinquencies: feedData.delinquencyAlerts.length,
+      leaseRenewals: feedData.leaseRenewals.length,
+      maintenance: feedData.maintenanceHotlist.length
+    }
+  });
 
   return { data, loading, error, kpiData, isLoading: loading, mapData, feedData };
 }
