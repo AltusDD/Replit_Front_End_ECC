@@ -1,7 +1,5 @@
 /* Genesis Grade Dashboard Styles - Sophisticated SFR Command Center */
 
-@import url('./theme.css');
-
 /* Dashboard Layout Grid System */
 .dashboard-layout {
   display: grid;

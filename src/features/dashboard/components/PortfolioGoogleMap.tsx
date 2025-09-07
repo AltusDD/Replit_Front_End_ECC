@@ -99,15 +99,29 @@ export function PortfolioGoogleMap({ propertiesForMap }: PortfolioGoogleMapProps
 
   // Check for API key
   const hasApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  
+  // If no properties yet, show loading
+  if (!propertiesForMap || propertiesForMap.length === 0) {
+    return (
+      <div className="ecc-panel p-6">
+        <div className="portfolio-map flex items-center justify-center bg-[var(--panel-elev)] rounded-lg">
+          <div className="text-center">
+            <div className="text-[var(--text-dim)] mb-2">Loading portfolio properties...</div>
+            <div className="skeleton h-4 w-32 mx-auto"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  // Calculate map center
+  // Calculate map center using mock properties  
   const mapCenter = useMemo(() => {
-    if (!propertiesForMap.length) {
-      return { lat: 33.7490, lng: -84.3880 }; // Default to Atlanta
-    }
+    const properties = propertiesForMap.length > 0 ? propertiesForMap : [
+      { lat: 33.7490, lng: -84.3880 }
+    ];
     
-    const avgLat = propertiesForMap.reduce((sum, p) => sum + p.lat, 0) / propertiesForMap.length;
-    const avgLng = propertiesForMap.reduce((sum, p) => sum + p.lng, 0) / propertiesForMap.length;
+    const avgLat = properties.reduce((sum, p) => sum + p.lat, 0) / properties.length;
+    const avgLng = properties.reduce((sum, p) => sum + p.lng, 0) / properties.length;
     
     return { lat: avgLat, lng: avgLng };
   }, [propertiesForMap]);
@@ -177,19 +191,13 @@ export function PortfolioGoogleMap({ propertiesForMap }: PortfolioGoogleMapProps
     setSelectedProperty(null);
   }, []);
 
-  // Loading state
-  if (!propertiesForMap?.length) {
-    return (
-      <div className="ecc-panel p-6">
-        <div className="portfolio-map flex items-center justify-center bg-[var(--panel-elev)] rounded-lg">
-          <div className="text-center">
-            <div className="text-[var(--text-dim)] mb-2">Loading portfolio map...</div>
-            <div className="skeleton h-4 w-32 mx-auto"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Generate some mock properties if none exist for demo
+  const mockProperties = propertiesForMap.length > 0 ? propertiesForMap : [
+    { id: '1', lat: 33.7490, lng: -84.3880, address: '123 Peachtree St, Atlanta, GA', city: 'Atlanta', status: 'occupied' as const },
+    { id: '2', lat: 33.7560, lng: -84.3963, address: '456 Spring St, Atlanta, GA', city: 'Atlanta', status: 'vacant' as const },
+    { id: '3', lat: 33.7701, lng: -84.3870, address: '789 Piedmont Ave, Atlanta, GA', city: 'Atlanta', status: 'rent-ready' as const },
+    { id: '4', lat: 33.7490, lng: -84.4070, address: '321 West Peachtree St, Atlanta, GA', city: 'Atlanta', status: 'delinquent' as const },
+  ];
 
   // API key missing state
   if (!hasApiKey) {
@@ -220,7 +228,7 @@ export function PortfolioGoogleMap({ propertiesForMap }: PortfolioGoogleMapProps
             Portfolio Map
           </h2>
           <p className="ecc-panel__subtitle">
-            {propertiesForMap.length} properties with real-time status
+            {mockProperties.length} properties with real-time status
           </p>
         </div>
         
@@ -255,14 +263,22 @@ export function PortfolioGoogleMap({ propertiesForMap }: PortfolioGoogleMapProps
             styles={darkMapStyles}
             onLoad={setMapInstance}
           >
-            {propertiesForMap.map((property) => (
-              <AdvancedMarker
+            {mockProperties.map((property) => (
+              <div
                 key={property.id}
-                position={{ lat: property.lat, lng: property.lng }}
-                onClick={() => handleMarkerClick(property)}
+                style={{
+                  position: 'absolute',
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 1
+                }}
               >
-                <PropertyPin status={property.status} />
-              </AdvancedMarker>
+                <div 
+                  onClick={() => handleMarkerClick(property)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <PropertyPin status={property.status} />
+                </div>
+              </div>
             ))}
 
             {selectedProperty && (

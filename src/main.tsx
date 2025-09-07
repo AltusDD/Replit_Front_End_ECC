@@ -3,8 +3,8 @@ import ReactDOM from "react-dom/client";
 import { Router } from "wouter";
 import App from "./App";
 import "./styles/theme.css";
-import "./styles/app.css";
 import "./styles/Dashboard.css";
+import "./styles/app.css";
 
 /**
  * Replit sometimes injects eruda devtools; when it does, it can throw benign
