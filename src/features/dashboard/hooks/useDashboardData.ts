@@ -237,9 +237,9 @@ export function useDashboardData() {
         // Create map properties from live data ONLY - only include properties with real coordinates
         const propertiesForMap: MapProperty[] = propertiesArray
           .filter(property => {
-            const lat = safeNum(property.latitude ?? property.lat);
-            const lng = safeNum(property.longitude ?? property.lng);
-            const hasCoordinates = lat !== 0 && lng !== 0;
+            const lat = safeNum(property.lat);
+            const lng = safeNum(property.lng);
+            const hasCoordinates = lat !== 0 && lng !== 0 && lat !== null && lng !== null;
             
             // Log warning for properties missing coordinates
             if (!hasCoordinates) {
@@ -285,8 +285,8 @@ export function useDashboardData() {
 
             return {
               id: property.id,
-              lat: safeNum(property.latitude ?? property.lat),
-              lng: safeNum(property.longitude ?? property.lng),
+              lat: safeNum(property.lat),
+              lng: safeNum(property.lng),
               address: property.address || property.street_address || property.full_address || `Property ${property.id}`,
               city: property.city || '',
               status,
