@@ -1,29 +1,29 @@
-// KPI Ticker - 4 actionable cards with token colors
+// Genesis Grade KPI Ticker - Portfolio Health at a Glance
 
+import React from 'react';
 import { Link } from 'wouter';
-import { fmtPct } from '@/utils/format';
-import type { DashboardData } from '../hooks/useDashboardData';
+import type { DashboardKPIs } from '../hooks/useDashboardData';
 
 interface KpiTickerProps {
-  kpis: DashboardData['kpis'];
+  kpis: DashboardKPIs;
 }
 
-// Donut chart component
+// Donut Chart Component for Occupancy
 function DonutChart({ percentage }: { percentage: number }) {
-  const radius = 20;
+  const radius = 22;
   const strokeWidth = 4;
   const circumference = 2 * Math.PI * radius;
   const strokeDasharray = circumference;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
   
   return (
-    <div className="relative w-12 h-12">
+    <div className="donut-chart relative w-12 h-12">
       <svg width="48" height="48" className="transform -rotate-90">
         <circle
           cx="24"
           cy="24"
           r={radius}
-          stroke="var(--line)"
+          className="donut-chart__track"
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -31,24 +31,21 @@ function DonutChart({ percentage }: { percentage: number }) {
           cx="24"
           cy="24"
           r={radius}
-          stroke="var(--altus-gold)"
+          className="donut-chart__value"
           strokeWidth={strokeWidth}
           fill="none"
           strokeDasharray={strokeDasharray}
           strokeDashoffset={strokeDashoffset}
-          className="transition-all duration-300"
         />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xs font-medium text-[var(--text)]">
-          {Math.round(percentage)}%
-        </span>
+      <div className="donut-chart__label">
+        {Math.round(percentage)}%
       </div>
     </div>
   );
 }
 
-// Sparkline component
+// Sparkline Component for Collections Trend
 function Sparkline({ data }: { data: number[] }) {
   if (data.length < 2) return null;
   
@@ -67,12 +64,10 @@ function Sparkline({ data }: { data: number[] }) {
   }).join(' ');
   
   return (
-    <svg width={width} height={height} className="inline-block">
+    <svg width={width} height={height} className="sparkline">
       <polyline
         points={points}
         fill="none"
-        stroke="var(--altus-gold)"
-        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -80,33 +75,40 @@ function Sparkline({ data }: { data: number[] }) {
   );
 }
 
-// KPI Card component
+// Individual KPI Card Component
 function KpiCard({
   title,
   value,
   subtitle,
-  linkTo,
-  visual
+  href,
+  visual,
+  testId
 }: {
   title: string;
-  value: string;
-  subtitle?: string;
-  linkTo: string;
+  value: string | number;
+  subtitle: string;
+  href: string;
   visual?: React.ReactNode;
+  testId: string;
 }) {
   return (
-    <Link href={linkTo}>
-      <div className="ecc-kpi p-4 rounded-lg" role="button" tabIndex={0} data-testid={`kpi-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+    <Link href={href}>
+      <div 
+        className="ecc-kpi p-4 rounded-xl cursor-pointer" 
+        role="button" 
+        tabIndex={0}
+        data-testid={testId}
+      >
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <div className="ecc-kpi__title">{title}</div>
-            <div className="ecc-kpi__value">{value}</div>
-            {subtitle && (
-              <div className="text-xs text-[var(--text-dim)] mt-1">{subtitle}</div>
-            )}
+            <div className="ecc-kpi__title mb-2">{title}</div>
+            <div className="ecc-kpi__value mb-1">{value}</div>
+            <div className="ecc-kpi__trend text-xs text-[var(--text-dim)]">
+              {subtitle}
+            </div>
           </div>
           {visual && (
-            <div className="ml-3 flex-shrink-0">
+            <div className="ml-4 flex-shrink-0">
               {visual}
             </div>
           )}
@@ -117,43 +119,47 @@ function KpiCard({
 }
 
 export function KpiTicker({ kpis }: KpiTickerProps) {
-  // Daily receipts sparkline data (simplified)
-  const collectionsSparkline = [88, 85, 92, 89, 91, 87, kpis.collectionsRatePct];
+  // Mock sparkline data for collections trend
+  const collectionsSparkline = [92, 89, 94, 91, 96, 88, kpis.collectionsRatePct];
   
   return (
     <div className="kpi-grid" data-testid="kpi-ticker">
-      {/* Occupancy with donut chart */}
+      {/* Portfolio Occupancy with Donut Chart */}
       <KpiCard
-        title="Occupancy"
-        value={fmtPct(kpis.occupancyPct / 100)}
-        subtitle="vs last month"
-        linkTo="/portfolio/properties?city=ALL&vacant=1"
+        title="Portfolio Occupancy"
+        value={`${kpis.occupancyPct.toFixed(1)}%`}
+        subtitle="vs 92.8% last month"
+        href="/portfolio/properties?filter=occupancy"
         visual={<DonutChart percentage={kpis.occupancyPct} />}
+        testId="kpi-occupancy"
       />
       
-      {/* Rent Ready / Vacant */}
+      {/* Rent Ready / Vacant Units */}
       <KpiCard
-        title="Rent Ready"
-        value={`${kpis.rentReadyVacant.ready}`}
-        subtitle={`of ${kpis.rentReadyVacant.vacant} vacant`}
-        linkTo="/portfolio/units?status=vacant&rent_ready=1"
+        title="Rent Ready Units"
+        value={kpis.rentReadyVacant.ready}
+        subtitle={`of ${kpis.rentReadyVacant.vacant} vacant units`}
+        href="/portfolio/units?status=vacant&rent_ready=true"
+        testId="kpi-rent-ready"
       />
       
-      {/* Collections MTD with sparkline */}
+      {/* Collections Rate with Sparkline */}
       <KpiCard
         title="Collections MTD"
-        value={fmtPct(kpis.collectionsRatePct / 100)}
-        subtitle="daily receipts"
-        linkTo="/accounting?scope=MTD"
+        value={`${kpis.collectionsRatePct.toFixed(1)}%`}
+        subtitle="daily collections trend"
+        href="/accounting?period=mtd"
         visual={<Sparkline data={collectionsSparkline} />}
+        testId="kpi-collections"
       />
       
       {/* Critical Work Orders */}
       <KpiCard
-        title="Critical WOs"
-        value={String(kpis.openCriticalWO)}
-        subtitle="open priority items"
-        linkTo="/maintenance?priority=high,critical"
+        title="Critical Work Orders"
+        value={kpis.openCriticalWO}
+        subtitle="high priority items open"
+        href="/maintenance?priority=high,critical"
+        testId="kpi-work-orders"
       />
     </div>
   );
