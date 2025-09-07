@@ -1,0 +1,281 @@
+*** Begin Patch
+*** Update File: src/main.tsx
+@@
+-import "./styles/app.css";
+-if (import.meta.env.DEV && location.search.includes("eruda")) {
+-  import("eruda").then((eruda) => {
+-    try {
+-      eruda.default.init();
+-    } catch {}
+-  });
+-}
++import "./styles/app.css";
++// Dev console: keep non-blocking & optional (no dependency errors in dev/prod)
++// Activate only when the URL includes ?debugConsole=1 and the package exists.
++if (import.meta.env.DEV && location.search.includes("debugConsole")) {
++  // Best effort; never break boot if not installed
++  import("eruda")
++    .then((eruda) => eruda?.default?.init?.())
++    .catch(() => void 0);
++}
+
+ import React from "react";
+ import ReactDOM from "react-dom/client";
+-import App from "./App";
++import App from "./App";
+
+ ReactDOM.createRoot(document.getElementById("root")!).render(
+   <React.StrictMode>
+     <App />
+   </React.StrictMode>
+ );
+
+
+*** Begin Patch
+*** Update File: src/App.tsx
+@@
+-import Sidebar from "@/components/Sidebar"; // <-- wrong import caused nav drift when alternates existed
++// Canonical Sidebar (SSOT) — do not change import path
++import Sidebar from "@/layout/components/Sidebar";
++import navConfig from "@/config/navigation";
+
+ export default function App() {
+   return (
+-    <div className="ecc-shell">
+-      <Sidebar />
+-      <main className="ecc-main">
+-        <Routes />
+-      </main>
+-    </div>
++    <div className="ecc-shell">
++      <Sidebar nav={navConfig} />
++      <main className="ecc-main">
++        <Routes />
++      </main>
++    </div>
+   );
+ }
+
+
+*** Begin Patch
+*** Update File: src/layout/components/Sidebar.tsx
+@@
+-// Sidebar used multiple internal configs; lock to SSOT
+-import navConfig from "@/layout/navConfig"; // deprecated
++// Sidebar renders from the SSOT: src/config/navigation.ts
++// Accept via props for testability; default to SSOT if none passed
++import navConfigSSOT from "@/config/navigation";
+
+ type SidebarProps = {
+-  // previous versions hard-coded items
++  nav?: typeof navConfigSSOT;
+ };
+
+ export default function Sidebar({ nav }: SidebarProps) {
+-  const items = navConfig; // old/deprecated path
++  const items = nav ?? navConfigSSOT;
+   return (
+     <aside className="ecc-sidebar is-expanded">
+       {/* ...existing chrome... */}
+       <nav>
+         {items.map((item) => (
+           <a key={item.path} href={item.path} className="ecc-nav-item">
+             {item.icon}
+             <span>{item.title}</span>
+           </a>
+         ))}
+       </nav>
+     </aside>
+   );
+ }
+
+
+*** Begin Patch
+*** Add File: src/features/dashboard/pages/DashboardPage.tsx
++// Canonical dashboard page (single source). If a second dashboard file exists
++// (e.g., Dashboard.tsx or MainDashboard.tsx), export *from* this file there.
++import React from "react";
++import KpiTicker from "@/features/dashboard/components/KpiTicker";
++import PortfolioGoogleMap from "@/features/dashboard/components/PortfolioGoogleMap";
++import PriorityActionFeed from "@/features/dashboard/components/PriorityActionFeed";
++import FinancialsAndLeasing from "@/features/dashboard/components/FinancialsAndLeasing";
++import OccupancyByCity from "@/features/dashboard/components/OccupancyByCity";
++import { useDashboardData } from "@/features/dashboard/hooks/useDashboardData";
++
++export default function DashboardPage() {
++  const { data, loading, error } = useDashboardData();
++
++  if (error) {
++    return (
++      <div className="ecc-panel p-6">
++        <h3 className="ecc-panel__title">Dashboard</h3>
++        <p className="text-sm">Something went wrong. Please retry.</p>
++      </div>
++    );
++  }
++  if (loading || !data) {
++    return (
++      <div className="dashboard-layout">
++        <div className="dashboard-row">
++          <div className="ecc-skeleton h-[92px] w-full rounded-lg" />
++        </div>
++        <div className="dashboard-row">
++          <div className="ecc-skeleton h-[520px] w-full rounded-lg" />
++        </div>
++      </div>
++    );
++  }
++
++  return (
++    <div className="dashboard-layout" data-testid="dashboard-page">
++      <div className="dashboard-row">
++        <KpiTicker kpis={data.kpis} />
++      </div>
++
++      <div className="dashboard-row main-grid">
++        <div className="ecc-panel p-6">
++          <PortfolioGoogleMap properties={data.propertiesForMap} />
++        </div>
++        <div className="ecc-panel p-6" data-testid="priority-action-feed">
++          <PriorityActionFeed items={data.actionFeed} />
++        </div>
++      </div>
++
++      <div className="dashboard-row financial-grid">
++        <FinancialsAndLeasing cashflow90={data.cashflow90} funnel30={data.funnel30} />
++      </div>
++
++      <div className="dashboard-row">
++        <div className="ecc-panel p-6" data-testid="occupancy-by-city">
++          <OccupancyByCity rows={data.occByCity} />
++        </div>
++      </div>
++    </div>
++  );
++}
+
+
+*** Begin Patch
+*** Update File: src/features/dashboard/hooks/useDashboardData.ts
+@@
+-  const controller = new AbortController();
+-  const signal = controller.signal;
+-  Promise.all([
+-    fetchJSON("/api/portfolio/properties", { signal }),
+-    fetchJSON("/api/portfolio/units", { signal }),
+-    fetchJSON("/api/portfolio/leases", { signal }),
+-    fetchJSON("/api/portfolio/tenants", { signal }),
+-    fetchJSON("/api/maintenance/workorders", { signal }),
+-    fetchJSON("/api/accounting/transactions", { signal }),
+-  ])
+-    .then(([props, units, leases, tenants, workorders, txns]) => {
+-      // ...
+-    })
+-    .catch((e) => {
+-      setError(e);
+-    });
+-  return () => controller.abort();
++  const controller = new AbortController();
++  const { signal } = controller;
++  Promise.all([
++    fetchJSON("/api/portfolio/properties", { signal }),
++    fetchJSON("/api/portfolio/units", { signal }),
++    fetchJSON("/api/portfolio/leases", { signal }),
++    fetchJSON("/api/portfolio/tenants", { signal }),
++    fetchJSON("/api/maintenance/workorders", { signal }),
++    fetchJSON("/api/accounting/transactions", { signal }),
++  ])
++    .then(([props, units, leases, tenants, workorders, txns]) => {
++      // ...existing shaping — no mock data...
++      setData({
++        kpis: calculateKPIs({ props, units, leases, tenants, workorders, txns }),
++        propertiesForMap: generateMapProperties(props),
++        cashflow90: buildCashflow(txns),
++        funnel30: buildLeasingFunnel(leases),
++        occByCity: aggregateByCity(props, units),
++        actionFeed: buildActionFeed({ tenants, leases, workorders }),
++      });
++    })
++    .catch((e) => {
++      // Swallow aborts (HMR & unmount) to fix noisy DOMException/AbortError
++      if ((e as any)?.name === "AbortError") return;
++      setError(e as Error);
++    });
++  return () => controller.abort();
+
+
+*** Begin Patch
+*** Update File: src/features/dashboard/components/OccupancyByCity.tsx
+@@
+-const pct = (occupied / total) * 100;
+-const pctText = `${pct.toFixed(1)}%`;
++const safeTotal = Number.isFinite(total) && total > 0 ? total : 0;
++const safeOcc   = Number.isFinite(occupied) ? occupied : 0;
++const pct = safeTotal === 0 ? 0 : (safeOcc / safeTotal) * 100;
++const pctText = `${pct.toFixed(1)}%`;
+@@
+-<td>{occupied}</td>
+-<td>{vacant}</td>
+-<td>{pctText}</td>
++<td>{Number.isFinite(safeOcc) ? safeOcc : 0}</td>
++<td>{Number.isFinite(vacant) ? vacant : 0}</td>
++<td>{pctText}</td>
+
+
+*** Begin Patch
+*** Update File: src/styles/theme.css
+@@
+-/* Panels previously had a warm/brown tint; align to cool-grays */
+-:root{
+-  --panel-bg: #1a1d21;
+-  --panel-elev: #20242a;
+-  --line:#2a2d31;
+-}
++:root{
++  /* Genesis cool-gray surfaces */
++  --panel-bg:   #1a1d21;
++  --panel-elev: #20242a;
++  --line:       #2a2d31;
++  --text:       #e6e7ea;
++  --text-dim:   #a8adb7;
++  --good:       #31c48d;
++  --warn:       #f3c969;
++  --bad:        #ef5953;
++  --altus-gold: #d6b36a;
++}
+
+ /* Map panel sizing (consistent, no layout shift) */
+-.portfolio-map{ height: 520px; border-radius: 12px; overflow: hidden; }
++.portfolio-map{ height: 520px; border-radius: 12px; overflow: hidden; }
+
+
+*** Begin Patch
+*** Add File: src/features/dashboard/pages/Dashboard.tsx
++// Back-compat: if another route still imports Dashboard.tsx,
++// keep it as a thin shim that re-exports the canonical page.
++export { default } from "./DashboardPage";
+
+
+*** Begin Patch
+*** Update File: src/routes/index.tsx
+@@
+-import Dashboard from "@/features/dashboard/pages/Dashboard"; 
++// Route always points to the canonical DashboardPage
++import Dashboard from "@/features/dashboard/pages/DashboardPage";
+
+
+*** Begin Patch
+*** Update File: src/utils/format.ts
+@@
+-export const fmtDate = (iso?: string | Date) =>
+-  iso ? dayjs(iso).format("MMM D, YYYY") : "—";
++export const fmtDate = (iso?: string | Date) =>
++  iso ? dayjs(iso).format("MMM D, YYYY") : "—";
+
+ export const fmtPct = (n?: number, digits = 1) =>
+   Number.isFinite(n) ? `${(n as number).toFixed(digits)}%` : "—";
+
+ export const fmtMoney = (n?: number) =>
+   Number.isFinite(n) ? n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) : "—";
+
+

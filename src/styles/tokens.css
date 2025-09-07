@@ -1,14 +1,20 @@
 :root {
+  /* Brand */
   --altus-black: #0b0e12;
-  --altus-gold:  #d6b36a;
-  /* Approved light-grey panels (no brown tint) */
-  --panel-bg:    #1c2026;  /* card background */
-  --panel-elev:  #232833;  /* elevated surfaces */
-  --line:        #2f3640;  /* borders */
-  --text:        #e9ecf1;  /* primary text */
-  --text-dim:    #a9b1bc;  /* secondary */
-  --good:        #2fc78d;
-  --warn:        #f3c969;
-  --bad:         #ef5953;
-  --neutral:     #8a93a1;
+  --altus-gold: #d6b36a;
+
+  /* Approved light-grey scheme (no brown tint) */
+  --panel-bg:   #1c2026;  /* primary panel bg */
+  --panel-elev: #232833;  /* elevated bg      */
+  --line:       #2f3640;  /* borders          */
+
+  /* Typography */
+  --text:     #e9ecf1;
+  --text-dim: #a9b1bc;
+
+  /* Semantics */
+  --good:    #2fc78d;
+  --warn:    #f3c969;
+  --bad:     #ef5953;
+  --neutral: #8a93a1;
 }
