@@ -48,6 +48,7 @@ export function money(n?: number | null): string {
 // Legacy aliases for compatibility
 export const percent = fmtPct;
 export const date = fmtDate;
+export const shortDate = fmtDate;
 export const formatMoney = fmtMoney;
 export const formatPercent = fmtPct;
 export const formatDate = fmtDate;
