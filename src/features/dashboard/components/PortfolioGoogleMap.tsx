@@ -51,6 +51,24 @@ export function PortfolioGoogleMap() {
     );
   }
 
+  // Filter to only valid coordinates
+  const validPoints = mapData.filter(
+    p => typeof p.lat === "number" && typeof p.lng === "number" && Number.isFinite(p.lat) && Number.isFinite(p.lng)
+  );
+
+  // Show empty state if no valid coordinates
+  if (validPoints.length === 0) {
+    return (
+      <div className="map-fallback">
+        <div className="map-fallback__icon">🗺️</div>
+        <div className="map-fallback__title">No Properties with Coordinates</div>
+        <div className="map-fallback__subtitle">
+          Properties need to be geocoded before they can be displayed on the map.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%', height: '400px' }}>
       <APIProvider apiKey={apiKey}>
@@ -60,7 +78,7 @@ export function PortfolioGoogleMap() {
           gestureHandling="greedy"
           disableDefaultUI={false}
         >
-          {mapData.map((property) => (
+          {validPoints.map((property) => (
             <AdvancedMarker
               key={property.id}
               position={{ lat: property.lat, lng: property.lng }}
