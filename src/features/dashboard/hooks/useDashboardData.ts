@@ -148,21 +148,59 @@ export function useDashboardData() {
         const leasesArray = Array.isArray(leases) ? leases : [];
         const workordersArray = Array.isArray(workorders) ? workorders : [];
 
-        // Calculate occupancy from live data ONLY
+        // Calculate occupancy from ACTIVE LEASES (unit.status is null, use lease data instead)
         const totalUnits = unitsArray.length;
-        const occupiedUnits = unitsArray.filter(u => {
-          const status = (u.status ?? u.vacancy_status ?? '').toString().toLowerCase();
-          return status === 'occupied' || status.includes('occupied') || status === 'rented';
+        const now = new Date();
+        
+        // Find occupied units by matching active leases within date range
+        const occupiedUnits = unitsArray.filter(unit => {
+          return leasesArray.some(lease => {
+            const isActive = (lease.status ?? '').toString().toLowerCase() === 'active';
+            const startDate = new Date(lease.start ?? lease.start_date ?? '1900-01-01');
+            const endDate = new Date(lease.end ?? lease.end_date ?? '2099-12-31');
+            const isInDateRange = now >= startDate && now <= endDate;
+            
+            // Match lease to unit by various possible field combinations
+            const unitId = unit.id;
+            const leaseUnitId = lease.unit_id ?? lease.unitId;
+            const unitLabel = unit.unitLabel ?? unit.unit_name ?? unit.name ?? '';
+            const leaseUnitLabel = lease.unitLabel ?? lease.unit_name ?? '';
+            
+            return isActive && isInDateRange && (
+              unitId === leaseUnitId || 
+              (unitLabel && leaseUnitLabel && unitLabel === leaseUnitLabel)
+            );
+          });
         }).length;
+        
         const occupancyPct = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
 
-        // Calculate vacant/rent ready from live data ONLY
-        const vacantUnits = unitsArray.filter(u => {
-          const status = (u.status ?? u.vacancy_status ?? '').toString().toLowerCase();
-          return status.includes('vacant') || status.includes('available') || status === 'empty';
+        // Calculate vacant/rent ready from NON-LEASED units (inverse of occupancy logic)
+        const vacantUnits = unitsArray.filter(unit => {
+          const hasActiveLease = leasesArray.some(lease => {
+            const isActive = (lease.status ?? '').toString().toLowerCase() === 'active';
+            const startDate = new Date(lease.start ?? lease.start_date ?? '1900-01-01');
+            const endDate = new Date(lease.end ?? lease.end_date ?? '2099-12-31');
+            const isInDateRange = now >= startDate && now <= endDate;
+            
+            const unitId = unit.id;
+            const leaseUnitId = lease.unit_id ?? lease.unitId;
+            const unitLabel = unit.unitLabel ?? unit.unit_name ?? unit.name ?? '';
+            const leaseUnitLabel = lease.unitLabel ?? lease.unit_name ?? '';
+            
+            return isActive && isInDateRange && (
+              unitId === leaseUnitId || 
+              (unitLabel && leaseUnitLabel && unitLabel === leaseUnitLabel)
+            );
+          });
+          
+          return !hasActiveLease; // Vacant = no active lease
         });
-
-        const rentReadyUnitsCount = calculateRentReady(vacantUnits); // Use the helper function
+        
+        const rentReadyUnits = vacantUnits.filter(u => {
+          const hasRent = safeNum(u.marketRent ?? u.market_rent ?? u.rent) > 0;
+          return hasRent; // Rent ready = vacant + has market rent set
+        });
 
 
         // Create map properties from live data ONLY - only include properties with real coordinates
@@ -170,7 +208,14 @@ export function useDashboardData() {
           .filter(property => {
             const lat = safeNum(property.latitude ?? property.lat);
             const lng = safeNum(property.longitude ?? property.lng);
-            return lat !== 0 && lng !== 0; // Only include properties with real coordinates
+            const hasCoordinates = lat !== 0 && lng !== 0;
+            
+            // Log warning for properties missing coordinates
+            if (!hasCoordinates) {
+              console.warn(`Property "${property.name ?? property.id}" is missing coordinates and will not be displayed on the map.`);
+            }
+            
+            return hasCoordinates; // Only include properties with real coordinates
           })
           .map(property => {
             // Determine actual status from live data
