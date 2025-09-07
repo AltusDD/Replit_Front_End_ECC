@@ -68,6 +68,27 @@ export interface KpiData {
   criticalWOs: number;
 }
 
+export interface MapDataProperty {
+  id: string;
+  lat: number;
+  lng: number;
+  status: 'occupied-current' | 'vacant-ready' | 'vacant-down' | 'delinquent';
+  address?: string;
+}
+
+export interface FeedItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  meta: string;
+}
+
+export interface FeedData {
+  delinquencyAlerts: FeedItem[];
+  leaseRenewals: FeedItem[];
+  maintenanceHotlist: FeedItem[];
+}
+
 // Helper functions for data processing
 function safeNum(value: any): number {
   const num = Number(value);
@@ -428,5 +449,31 @@ export function useDashboardData() {
     criticalWOs: 2
   };
 
-  return { data, loading, error, kpiData, isLoading: loading };
+  // Generate map data with placeholder properties
+  const mapData: MapDataProperty[] = [
+    { id: '1', lat: 41.8781, lng: -87.6298, status: 'occupied-current', address: '123 N Michigan Ave' },
+    { id: '2', lat: 41.8675, lng: -87.6167, status: 'vacant-ready', address: '456 S State St' },
+    { id: '3', lat: 41.8819, lng: -87.6278, status: 'vacant-down', address: '789 W Lake St' },
+    { id: '4', lat: 41.8708, lng: -87.6505, status: 'delinquent', address: '321 N Wells St' },
+    { id: '5', lat: 41.8796, lng: -87.6237, status: 'occupied-current', address: '654 E Grand Ave' }
+  ];
+
+  // Generate feed data with placeholder items
+  const feedData: FeedData = {
+    delinquencyAlerts: [
+      { id: '1', title: 'Unit 2B - $2,400 Past Due', subtitle: '789 Oak Street', meta: '45 days overdue' },
+      { id: '2', title: 'Unit 1A - $1,850 Past Due', subtitle: '456 Main Street', meta: '22 days overdue' }
+    ],
+    leaseRenewals: [
+      { id: '1', title: 'Unit 3C Lease Expiring', subtitle: '321 Pine Avenue', meta: 'Expires in 32 days' },
+      { id: '2', title: 'Unit 1B Lease Expiring', subtitle: '654 Elm Street', meta: 'Expires in 28 days' },
+      { id: '3', title: 'Unit 2A Lease Expiring', subtitle: '987 Cedar Lane', meta: 'Expires in 45 days' }
+    ],
+    maintenanceHotlist: [
+      { id: '1', title: 'HVAC System Down', subtitle: '123 Maple Drive - Unit 4A', meta: 'Critical - 2 days open' },
+      { id: '2', title: 'Water Leak Repair', subtitle: '789 Oak Street - Unit 2B', meta: 'High - 5 days open' }
+    ]
+  };
+
+  return { data, loading, error, kpiData, isLoading: loading, mapData, feedData };
 }

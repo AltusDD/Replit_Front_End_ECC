@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { KpiTicker } from '../components/KpiTicker';
+import { PortfolioGoogleMap } from '../components/PortfolioGoogleMap';
+import { PriorityActionFeed } from '../components/PriorityActionFeed';
 import '../../../styles/Dashboard.css';
 
 export default function DashboardPage() {
@@ -15,12 +17,10 @@ export default function DashboardPage() {
       {/* Main Grid - Map (2/3) + Feed (1/3) */}
       <div className="main-grid">
         <div className="map-container panel">
-          <h2>Portfolio Operations Map</h2>
-          <p>Interactive property map will be displayed here</p>
+          <PortfolioGoogleMap />
         </div>
         <div className="feed-container panel">
-          <h2>Priority Action Feed</h2>
-          <p>Priority actions and alerts will be displayed here</p>
+          <PriorityActionFeed />
         </div>
       </div>
 
