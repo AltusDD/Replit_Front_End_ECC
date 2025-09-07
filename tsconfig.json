@@ -30,6 +30,9 @@
       ],
       "@config/*": [
         "src/config/*"
+      ],
+      "@shared/*": [
+        "shared/*"
       ]
     },
     "types": [

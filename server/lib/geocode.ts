@@ -55,24 +55,13 @@ async function geocodeOSM(address: string): Promise<GeocodeHit | null> {
   return { lat: parseFloat(first.lat), lng: parseFloat(first.lon), provider: "osm", confidence: first.importance };
 }
 
-// --- simple pg helpers (replace with your db util) ---
-import { pool } from "../db"; // your pg Pool
+// --- simplified caching (no database for now) ---
+const memoryCache = new Map<string, GeocodeHit>();
 
 async function getCache(address: string): Promise<GeocodeHit | null> {
-  const { rows } = await pool.query(
-    `SELECT lat, lng, provider, confidence FROM geocode_cache WHERE address = $1`,
-    [address]
-  );
-  if (!rows[0]) return null;
-  const r = rows[0];
-  return { lat: r.lat, lng: r.lng, provider: r.provider, confidence: r.confidence ?? undefined };
+  return memoryCache.get(address) || null;
 }
 
 async function putCache(address: string, hit: GeocodeHit): Promise<void> {
-  await pool.query(
-    `INSERT INTO geocode_cache (address, lat, lng, provider, confidence)
-     VALUES ($1, $2, $3, $4, $5)
-     ON CONFLICT (address) DO UPDATE SET lat = EXCLUDED.lat, lng = EXCLUDED.lng, provider = EXCLUDED.provider, confidence = EXCLUDED.confidence, updated_at = now()`,
-    [address, hit.lat, hit.lng, hit.provider, hit.confidence ?? null]
-  );
+  memoryCache.set(address, hit);
 }

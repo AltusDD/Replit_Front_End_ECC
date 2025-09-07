@@ -112,6 +112,78 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
+/** Geocode properties endpoint for adding coordinates */
+app.post("/api/geocode/properties", async (req, res) => {
+  if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
+
+  try {
+    const { properties: propertiesToGeocode } = req.body;
+    
+    if (!Array.isArray(propertiesToGeocode)) {
+      return sendErr(res, 400, "Properties array is required");
+    }
+
+    // Import geocoding function
+    const { geocode } = await import("./lib/geocode.js");
+    
+    const results = [];
+    
+    for (const property of propertiesToGeocode) {
+      const addressToGeocode = property.property_address || 
+                             property.address || 
+                             property.street_address || 
+                             property.full_address || 
+                             property.name;
+      
+      if (!addressToGeocode) {
+        results.push({ id: property.id, success: false, error: "No address available" });
+        continue;
+      }
+      
+      try {
+        const result = await geocode(addressToGeocode);
+        
+        if (result) {
+          // Try to update the property in Supabase
+          const { error: updateError } = await supa.client
+            .from(TABLE.properties)
+            .update({ lat: result.lat, lng: result.lng })
+            .eq("id", property.id);
+
+          if (updateError) {
+            // If database update fails (columns don't exist), still return the geocoded result
+            results.push({ 
+              id: property.id, 
+              success: true, 
+              lat: result.lat, 
+              lng: result.lng, 
+              provider: result.provider,
+              dbUpdateFailed: true,
+              error: updateError.message 
+            });
+          } else {
+            results.push({ 
+              id: property.id, 
+              success: true, 
+              lat: result.lat, 
+              lng: result.lng, 
+              provider: result.provider 
+            });
+          }
+        } else {
+          results.push({ id: property.id, success: false, error: "Geocoding failed" });
+        }
+      } catch (error: any) {
+        results.push({ id: property.id, success: false, error: error.message });
+      }
+    }
+    
+    res.json({ results });
+  } catch (e: any) {
+    return sendErr(res, 500, e);
+  }
+});
+
 /** Properties with computed units & occupancy */
 app.get("/api/portfolio/properties", async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
