@@ -64,18 +64,18 @@ function CityRow({
         {properties}
       </td>
       <td className="py-3 px-4 text-sm text-[var(--text)] text-right">
-        {occupiedUnits}
+        {Number.isFinite(occupiedUnits) ? occupiedUnits : 0}
       </td>
       <td className="py-3 px-4 text-sm text-[var(--text)] text-right">
-        {totalUnits - occupiedUnits}
+        {Number.isFinite(totalUnits - occupiedUnits) ? totalUnits - occupiedUnits : 0}
       </td>
       <td className="py-3 px-4 text-right">
         <div className="flex items-center justify-end gap-3">
           <span className="text-sm font-medium text-[var(--text)] min-w-[60px]">
-            {fmtPct(occupancy / 100)}
+            {Number.isFinite(occupancy) ? fmtPct(occupancy / 100) : "0.0%"}
           </span>
           <div className="w-20">
-            <ProgressBar percentage={occupancy} />
+            <ProgressBar percentage={Number.isFinite(occupancy) ? occupancy : 0} />
           </div>
         </div>
       </td>

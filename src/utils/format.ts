@@ -4,7 +4,7 @@ export const safeNum = (v: any, def = 0): number => {
 };
 
 export const fmtMoney = (n?: number | null): string => {
-  if (n == null || Number.isNaN(n)) return "—";
+  if (n == null || Number.isNaN(n) || !Number.isFinite(n)) return "—";
   if (n === 0) return "$0";
   return n.toLocaleString(undefined, {
     style: "currency",
@@ -26,7 +26,7 @@ export const fmtDate = (input?: string | Date | null): string => {
 };
 
 export const fmtPct = (n?: number | null, digits = 1): string => {
-  if (n == null || Number.isNaN(n)) return "—";
+  if (n == null || Number.isNaN(n) || !Number.isFinite(n)) return "—";
   return `${n.toFixed(digits)}%`;
 };
 

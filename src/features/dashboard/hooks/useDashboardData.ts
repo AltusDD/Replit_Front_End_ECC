@@ -114,13 +114,18 @@ export function useDashboardData() {
           r.occ += occ; r.vac += vac;
           byCityMap.set(city, r);
         });
-        const occByCity = Array.from(byCityMap.entries()).map(([city, v]) => ({
-          city,
-          properties: v.props,
-          occupied: v.occ,
-          vacant: v.vac,
-          occPct: v.occ + v.vac ? (v.occ / (v.occ + v.vac)) * 100 : 0,
-        })).sort((a,b) => a.city.localeCompare(b.city));
+        const occByCity = Array.from(byCityMap.entries()).map(([city, v]) => {
+          const safeTotal = Number.isFinite(v.occ + v.vac) && v.occ + v.vac > 0 ? v.occ + v.vac : 0;
+          const safeOcc = Number.isFinite(v.occ) ? v.occ : 0;
+          const occPct = safeTotal === 0 ? 0 : (safeOcc / safeTotal) * 100;
+          return {
+            city,
+            properties: Number.isFinite(v.props) ? v.props : 0,
+            occupiedUnits: safeOcc,
+            totalUnits: safeTotal,
+            occupancy: occPct,
+          };
+        }).sort((a,b) => a.city.localeCompare(b.city));
 
         // Generate map properties - use simple state-based coordinates
         const stateCoords: Record<string, { lat: number; lng: number }> = {
@@ -242,6 +247,7 @@ export function useDashboardData() {
           },
         });
       } catch (e) {
+        // Swallow aborts (HMR & unmount) to fix noisy DOMException/AbortError
         if (isAbortError(e)) return;
         setError(e as Error);
       } finally {
