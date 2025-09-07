@@ -169,7 +169,9 @@ app.get("/api/portfolio/properties", async (req, res) => {
         zip: row.address_zip || "—",
         units: totalUnits,
         occPct: occPct,
-        active: Boolean(row.active)
+        active: Boolean(row.active),
+        lat: row.lat || null,
+        lng: row.lng || null
       };
     });
 

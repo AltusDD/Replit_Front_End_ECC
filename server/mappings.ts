@@ -10,6 +10,8 @@ export interface PropertyOut {
   units: number;
   occPct: number;
   active: boolean;
+  lat: number | null;
+  lng: number | null;
 }
 
 export interface UnitOut {
