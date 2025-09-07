@@ -3,32 +3,19 @@ export const safeNum = (v: any, def = 0): number => {
   return Number.isFinite(n) ? n : def;
 };
 
-export const fmtMoney = (n?: number | null): string => {
-  if (n == null || Number.isNaN(n) || !Number.isFinite(n)) return "—";
-  if (n === 0) return "$0";
-  return n.toLocaleString(undefined, {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-};
+export const fmtMoney = (n?: number | null) =>
+  typeof n === "number" && Number.isFinite(n)
+    ? n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+    : "$0";
 
 // Mon D, YYYY (e.g., Sep 6, 2025)
-export const fmtDate = (input?: string | Date | null): string => {
-  if (!input) return "—";
-  const d = typeof input === "string" ? new Date(input) : input;
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
+export const fmtDate = (iso?: string | null) =>
+  iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
 
-export const fmtPct = (n?: number | null, digits = 1): string => {
-  if (n == null || Number.isNaN(n) || !Number.isFinite(n)) return "—";
-  return `${n.toFixed(digits)}%`;
-};
+export const fmtPct = (n?: number | null, digits = 1) =>
+  typeof n === "number" && Number.isFinite(n)
+    ? `${n.toFixed(digits)}%`
+    : `${(0).toFixed(digits)}%`;
 
 export const fmtCompact = (n?: number | null): string => {
   if (n == null || Number.isNaN(n)) return "—";
@@ -50,10 +37,8 @@ export function money(n?: number | null): string {
   });
 }
 
-// Legacy aliases for compatibility
+/** Back-compat aliases (some files import these names) */
+export const money = fmtMoney;
 export const percent = fmtPct;
 export const date = fmtDate;
-export const shortDate = fmtDate;
 export const formatMoney = fmtMoney;
-export const formatPercent = fmtPct;
-export const formatDate = fmtDate;
