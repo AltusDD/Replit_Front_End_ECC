@@ -247,7 +247,6 @@ export function PortfolioGoogleMap({ propertiesForMap }: PortfolioGoogleMapProps
       <div className="portfolio-map">
         <APIProvider apiKey={hasApiKey}>
           <Map
-            mapId="genesis-portfolio-map"
             style={{ width: '100%', height: '100%' }}
             defaultCenter={mapCenter}
             defaultZoom={10}
