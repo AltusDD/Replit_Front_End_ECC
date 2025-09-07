@@ -1,31 +1,39 @@
-// ChartContainer.tsx - Genesis specification consistent panel header with controls slot
+// Genesis Grade Chart Container - Sophisticated Data Visualization Wrapper
+
 import React from 'react';
 
 interface ChartContainerProps {
   title: string;
-  controls?: React.ReactNode;
+  subtitle?: string;
   children: React.ReactNode;
+  actions?: React.ReactNode;
   className?: string;
 }
 
 export function ChartContainer({ 
   title, 
-  controls,
-  children,
-  className = ''
+  subtitle, 
+  children, 
+  actions,
+  className = '' 
 }: ChartContainerProps) {
   return (
-    <div className={`ecc-panel ${className}`}>
-      <div className="flex items-center justify-between p-6 pb-4">
-        <h3 className="ecc-panel__title">{title}</h3>
-        {controls && (
-          <div className="flex items-center gap-3">
-            {controls}
+    <div className={`chart-container ${className}`}>
+      <div className="chart-container__header">
+        <div>
+          <h3 className="chart-container__title">{title}</h3>
+          {subtitle && (
+            <p className="chart-container__subtitle">{subtitle}</p>
+          )}
+        </div>
+        {actions && (
+          <div className="chart-container__actions">
+            {actions}
           </div>
         )}
       </div>
-      {controls && <div className="border-b border-[var(--line)] mx-6"></div>}
-      <div className="p-6 pt-4">
+      
+      <div className="chart-container__content">
         {children}
       </div>
     </div>
