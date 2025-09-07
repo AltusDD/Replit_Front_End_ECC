@@ -1,7 +1,7 @@
 // Genesis Grade Portfolio Google Map - Interactive Property Visualization
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { APIProvider, Map, AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, Marker, InfoWindow } from '@vis.gl/react-google-maps';
 import type { MapProperty } from '../hooks/useDashboardData';
 import { ActionButton } from './ActionButton';
 
@@ -264,21 +264,11 @@ export function PortfolioGoogleMap({ propertiesForMap }: PortfolioGoogleMapProps
             onLoad={setMapInstance}
           >
             {mockProperties.map((property) => (
-              <div
+              <Marker
                 key={property.id}
-                style={{
-                  position: 'absolute',
-                  transform: 'translate(-50%, -50%)',
-                  zIndex: 1
-                }}
-              >
-                <div 
-                  onClick={() => handleMarkerClick(property)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <PropertyPin status={property.status} />
-                </div>
-              </div>
+                position={{ lat: property.lat, lng: property.lng }}
+                onClick={() => handleMarkerClick(property)}
+              />
             ))}
 
             {selectedProperty && (
