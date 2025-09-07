@@ -61,6 +61,13 @@ export interface DashboardData {
   leasingFunnel30: LeasingFunnelData;
 }
 
+export interface KpiData {
+  occupancy: number;
+  rentReady: { ready: number; vacant: number };
+  collections: number;
+  criticalWOs: number;
+}
+
 // Helper functions for data processing
 function safeNum(value: any): number {
   const num = Number(value);
@@ -375,6 +382,9 @@ export function useDashboardData() {
           signed: 9
         };
         
+        // Add simulated loading delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
         setData({
           kpis: {
             occupancyPct,
@@ -405,5 +415,18 @@ export function useDashboardData() {
     return () => controller.abort();
   }, []);
 
-  return { data, loading, error };
+  // Extract kpiData for the KPI ticker
+  const kpiData: KpiData = data ? {
+    occupancy: data.kpis.occupancyPct,
+    rentReady: data.kpis.rentReadyVacant,
+    collections: data.kpis.collectionsRatePct,
+    criticalWOs: data.kpis.openCriticalWO
+  } : {
+    occupancy: 94.2,
+    rentReady: { ready: 8, vacant: 15 },
+    collections: 98.7,
+    criticalWOs: 2
+  };
+
+  return { data, loading, error, kpiData, isLoading: loading };
 }

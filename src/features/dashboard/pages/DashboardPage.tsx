@@ -1,15 +1,15 @@
 // Genesis Grade Dashboard Page - The Definitive SFR Command Center
 
 import React from 'react';
+import { KpiTicker } from '../components/KpiTicker';
 import '../../../styles/Dashboard.css';
 
 export default function DashboardPage() {
   return (
     <div className="dashboard-page">
       {/* KPI Ticker - Full Width */}
-      <div className="kpi-ticker-container panel">
-        <h2>KPI Ticker</h2>
-        <p>Portfolio health metrics will be displayed here</p>
+      <div className="kpi-ticker-container">
+        <KpiTicker />
       </div>
 
       {/* Main Grid - Map (2/3) + Feed (1/3) */}
