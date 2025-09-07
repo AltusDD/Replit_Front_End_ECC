@@ -1,70 +1,104 @@
-import "dotenv/config";
-import PQueue from "p-queue";
-import { pool } from "../server/db";
-import { geocode } from "../server/lib/geocode";
+// node scripts/backfill-geocodes.ts
+import { createClient } from "@supabase/supabase-js";
+import { geocode } from "../server/lib/geocode.js";
 
-const queue = new PQueue({ concurrency: 2, interval: 1000, intervalCap: 2 });
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-async function backfillGeocode() {
-  console.log("🗺️  Starting geocoding backfill...");
-
-  // Get all properties without coordinates
-  const { rows } = await pool.query(`
-    SELECT id, property_address, property_name, lat, lng
-    FROM properties
-    WHERE lat IS NULL OR lng IS NULL OR lat = 0 OR lng = 0
-    ORDER BY id
-  `);
-
-  console.log(`Found ${rows.length} properties missing coordinates`);
-
-  for (const [index, property] of rows.entries()) {
-    const { id, property_address, property_name } = property;
-    
-    // Try property_address first, fallback to property_name
-    const addressToGeocode = property_address || property_name;
-    if (!addressToGeocode) {
-      console.log(`Skipping property ${id}: no address available`);
-      continue;
-    }
-
-    queue.add(async () => {
-      try {
-        console.log(`[${index + 1}/${rows.length}] Geocoding property ${id}: "${addressToGeocode}"`);
-        
-        const result = await geocode(addressToGeocode);
-        
-        if (result) {
-          await pool.query(
-            `UPDATE properties SET lat = $1, lng = $2 WHERE id = $3`,
-            [result.lat, result.lng, id]
-          );
-          console.log(`✅ Property ${id} geocoded to: ${result.lat}, ${result.lng} (${result.provider})`);
-        } else {
-          console.log(`❌ Failed to geocode property ${id}: "${addressToGeocode}"`);
-        }
-      } catch (error) {
-        console.error(`Error geocoding property ${id}:`, error);
-      }
-    });
-  }
-
-  await queue.onIdle();
-  console.log("🎉 Geocoding backfill complete!");
-  
-  // Final count
-  const { rows: updated } = await pool.query(`
-    SELECT COUNT(*) as count
-    FROM properties 
-    WHERE lat IS NOT NULL AND lng IS NOT NULL AND lat != 0 AND lng != 0
-  `);
-  
-  console.log(`📍 Total properties with coordinates: ${updated[0].count}`);
-  
-  process.exit(0);
+// Supabase setup (same as server)
+function coerceRestUrl(raw?: string | null): string | null {
+  if (!raw) return null;
+  const rest = raw.match(/^https?:\/\/([a-z0-9-]+)\.supabase\.co\/?$/i);
+  if (rest) return `https://${rest[1]}.supabase.co`;
+  const m = raw.match(/@db\.([a-z0-9-]+)\.supabase\.co/i);
+  if (m) return `https://${m[1]}.supabase.co`;
+  return raw;
 }
 
-backfillGeocode().catch((error) => {
-  console.error("Fatal error:", error);
+const rawUrl = process.env.SUPABASE_URL || process.env.SUPABASE_REST_URL || null;
+const restUrl = coerceRestUrl(rawUrl);
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "";
+
+if (!restUrl || !key) {
+  console.error("❌ Missing Supabase REST URL and/or key");
+  process.exit(1);
+}
+
+const supabase = createClient(restUrl, key, { auth: { persistSession: false } });
+
+function makeAddress(p: any) {
+  const parts = [
+    p.property_address,
+    p.address, 
+    p.street_address,
+    p.full_address,
+    p.street,
+    p.city,
+    p.state,
+    p.zip
+  ].filter(Boolean);
+  return parts.length ? parts.join(", ") : (p.name || "");
+}
+
+(async () => {
+  console.log("🗺️ Starting geocoding backfill...");
+  
+  // Get properties missing coordinates
+  const { data: properties, error } = await supabase
+    .from("properties")
+    .select("*")
+    .or("lat.is.null,lng.is.null,lat.eq.0,lng.eq.0")
+    .limit(1000);
+
+  if (error) {
+    console.error("❌ Error fetching properties:", error);
+    process.exit(1);
+  }
+
+  if (!properties?.length) {
+    console.log("✅ All properties already have coordinates!");
+    process.exit(0);
+  }
+
+  console.log(`📍 Found ${properties.length} properties to geocode`);
+
+  let ok = 0, fail = 0;
+  
+  for (const p of properties) {
+    const address = makeAddress(p);
+    console.log(`Processing ${p.id}: ${address}`);
+    
+    if (!address) {
+      console.warn(`× ${p.id}: No address available`);
+      fail++;
+      continue;
+    }
+    
+    const hit = await geocode(address);
+    
+    if (hit) {
+      const { error: updateError } = await supabase
+        .from("properties")
+        .update({ lat: hit.lat, lng: hit.lng })
+        .eq("id", p.id);
+        
+      if (updateError) {
+        console.error(`× ${p.id}: Database update failed - ${updateError.message}`);
+        fail++;
+      } else {
+        ok++;
+        console.log(`✓ ${p.id}: ${address} -> ${hit.lat},${hit.lng} (${hit.provider})`);
+      }
+    } else {
+      fail++;
+      console.warn(`× ${p.id}: ${address} (no result)`);
+    }
+    
+    await sleep(1000); // 1/sec rate limit
+  }
+
+  console.log(`\n🎉 Backfill complete: ${ok} updated, ${fail} skipped/failed`);
+  process.exit(0);
+})().catch(error => {
+  console.error("💥 Fatal error:", error);
   process.exit(1);
 });
