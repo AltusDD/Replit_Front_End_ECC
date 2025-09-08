@@ -1,0 +1,26 @@
+name: Sync DoorLoop Owners
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "*/30 * * * *"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm i -D tsx @supabase/supabase-js
+      - name: Run owners sync
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DOORLOOP_API_KEY: ${{ secrets.DOORLOOP_API_KEY }}
+          DOORLOOP_BASE_URL: ${{ secrets.DOORLOOP_BASE_URL }}
+          OWNERS_ENDPOINT: ${{ secrets.OWNERS_ENDPOINT }}
+          SINCE_DAYS: 30
+        run: npx tsx scripts/sync-doorloop-owners.ts
