@@ -6,7 +6,7 @@ import { KpiCard } from './KpiCard';
 import { fmtPct } from '../../../utils/format';
 
 export function KpiTicker() {
-  const { kpiData, isLoading } = useDashboardData();
+  const { kpiData, isLoading, occupancyChartData, collectionsSparklineData } = useDashboardData();
 
   return (
     <div className="kpi-ticker">
@@ -14,6 +14,8 @@ export function KpiTicker() {
         title="Occupancy"
         value={fmtPct(kpiData.occupancy)}
         isLoading={isLoading}
+        chartType="donut"
+        chartData={occupancyChartData}
       />
       
       <KpiCard
@@ -27,6 +29,8 @@ export function KpiTicker() {
         title="Collections MTD"
         value={fmtPct(kpiData.collections)}
         isLoading={isLoading}
+        chartType="sparkline"
+        chartData={collectionsSparklineData}
       />
       
       <KpiCard

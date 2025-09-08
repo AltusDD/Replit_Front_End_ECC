@@ -419,6 +419,19 @@ export function useDashboardData() {
     return () => controller.abort();
   }, []);
 
+  // Generate chart data for KPI cards
+  const occupancyChartData = data ? [
+    { name: 'Occupied', value: data.kpis.occupancyPct, color: 'var(--good)' },
+    { name: 'Vacant', value: 100 - data.kpis.occupancyPct, color: 'var(--neutral)' }
+  ] : [];
+
+  // Generate collections sparkline data (mock trend for now - replace with real historical data)
+  const collectionsSparklineData = data ? 
+    Array.from({ length: 7 }, (_, i) => ({
+      name: `Day ${i + 1}`,
+      value: Math.max(0, data.kpis.collectionsRatePct + (Math.random() - 0.5) * 20)
+    })) : [];
+
   // Extract kpiData for the KPI ticker
   const kpiDataTransformed: KpiData = data ? {
     occupancy: data.kpis.occupancyPct,
@@ -462,5 +475,15 @@ export function useDashboardData() {
     }
   });
 
-  return { data, loading, error, kpiData: kpiDataTransformed, isLoading: loading, mapData: mapDataTransformed, feedData: feedDataTransformed };
+  return { 
+    data, 
+    loading, 
+    error, 
+    kpiData: kpiDataTransformed, 
+    isLoading: loading, 
+    mapData: mapDataTransformed, 
+    feedData: feedDataTransformed,
+    occupancyChartData,
+    collectionsSparklineData
+  };
 }

@@ -46,6 +46,16 @@
   box-shadow: 0 4px 12px rgba(214, 179, 106, 0.1);
 }
 
+.kpi-card__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpi-card__text {
+  flex: 1;
+}
+
 .kpi-card__icon {
   margin-bottom: 8px;
 }
@@ -70,6 +80,11 @@
 .kpi-card__metric {
   font-size: 11px;
   color: var(--text-dim);
+}
+
+.kpi-card__chart {
+  flex-shrink: 0;
+  margin-left: 16px;
 }
 
 /* Skeleton Loading States */
