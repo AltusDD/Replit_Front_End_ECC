@@ -120,6 +120,42 @@ export const geocodeCache = pgTable("geocode_cache", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
+// Owner transfers table for tracking property ownership transfers
+export const ownerTransfers = pgTable("owner_transfers", {
+  id: serial("id").primaryKey(),
+  property_ids: text("property_ids").array(), // JSON array of property IDs
+  new_owner_id: integer("new_owner_id").references(() => owners.id),
+  old_owner_id: integer("old_owner_id").references(() => owners.id),
+  effective_date: varchar("effective_date", { length: 10 }), // YYYY-MM-DD format
+  status: varchar("status", { length: 50 }).default("PENDING_ACCOUNTING"), // PENDING_ACCOUNTING, APPROVED_ACCOUNTING, READY_EXECUTION, COMPLETE
+  notes: text("notes"),
+  initiated_by: varchar("initiated_by", { length: 255 }),
+  executed_at: timestamp("executed_at"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+// Owner transfer snapshots for storing immutable entity states
+export const ownerTransferSnapshots = pgTable("owner_transfer_snapshots", {
+  id: serial("id").primaryKey(),
+  transfer_id: integer("transfer_id").references(() => ownerTransfers.id),
+  entity_type: varchar("entity_type", { length: 50 }), // 'property', 'unit', 'lease', 'tenant', etc.
+  entity_id: varchar("entity_id", { length: 50 }), // String to handle various ID types
+  raw_jsonb: text("raw_jsonb"), // JSON snapshot of the entity
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+// Audit events table for tracking all system changes
+export const auditEvents = pgTable("audit_events", {
+  id: serial("id").primaryKey(),
+  event_type: varchar("event_type", { length: 100 }), // e.g., 'OWNER_TRANSFER_INIT', 'OWNER_TRANSFER_COMPLETE'
+  entity_type: varchar("entity_type", { length: 50 }), // 'owner_transfer', 'property', etc.
+  entity_id: varchar("entity_id", { length: 50 }), // ID of the affected entity
+  actor_id: varchar("actor_id", { length: 255 }), // User who performed the action
+  payload: text("payload"), // JSON payload with additional context
+  created_at: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas for form validation
 export const insertPropertySchema = createInsertSchema(properties);
 export const insertUnitSchema = createInsertSchema(units);
@@ -127,6 +163,9 @@ export const insertLeaseSchema = createInsertSchema(leases);
 export const insertTenantSchema = createInsertSchema(tenants);
 export const insertOwnerSchema = createInsertSchema(owners);
 export const insertWorkorderSchema = createInsertSchema(workorders);
+export const insertOwnerTransferSchema = createInsertSchema(ownerTransfers);
+export const insertOwnerTransferSnapshotSchema = createInsertSchema(ownerTransferSnapshots);
+export const insertAuditEventSchema = createInsertSchema(auditEvents);
 
 // Types for TypeScript
 export type Property = typeof properties.$inferSelect;
@@ -141,3 +180,9 @@ export type Owner = typeof owners.$inferSelect;
 export type InsertOwner = z.infer<typeof insertOwnerSchema>;
 export type Workorder = typeof workorders.$inferSelect;
 export type InsertWorkorder = z.infer<typeof insertWorkorderSchema>;
+export type OwnerTransfer = typeof ownerTransfers.$inferSelect;
+export type InsertOwnerTransfer = z.infer<typeof insertOwnerTransferSchema>;
+export type OwnerTransferSnapshot = typeof ownerTransferSnapshots.$inferSelect;
+export type InsertOwnerTransferSnapshot = z.infer<typeof insertOwnerTransferSnapshotSchema>;
+export type AuditEvent = typeof auditEvents.$inferSelect;
+export type InsertAuditEvent = z.infer<typeof insertAuditEventSchema>;
