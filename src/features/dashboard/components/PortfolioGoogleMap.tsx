@@ -1,33 +1,57 @@
 // Genesis Grade Portfolio Google Map - Interactive Property Visualization
 
-import React from 'react';
-import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
+import React, { useState } from 'react';
+import { APIProvider, Map, AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
 import { useDashboardData, type MapDataProperty } from '../hooks/useDashboardData';
+import { Link } from 'wouter';
 
-// Pin colors based on property status
+// Pin colors based on property status using design tokens
 const getPinColor = (status: MapDataProperty['status']): string => {
   switch (status) {
-    case 'occupied-current': return '#2fc78d'; // --good
-    case 'vacant-ready': return '#f3c969'; // --warn
-    case 'vacant-down': return '#ef5953'; // --bad
-    case 'delinquent': return '#ef5953'; // --bad
-    default: return '#8a93a1'; // --neutral
+    case 'occupied-current': return 'var(--good)'; 
+    case 'vacant-ready': return 'var(--warn)'; 
+    case 'vacant-down': return 'var(--bad)'; 
+    case 'delinquent': return 'var(--bad)'; 
+    default: return 'var(--neutral)'; 
+  }
+};
+
+// Get status display text
+const getStatusText = (status: MapDataProperty['status']): string => {
+  switch (status) {
+    case 'occupied-current': return 'Occupied';
+    case 'vacant-ready': return 'Rent Ready';
+    case 'vacant-down': return 'Vacant';
+    case 'delinquent': return 'Delinquent';
+    default: return 'Unknown';
   }
 };
 
 // Custom Pin Component
-function PropertyPin({ status }: { status: MapDataProperty['status'] }) {
+function PropertyPin({ status, onClick }: { 
+  status: MapDataProperty['status']; 
+  onClick?: () => void;
+}) {
   const color = getPinColor(status);
   
   return (
     <div 
+      onClick={onClick}
       style={{
-        width: '20px',
-        height: '20px',
+        width: '24px',
+        height: '24px',
         borderRadius: '50%',
         backgroundColor: color,
-        border: '2px solid white',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+        border: '3px solid white',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+        cursor: 'pointer',
+        transition: 'transform 0.2s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'scale(1.2)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'scale(1)';
       }}
     />
   );
@@ -35,6 +59,7 @@ function PropertyPin({ status }: { status: MapDataProperty['status'] }) {
 
 export function PortfolioGoogleMap() {
   const { mapData } = useDashboardData();
+  const [selectedProperty, setSelectedProperty] = useState<MapDataProperty | null>(null);
   
   // Check for Google Maps API key
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -56,6 +81,12 @@ export function PortfolioGoogleMap() {
     p => typeof p.lat === "number" && typeof p.lng === "number" && Number.isFinite(p.lat) && Number.isFinite(p.lng)
   );
 
+  console.log('🗺️ Map Data Debug:', {
+    totalProperties: mapData.length,
+    validProperties: validPoints.length,
+    sampleProperty: validPoints[0]
+  });
+
   // Show empty state if no valid coordinates
   if (validPoints.length === 0) {
     return (
@@ -69,23 +100,70 @@ export function PortfolioGoogleMap() {
     );
   }
 
+  // Calculate center from properties if available
+  const center = validPoints.length > 0 ? {
+    lat: validPoints.reduce((sum, p) => sum + p.lat, 0) / validPoints.length,
+    lng: validPoints.reduce((sum, p) => sum + p.lng, 0) / validPoints.length
+  } : { lat: 41.8781, lng: -87.6298 };
+
   return (
     <div style={{ width: '100%', height: '400px' }}>
       <APIProvider apiKey={apiKey}>
         <Map
-          defaultCenter={{ lat: 41.8781, lng: -87.6298 }}
-          defaultZoom={12}
+          center={center}
+          defaultZoom={11}
           gestureHandling="greedy"
           disableDefaultUI={false}
+          styles={[
+            {
+              featureType: "poi",
+              elementType: "labels",
+              stylers: [{ visibility: "off" }]
+            }
+          ]}
         >
           {validPoints.map((property) => (
             <AdvancedMarker
               key={property.id}
               position={{ lat: property.lat, lng: property.lng }}
+              onClick={() => setSelectedProperty(property)}
             >
-              <PropertyPin status={property.status} />
+              <PropertyPin 
+                status={property.status} 
+                onClick={() => setSelectedProperty(property)}
+              />
             </AdvancedMarker>
           ))}
+
+          {selectedProperty && (
+            <InfoWindow
+              position={{ lat: selectedProperty.lat, lng: selectedProperty.lng }}
+              onCloseClick={() => setSelectedProperty(null)}
+            >
+              <div className="property-info-window">
+                <h3 className="font-semibold text-sm mb-2">
+                  {selectedProperty.address || `Property ${selectedProperty.id}`}
+                </h3>
+                <div className="space-y-1 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full border border-white"
+                      style={{ backgroundColor: getPinColor(selectedProperty.status) }}
+                    />
+                    <span className="font-medium">{getStatusText(selectedProperty.status)}</span>
+                  </div>
+                  <div className="pt-2 border-t border-gray-200">
+                    <Link 
+                      href={`/portfolio/properties/${selectedProperty.id}`}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      View Details →
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </InfoWindow>
+          )}
         </Map>
       </APIProvider>
     </div>
