@@ -41,5 +41,6 @@ export {
   fmtMoney as money,
   fmtPct as percent,
   fmtDate as date,
+  fmtDate as shortDate,
   fmtMoney as formatMoney,
 };
