@@ -1,8 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const url  = process.env.SUPABASE_URL!;
-const key  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const SUPABASE_URL = process.env.SUPABASE_URL!;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-export const supabaseAdmin = createClient(url, key, {
-  auth: { persistSession: false }
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+}
+
+export const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
 });
+
+// Keep the old export for backwards compatibility
+export const supabaseAdmin = sbAdmin;
