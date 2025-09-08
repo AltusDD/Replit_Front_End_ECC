@@ -8,15 +8,13 @@ export default function OwnerCardPage() {
   const { id = '' } = useParams();
   const [showTransferModal, setShowTransferModal] = useState(false);
 
-  // Fetch owner data and their properties
-  const properties = useCollection(`/api/portfolio/properties`);
+  // Fetch owner summary and their properties
+  const ownerSummary = useCollection(`/api/owners/${id}/summary`);
+  const ownerProperties = useCollection(`/api/owners/${id}/properties?limit=200`);
   
-  // Filter properties owned by this owner (when we have proper owner_id linking)
-  const ownerProperties = properties.data?.filter(p => 
-    // For now, we'll show all properties - in real implementation, 
-    // this would filter by owner_id
-    true
-  ) || [];
+  const owner = ownerSummary.data?.owner;
+  const propertyCount = ownerSummary.data?.counts?.properties || 0;
+  const properties = ownerProperties.data?.properties || [];
 
   const breadcrumbs = [
     { label: 'Portfolio', href: '/portfolio/owners' },
@@ -42,10 +40,10 @@ export default function OwnerCardPage() {
               Owner Card
             </h1>
             <p style={{ color: 'var(--text-subtle)', fontSize: '1.2em' }}>
-              Owner ID: {id}
+              {owner?.display_name || owner?.company_name || [owner?.first_name, owner?.last_name].filter(Boolean).join(' ') || `Owner ${id}`}
             </p>
             <p style={{ color: 'var(--text-dim)', marginTop: 'var(--gap-2)' }}>
-              {ownerProperties.length} Properties • Active Owner
+              {propertyCount} Properties • Active Owner
             </p>
           </div>
           
@@ -90,15 +88,15 @@ export default function OwnerCardPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--gap-2)' }}>
             <div>
               <strong style={{ color: 'var(--text)' }}>Company:</strong>
-              <p style={{ color: 'var(--text-dim)', marginTop: '4px' }}>Sample Company LLC</p>
+              <p style={{ color: 'var(--text-dim)', marginTop: '4px' }}>{owner?.company_name || 'N/A'}</p>
             </div>
             <div>
               <strong style={{ color: 'var(--text)' }}>Contact:</strong>
-              <p style={{ color: 'var(--text-dim)', marginTop: '4px' }}>owner@example.com</p>
+              <p style={{ color: 'var(--text-dim)', marginTop: '4px' }}>{owner?.email || 'N/A'}</p>
             </div>
             <div>
               <strong style={{ color: 'var(--text)' }}>Phone:</strong>
-              <p style={{ color: 'var(--text-dim)', marginTop: '4px' }}>(555) 123-4567</p>
+              <p style={{ color: 'var(--text-dim)', marginTop: '4px' }}>{owner?.phone || 'N/A'}</p>
             </div>
             <div>
               <strong style={{ color: 'var(--text)' }}>Status:</strong>
@@ -128,19 +126,19 @@ export default function OwnerCardPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--gap-2)' }}>
             <div style={{ textAlign: 'center', padding: 'var(--gap-2)' }}>
               <div style={{ fontSize: '2em', color: 'var(--altus-gold)' }}>
-                {ownerProperties.length}
+                {propertyCount}
               </div>
               <div style={{ color: 'var(--text-dim)', fontSize: '0.9em' }}>Properties</div>
             </div>
             <div style={{ textAlign: 'center', padding: 'var(--gap-2)' }}>
               <div style={{ fontSize: '2em', color: 'var(--good)' }}>
-                {ownerProperties.reduce((sum, p) => sum + (p.units || 0), 0)}
+                {properties.reduce((sum, p) => sum + (p.units || 0), 0)}
               </div>
               <div style={{ color: 'var(--text-dim)', fontSize: '0.9em' }}>Total Units</div>
             </div>
             <div style={{ textAlign: 'center', padding: 'var(--gap-2)' }}>
               <div style={{ fontSize: '2em', color: 'var(--warn)' }}>
-                {Math.round(ownerProperties.reduce((sum, p) => sum + (p.occPct || 0), 0) / Math.max(ownerProperties.length, 1))}%
+                —
               </div>
               <div style={{ color: 'var(--text-dim)', fontSize: '0.9em' }}>Avg Occupancy</div>
             </div>
@@ -163,17 +161,17 @@ export default function OwnerCardPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--gap-3)' }}>
           <h2 style={{ color: 'var(--text)' }}>Properties</h2>
           <span style={{ color: 'var(--text-dim)', fontSize: '0.9em' }}>
-            {ownerProperties.length} properties
+            {properties.length} properties
           </span>
         </div>
         
-        {ownerProperties.length === 0 ? (
+        {properties.length === 0 ? (
           <p style={{ color: 'var(--text-dim)', textAlign: 'center', padding: 'var(--gap-4)' }}>
             No properties found for this owner.
           </p>
         ) : (
           <div style={{ display: 'grid', gap: 'var(--gap-2)' }}>
-            {ownerProperties.slice(0, 5).map((property, index) => (
+            {properties.slice(0, 5).map((property, index) => (
               <div 
                 key={property.id || index}
                 style={{
@@ -191,15 +189,15 @@ export default function OwnerCardPage() {
                     {property.name || `Property ${property.id}`}
                   </strong>
                   <p style={{ color: 'var(--text-dim)', fontSize: '0.9em', marginTop: '4px' }}>
-                    {property.city}, {property.state} • {property.units || 0} units
+                    {[property.city, property.state].filter(Boolean).join(', ')} • {property.units || 0} units
                   </p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ 
-                    color: property.occPct >= 90 ? 'var(--good)' : property.occPct >= 70 ? 'var(--warn)' : 'var(--bad)',
+                    color: 'var(--neutral)',
                     fontWeight: 'bold'
                   }}>
-                    {property.occPct || 0}%
+                    —
                   </span>
                   <p style={{ color: 'var(--text-dim)', fontSize: '0.8em', marginTop: '2px' }}>
                     Occupancy
@@ -208,10 +206,10 @@ export default function OwnerCardPage() {
               </div>
             ))}
             
-            {ownerProperties.length > 5 && (
+            {properties.length > 5 && (
               <div style={{ textAlign: 'center', marginTop: 'var(--gap-2)' }}>
                 <span style={{ color: 'var(--text-dim)', fontSize: '0.9em' }}>
-                  + {ownerProperties.length - 5} more properties
+                  + {properties.length - 5} more properties
                 </span>
               </div>
             )}
@@ -223,7 +221,7 @@ export default function OwnerCardPage() {
       <TransferStepper
         isOpen={showTransferModal}
         onClose={() => setShowTransferModal(false)}
-        propertyIds={ownerProperties.map(p => p.id).filter(id => typeof id === 'number')}
+        propertyIds={properties.map(p => p.id).filter(id => typeof id === 'number')}
       />
     </div>
   );
