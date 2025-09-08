@@ -12,6 +12,7 @@ import {
   type InitiateInput
 } from "./services/ownerTransferService";
 import { ownersRouter } from './routes/owners';
+import adminSyncRoute from './routes/adminSync';
 import * as fs from "fs";
 import * as path from "path";
 
@@ -27,6 +28,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/owners', ownersRouter);
+app.use('/api/admin/sync', adminSyncRoute);
 
 const PORT = Number(process.env.PORT_API || 8787);
 
