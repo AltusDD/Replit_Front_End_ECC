@@ -1,44 +1,45 @@
-export const safeNum = (v: any, def = 0): number => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : def;
-};
+// src/utils/format.ts
 
-export const fmtMoney = (n?: number | null) =>
-  typeof n === "number" && Number.isFinite(n)
-    ? n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
-    : "$0";
-
-// Mon D, YYYY (e.g., Sep 6, 2025)
-export const fmtDate = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
-
-export const fmtPct = (n?: number | null, digits = 1) =>
-  typeof n === "number" && Number.isFinite(n)
-    ? `${n.toFixed(digits)}%`
-    : `${(0).toFixed(digits)}%`;
-
-export const fmtCompact = (n?: number | null): string => {
-  if (n == null || Number.isNaN(n)) return "—";
-  return Intl.NumberFormat(undefined, { notation: "compact" }).format(n);
-};
-
-export function pct(n?: number | null, digits = 1): string {
-  if (n == null || Number.isNaN(n)) return "—";
-  return `${n.toFixed(digits)}%`;
-}
-
-export function money(n?: number | null): string {
-  if (n == null || Number.isNaN(n)) return "—";
-  if (n === 0) return "$0";
-  return n.toLocaleString(undefined, {
+export function fmtMoney(
+  value?: number | null,
+  opts: Intl.NumberFormatOptions = {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 0,
+  }
+): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "$0";
+  return value.toLocaleString("en-US", opts);
+}
+
+export function fmtPct(value?: number | null, digits = 1): string {
+  const n = typeof value === "number" && Number.isFinite(value) ? value : 0;
+  return `${n.toFixed(digits)}%`;
+}
+
+export function fmtDate(iso?: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 }
 
-/** Back-compat aliases (some files import these names) */
-export const money = fmtMoney;
-export const percent = fmtPct;
-export const date = fmtDate;
-export const formatMoney = fmtMoney;
+export function fmtCompact(n?: number | null): string {
+  if (typeof n !== "number" || !Number.isFinite(n)) return "0";
+  return n.toLocaleString("en-US", { notation: "compact", maximumFractionDigits: 1 });
+}
+
+/**
+ * Back-compat named exports.
+ * These are *re-exports* (aliases), not new declarations — so there are no duplicate symbols.
+ */
+export {
+  fmtMoney as money,
+  fmtPct as percent,
+  fmtDate as date,
+  fmtMoney as formatMoney,
+};
