@@ -50,13 +50,22 @@ async function geocodeOSM(address: string): Promise<Hit | null> {
   return { lat: parseFloat(f.lat), lng: parseFloat(f.lon), provider: "osm", confidence: f.importance ?? null };
 }
 
-// cache - using memory cache since we don't have geocode_cache table in Supabase
-const memoryCache = new Map<string, Hit>();
-
+// cache
 async function cacheGet(address: string): Promise<Hit | null> {
-  return memoryCache.get(address) || null;
+  const { rows } = await pool.query(
+    "SELECT lat,lng,provider,confidence FROM geocode_cache WHERE address=$1",
+    [address]
+  );
+  const r = rows[0];
+  return r ? { lat: r.lat, lng: r.lng, provider: r.provider, confidence: r.confidence } : null;
 }
 
 async function cachePut(address: string, hit: Hit) {
-  memoryCache.set(address, hit);
+  await pool.query(
+    `INSERT INTO geocode_cache(address,lat,lng,provider,confidence)
+     VALUES($1,$2,$3,$4,$5)
+     ON CONFLICT(address)
+     DO UPDATE SET lat=EXCLUDED.lat,lng=EXCLUDED.lng,provider=EXCLUDED.provider,confidence=EXCLUDED.confidence,updated_at=now()`,
+    [address, hit.lat, hit.lng, hit.provider, hit.confidence ?? null]
+  );
 }
