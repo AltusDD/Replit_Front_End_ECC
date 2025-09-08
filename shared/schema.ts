@@ -140,19 +140,20 @@ export const ownerTransferSnapshots = pgTable("owner_transfer_snapshots", {
   id: serial("id").primaryKey(),
   transfer_id: integer("transfer_id").references(() => ownerTransfers.id),
   entity_type: varchar("entity_type", { length: 50 }), // 'property', 'unit', 'lease', 'tenant', etc.
-  entity_id: varchar("entity_id", { length: 50 }), // String to handle various ID types
-  raw_jsonb: text("raw_jsonb"), // JSON snapshot of the entity
+  entity_id: integer("entity_id"), // Integer ID to handle primary keys
+  raw_jsonb: text("raw_jsonb"), // JSON snapshot of the entity (using text for compatibility)
   created_at: timestamp("created_at").defaultNow(),
 });
 
 // Audit events table for tracking all system changes
 export const auditEvents = pgTable("audit_events", {
   id: serial("id").primaryKey(),
-  event_type: varchar("event_type", { length: 100 }), // e.g., 'OWNER_TRANSFER_INIT', 'OWNER_TRANSFER_COMPLETE'
-  entity_type: varchar("entity_type", { length: 50 }), // 'owner_transfer', 'property', etc.
-  entity_id: varchar("entity_id", { length: 50 }), // ID of the affected entity
+  event_type: varchar("event_type", { length: 100 }).notNull(), // e.g., 'OWNER_TRANSFER_INIT', 'OWNER_TRANSFER_COMPLETE'
+  ref_table: varchar("ref_table", { length: 50 }), // 'owner_transfers', 'properties', etc.
+  ref_id: integer("ref_id"), // ID of the affected entity
   actor_id: varchar("actor_id", { length: 255 }), // User who performed the action
-  payload: text("payload"), // JSON payload with additional context
+  payload: text("payload"), // JSON payload with additional context (using text for compatibility)
+  tag: varchar("tag", { length: 100 }), // Optional tag for grouping events
   created_at: timestamp("created_at").defaultNow(),
 });
 
