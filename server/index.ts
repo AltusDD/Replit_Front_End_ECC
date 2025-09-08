@@ -2,7 +2,15 @@ import express from "express";
 import cors from "cors";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { PropertyOut, UnitOut, LeaseOut, TenantOut, OwnerOut } from "./mappings";
-import { OwnerTransferService } from "./services/ownerTransferService";
+import {
+  initiateTransfer,
+  generateAccountingReport,
+  markApprovedByAccounting,
+  authorizeExecution,
+  executeTransfer,
+  getTransferDetails,
+  type InitiateInput
+} from "./services/ownerTransferService";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -532,30 +540,18 @@ app.get("/api/portfolio/_debug/sql", async (req, res) => {
   }
 });
 
-// Owner Transfer Service Routes
-let ownerTransferService: OwnerTransferService | null = null;
-
-// Initialize service when Supabase is available
-if (supa.client) {
-  ownerTransferService = new OwnerTransferService(supa.client);
-}
-
 /** POST /api/owner-transfer/initiate - Initiate owner transfer */
 app.post("/api/owner-transfer/initiate", async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
-  if (!ownerTransferService) return sendErr(res, 500, "Owner transfer service not initialized");
 
   try {
-    const input = req.body;
-    const result = await ownerTransferService.initiateTransfer(input);
-    
-    // Generate accounting report
-    const report = await ownerTransferService.generateAccountingReport(result.transferId);
+    const input: InitiateInput = req.body;
+    const result = await initiateTransfer(input);
     
     res.status(201).json({
       transferId: result.transferId,
-      reportUrl: `/api/owner-transfer/${result.transferId}/report`,
-      reportFilename: report.filename,
+      reportUrl: result.reportUrl ? result.reportUrl : `/api/owner-transfer/${result.transferId}/report`,
+      reportFilename: `owner_transfer_${result.transferId}.xlsx`,
     });
   } catch (e: any) {
     if (e.name === 'ZodError') {
@@ -568,10 +564,10 @@ app.post("/api/owner-transfer/initiate", async (req, res) => {
 /** POST /api/owner-transfer/approve-accounting - Mark approved by accounting */
 app.post("/api/owner-transfer/approve-accounting", async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
-  if (!ownerTransferService) return sendErr(res, 500, "Owner transfer service not initialized");
 
   try {
-    await ownerTransferService.markApprovedByAccounting(req.body);
+    const { transferId, actorId } = req.body;
+    await markApprovedByAccounting(transferId, actorId);
     res.json({ ok: true, message: "Transfer approved by accounting" });
   } catch (e: any) {
     if (e.name === 'ZodError') {
@@ -584,13 +580,13 @@ app.post("/api/owner-transfer/approve-accounting", async (req, res) => {
 /** POST /api/owner-transfer/authorize - Authorize transfer execution (admin only) */
 app.post("/api/owner-transfer/authorize", async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
-  if (!ownerTransferService) return sendErr(res, 500, "Owner transfer service not initialized");
 
   try {
     // TODO: Add proper admin role checking here
     // For now, we assume the request is authorized if it reaches this point
     
-    await ownerTransferService.authorizeExecution(req.body);
+    const { transferId, actorId } = req.body;
+    await authorizeExecution(transferId, actorId);
     res.json({ ok: true, message: "Transfer authorized for execution" });
   } catch (e: any) {
     if (e.name === 'ZodError') {
@@ -603,10 +599,10 @@ app.post("/api/owner-transfer/authorize", async (req, res) => {
 /** POST /api/owner-transfer/execute - Execute transfer with dry-run support */
 app.post("/api/owner-transfer/execute", async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
-  if (!ownerTransferService) return sendErr(res, 500, "Owner transfer service not initialized");
 
   try {
-    const result = await ownerTransferService.executeTransfer(req.body);
+    const { transferId, dryRun = true, actorId } = req.body;
+    const result = await executeTransfer(transferId, { dryRun });
     res.json({
       ok: true,
       applied: result.applied,
@@ -623,7 +619,6 @@ app.post("/api/owner-transfer/execute", async (req, res) => {
 /** GET /api/owner-transfer/:id/report - Download Excel report */
 app.get("/api/owner-transfer/:id/report", async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
-  if (!ownerTransferService) return sendErr(res, 500, "Owner transfer service not initialized");
 
   try {
     const transferId = parseInt(req.params.id);
@@ -631,27 +626,15 @@ app.get("/api/owner-transfer/:id/report", async (req, res) => {
       return sendErr(res, 400, "Invalid transfer ID");
     }
 
-    const reportsDir = path.join(process.cwd(), 'reports', 'owner_transfers');
-    const filename = `owner_transfer_${transferId}.xlsx`;
-    const filepath = path.join(reportsDir, filename);
-
-    // Check if file exists
-    if (!fs.existsSync(filepath)) {
-      // Try to regenerate the report
-      try {
-        const report = await ownerTransferService.generateAccountingReport(transferId);
-        // File should now exist, continue with download
-      } catch (generateError) {
-        return sendErr(res, 404, "Report not found and could not be generated");
-      }
-    }
-
-    // Stream the file
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    // Generate the report
+    const report = await generateAccountingReport(transferId);
     
-    const fileStream = fs.createReadStream(filepath);
-    fileStream.pipe(res);
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${report.filename}"`);
+    
+    // Send the buffer directly
+    res.send(report.buffer);
   } catch (e: any) {
     return sendErr(res, 500, e);
   }
@@ -660,7 +643,6 @@ app.get("/api/owner-transfer/:id/report", async (req, res) => {
 /** GET /api/owner-transfer/:id - Get transfer details */
 app.get("/api/owner-transfer/:id", async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
-  if (!ownerTransferService) return sendErr(res, 500, "Owner transfer service not initialized");
 
   try {
     const transferId = parseInt(req.params.id);
@@ -668,17 +650,8 @@ app.get("/api/owner-transfer/:id", async (req, res) => {
       return sendErr(res, 400, "Invalid transfer ID");
     }
 
-    const transfer = await ownerTransferService.getTransferById(transferId);
-    if (!transfer) {
-      return sendErr(res, 404, "Transfer not found");
-    }
-
-    const auditEvents = await ownerTransferService.getAuditEvents(transferId, 10);
-
-    res.json({
-      transfer,
-      auditEvents,
-    });
+    const details = await getTransferDetails(transferId);
+    res.json(details);
   } catch (e: any) {
     return sendErr(res, 500, e);
   }
