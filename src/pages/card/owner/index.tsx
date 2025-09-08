@@ -218,11 +218,13 @@ export default function OwnerCardPage() {
       </div>
 
       {/* Transfer Stepper Modal */}
-      <TransferStepper
-        isOpen={showTransferModal}
-        onClose={() => setShowTransferModal(false)}
-        propertyIds={properties.map(p => p.id).filter(id => typeof id === 'number')}
-      />
+      {showTransferModal && (
+        <TransferStepper
+          isOpen={showTransferModal}
+          onClose={() => setShowTransferModal(false)}
+          propertyIds={properties.map(p => p.id).filter(id => typeof id === 'number')}
+        />
+      )}
     </div>
   );
 }

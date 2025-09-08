@@ -1,628 +1,186 @@
-// Owner Transfer Stepper Modal - Multi-step ownership transfer workflow
-import React, { useState, useEffect } from 'react';
-import { useOwnerTransfer } from '../hooks/useOwnerTransfer';
-import { useCollection } from '../../data/useCollection';
-import type { Owner, Property } from '../../../../shared/schema';
+import React, { useEffect, useMemo, useState } from 'react';
+
+type OwnerLite = { id:number; label:string; company_name?:string|null; first_name?:string|null; last_name?:string|null };
+type PropertyLite = { id:number; name:string; city:string|null; state:string|null; units:number|null };
+
+function useDebounced<T>(val:T, ms=250){ 
+  const [v,setV]=useState(val); 
+  useEffect(()=>{ 
+    const t=setTimeout(()=>setV(val),ms); 
+    return ()=>clearTimeout(t);
+  },[val,ms]); 
+  return v; 
+}
+
+export function TransferOwnershipModal({ ownerId, onClose, onNext }:{
+  ownerId:number;
+  onNext:(p:{ newOwnerId:number; effectiveDate:string; notes?:string; propertyIds:number[] })=>void;
+  onClose:()=>void;
+}) {
+  const [q, setQ] = useState(''); const dq = useDebounced(q, 300);
+  const [owners, setOwners] = useState<OwnerLite[]>([]); const [loadingOwners, setLoadingOwners] = useState(false);
+  const [newOwnerId, setNewOwnerId] = useState<number|undefined>(undefined);
+
+  const [propsLoading, setPropsLoading] = useState(false);
+  const [ownerProps, setOwnerProps] = useState<PropertyLite[]>([]);
+  const [selectedProps, setSelectedProps] = useState<Record<number, boolean>>({});
+  const [selectAll, setSelectAll] = useState(true);
+
+  const [effectiveDate, setEffectiveDate] = useState<string>(() => new Date().toISOString().slice(0,10));
+  const [notes, setNotes] = useState<string>('');
+
+  useEffect(() => { let keep = true; (async () => {
+    setLoadingOwners(true);
+    try {
+      const r = await fetch(`/api/owners/search?q=${encodeURIComponent(dq)}`);
+      const j = await r.json(); if (keep) setOwners(j.owners || []);
+    } finally { if (keep) setLoadingOwners(false); }
+  })(); return () => { keep = false }; }, [dq]);
+
+  useEffect(() => { let keep = true; (async () => {
+    setPropsLoading(true);
+    try {
+      const r = await fetch(`/api/owners/${ownerId}/properties?limit=500`);
+      const j = await r.json(); if (!keep) return;
+      const props:PropertyLite[] = j.properties || [];
+      setOwnerProps(props);
+      const sel:Record<number,boolean> = {}; props.forEach(p => { sel[p.id] = true; });
+      setSelectedProps(sel); setSelectAll(true);
+    } finally { if (keep) setPropsLoading(false); }
+  })(); return () => { keep = false }; }, [ownerId]);
+
+  const selectedIds = useMemo(() => Object.entries(selectedProps).filter(([,v])=>v).map(([k])=>Number(k)), [selectedProps]);
+  const toggleAll = (flag:boolean) => { const sel:Record<number,boolean>={}; ownerProps.forEach(p=>{sel[p.id]=flag}); setSelectedProps(sel); setSelectAll(flag); };
+  const canContinue = Boolean(newOwnerId) && effectiveDate && selectedIds.length > 0;
+
+  return (
+    <div className="ecc-modal">
+      <div className="p-4">
+        <div className="font-semibold mb-2">Select New Owner</div>
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search owner (company or person)..." className="ecc-input w-full mb-2" />
+        <div className="ecc-select w-full mb-4">
+          <select value={newOwnerId ?? ''} onChange={e=>setNewOwnerId(e.target.value ? Number(e.target.value) : undefined)} className="w-full bg-transparent">
+            <option value="">{loadingOwners ? 'Loading owners...' : 'Select an owner...'}</option>
+            {owners.map(o => (<option key={o.id} value={o.id}>{o.label}</option>))}
+          </select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div><div className="font-semibold mb-1">Effective Date</div>
+            <input type="date" value={effectiveDate} onChange={e=>setEffectiveDate(e.target.value)} className="ecc-input w-full" />
+          </div>
+          <div><div className="font-semibold mb-1">Notes</div>
+            <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={2} className="ecc-input w-full" placeholder="Optional notes..." />
+          </div>
+        </div>
+
+        <div className="font-semibold mb-2">Selected Properties ({selectedIds.length})</div>
+        <div className="flex items-center gap-3 mb-3">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={selectAll} onChange={e=>toggleAll(e.target.checked)} />
+            <span>Select all</span>
+          </label>
+        </div>
+
+        <div className="max-h-[280px] overflow-auto rounded border border-[var(--line)] p-2">
+          {propsLoading && <div className="text-[var(--text-dim)] p-2">Loading properties…</div>}
+          {!propsLoading && ownerProps.length===0 && <div className="text-[var(--text-dim)] p-2">No properties for this owner.</div>}
+          {ownerProps.map(p => (
+            <label key={p.id} className="flex items-center gap-2 py-1 px-2 hover:bg-[var(--panel-elev)] rounded cursor-pointer">
+              <input type="checkbox" checked={!!selectedProps[p.id]} onChange={e=>setSelectedProps(s=>({...s,[p.id]:e.target.checked}))} />
+              <span className="flex-1">{p.name}</span>
+              <span className="text-xs text-[var(--text-dim)]">{[p.city,p.state].filter(Boolean).join(', ')}</span>
+            </label>
+          ))}
+        </div>
+
+        <div className="mt-6 flex justify-end gap-2">
+          <button className="ecc-btn" onClick={onClose}>Close</button>
+          <button className={`ecc-btn ecc-btn--primary ${!canContinue ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!canContinue}
+            onClick={()=>onNext({ newOwnerId:newOwnerId!, effectiveDate, notes, propertyIds:selectedIds })}>Next</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface TransferStepperProps {
   isOpen: boolean;
   onClose: () => void;
-  propertyIds?: number[]; // Pre-selected properties (optional)
-}
-
-type Step = 'select-owner' | 'set-date' | 'confirm-entities' | 'manage-workflow';
-
-interface TransferFormData {
-  propertyIds: number[];
-  newOwnerId: number;
-  effectiveDate: string;
-  notes: string;
+  propertyIds?: number[];
 }
 
 export function TransferStepper({ isOpen, onClose, propertyIds = [] }: TransferStepperProps) {
-  const [currentStep, setCurrentStep] = useState<Step>('select-owner');
-  const [formData, setFormData] = useState<TransferFormData>({
-    propertyIds: propertyIds,
-    newOwnerId: 0,
-    effectiveDate: '',
-    notes: '',
-  });
-  const [transferId, setTransferId] = useState<number | null>(null);
-  const [transferStatus, setTransferStatus] = useState<string>('PENDING_ACCOUNTING');
+  const [showModal, setShowModal] = useState(false);
+  // Get owner ID from current URL path (/card/owner/:id)
+  const ownerId = Number(window.location.pathname.split('/').pop()) || 1;
 
-  const ownerTransfer = useOwnerTransfer();
-  const owners = useCollection<Owner>('/api/portfolio/owners');
-  const properties = useCollection<Property>('/api/portfolio/properties');
-
-  // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
-      setCurrentStep('select-owner');
-      setFormData({
-        propertyIds: propertyIds,
-        newOwnerId: 0,
-        effectiveDate: new Date().toISOString().split('T')[0], // Today's date
-        notes: '',
+      setShowModal(true);
+    } else {
+      setShowModal(false);
+    }
+  }, [isOpen]);
+
+  const handleNext = async (params: { newOwnerId:number; effectiveDate:string; notes?:string; propertyIds:number[] }) => {
+    try {
+      const response = await fetch('/api/owner-transfer/initiate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          old_owner_id: ownerId,
+          new_owner_id: params.newOwnerId,
+          effective_date: params.effectiveDate,
+          notes: params.notes,
+          property_ids: params.propertyIds
+        }),
       });
-      setTransferId(null);
-      setTransferStatus('PENDING_ACCOUNTING');
-    }
-  }, [isOpen, propertyIds]);
 
-  const selectedProperties = properties.data?.filter(p => 
-    formData.propertyIds.includes(p.id)
-  ) || [];
-
-  const selectedOwner = owners.data?.find(o => o.id === formData.newOwnerId);
-
-  const handleNext = async () => {
-    switch (currentStep) {
-      case 'select-owner':
-        if (formData.newOwnerId && formData.effectiveDate) {
-          setCurrentStep('set-date');
-        }
-        break;
-      case 'set-date':
-        setCurrentStep('confirm-entities');
-        break;
-      case 'confirm-entities':
-        // Initiate transfer
-        const result = await ownerTransfer.initiateTransfer({
-          propertyIds: formData.propertyIds,
-          newOwnerId: formData.newOwnerId,
-          effectiveDate: formData.effectiveDate,
-          notes: formData.notes,
-        });
-        
-        if (result) {
-          setTransferId(result.transferId);
-          setCurrentStep('manage-workflow');
-        }
-        break;
-    }
-  };
-
-  const handleApproveAccounting = async () => {
-    if (!transferId) return;
-    
-    const success = await ownerTransfer.approveAccounting({ transferId });
-    if (success) {
-      setTransferStatus('APPROVED_ACCOUNTING');
-    }
-  };
-
-  const handleAuthorizeExecution = async () => {
-    if (!transferId) return;
-    
-    const success = await ownerTransfer.authorizeExecution({ transferId });
-    if (success) {
-      setTransferStatus('READY_EXECUTION');
-    }
-  };
-
-  const handleExecuteTransfer = async (dryRun: boolean = true) => {
-    if (!transferId) return;
-    
-    const result = await ownerTransfer.executeTransfer({ transferId, dryRun });
-    if (result) {
-      if (!dryRun && result.applied) {
-        setTransferStatus('COMPLETE');
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Transfer initiated successfully! Transfer ID: ${result.transferId}`);
+        onClose();
+      } else {
+        const error = await response.json();
+        alert(`Transfer failed: ${error.message || 'Unknown error'}`);
       }
-      // Show execution summary
-      alert(`Transfer ${dryRun ? 'dry run' : 'execution'} completed:\n${result.summary?.operations?.join('\n')}`);
+    } catch (error) {
+      alert(`Transfer failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
-  const handleDownloadReport = async () => {
-    if (!transferId) return;
-    await ownerTransfer.downloadReport(transferId);
-  };
-
-  if (!isOpen) return null;
+  if (!isOpen || !showModal) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 style={{ color: 'var(--text)', marginBottom: 0 }}>
-            Transfer Property Ownership
-          </h2>
-          <button 
-            className="modal-close" 
-            onClick={onClose}
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              color: 'var(--text-dim)', 
-              fontSize: '24px',
-              cursor: 'pointer'
-            }}
-          >
-            ×
-          </button>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="transfer-progress">
-          {[
-            { key: 'select-owner', label: '1. Select Owner' },
-            { key: 'set-date', label: '2. Set Date' },
-            { key: 'confirm-entities', label: '3. Confirm' },
-            { key: 'manage-workflow', label: '4. Workflow' },
-          ].map((step) => (
-            <div 
-              key={step.key}
-              className={`progress-step ${currentStep === step.key ? 'active' : ''}`}
-            >
-              {step.label}
-            </div>
-          ))}
-        </div>
-
-        <div className="modal-body">
-          {currentStep === 'select-owner' && (
-            <div className="step-content">
-              <h3 style={{ color: 'var(--text)', marginBottom: 'var(--gap-3)' }}>
-                Select New Owner
-              </h3>
-              
-              <div className="form-group">
-                <label style={{ color: 'var(--text)', display: 'block', marginBottom: 'var(--gap-1)' }}>
-                  New Owner *
-                </label>
-                <select
-                  value={formData.newOwnerId}
-                  onChange={(e) => setFormData({ ...formData, newOwnerId: Number(e.target.value) })}
-                  style={{
-                    width: '100%',
-                    padding: 'var(--gap-2)',
-                    backgroundColor: 'var(--panel-elev)',
-                    border: '1px solid var(--line)',
-                    borderRadius: 'var(--radius-md)',
-                    color: 'var(--text)',
-                  }}
-                >
-                  <option value={0}>Select an owner...</option>
-                  {owners.data?.map((owner) => (
-                    <option key={owner.id} value={owner.id}>
-                      {owner.company || owner.name || `Owner ${owner.id}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group" style={{ marginTop: 'var(--gap-3)' }}>
-                <label style={{ color: 'var(--text)', display: 'block', marginBottom: 'var(--gap-1)' }}>
-                  Effective Date *
-                </label>
-                <input
-                  type="date"
-                  value={formData.effectiveDate}
-                  onChange={(e) => setFormData({ ...formData, effectiveDate: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: 'var(--gap-2)',
-                    backgroundColor: 'var(--panel-elev)',
-                    border: '1px solid var(--line)',
-                    borderRadius: 'var(--radius-md)',
-                    color: 'var(--text)',
-                  }}
-                />
-              </div>
-
-              <div className="form-group" style={{ marginTop: 'var(--gap-3)' }}>
-                <label style={{ color: 'var(--text)', display: 'block', marginBottom: 'var(--gap-1)' }}>
-                  Notes
-                </label>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Optional notes about this transfer..."
-                  style={{
-                    width: '100%',
-                    height: '80px',
-                    padding: 'var(--gap-2)',
-                    backgroundColor: 'var(--panel-elev)',
-                    border: '1px solid var(--line)',
-                    borderRadius: 'var(--radius-md)',
-                    color: 'var(--text)',
-                    resize: 'none',
-                  }}
-                />
-              </div>
-
-              <div style={{ marginTop: 'var(--gap-3)', padding: 'var(--gap-2)', backgroundColor: 'var(--panel-elev)', borderRadius: 'var(--radius-md)' }}>
-                <strong style={{ color: 'var(--text)' }}>
-                  Selected Properties: {formData.propertyIds.length}
-                </strong>
-                {formData.propertyIds.length === 0 && (
-                  <p style={{ color: 'var(--warn)', marginTop: 'var(--gap-1)' }}>
-                    No properties selected. Please select at least one property.
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {currentStep === 'set-date' && (
-            <div className="step-content">
-              <h3 style={{ color: 'var(--text)', marginBottom: 'var(--gap-3)' }}>
-                Transfer Summary
-              </h3>
-              
-              <div style={{ 
-                backgroundColor: 'var(--panel-elev)', 
-                padding: 'var(--gap-3)', 
-                borderRadius: 'var(--radius-md)',
-                marginBottom: 'var(--gap-3)'
-              }}>
-                <div style={{ marginBottom: 'var(--gap-2)' }}>
-                  <strong style={{ color: 'var(--text)' }}>New Owner:</strong>
-                  <p style={{ color: 'var(--text-dim)', marginTop: 'var(--gap-1)' }}>
-                    {selectedOwner?.company || selectedOwner?.name || 'Unknown'}
-                  </p>
-                </div>
-                
-                <div style={{ marginBottom: 'var(--gap-2)' }}>
-                  <strong style={{ color: 'var(--text)' }}>Effective Date:</strong>
-                  <p style={{ color: 'var(--text-dim)', marginTop: 'var(--gap-1)' }}>
-                    {formData.effectiveDate}
-                  </p>
-                </div>
-                
-                <div style={{ marginBottom: 'var(--gap-2)' }}>
-                  <strong style={{ color: 'var(--text)' }}>Properties:</strong>
-                  <p style={{ color: 'var(--text-dim)', marginTop: 'var(--gap-1)' }}>
-                    {formData.propertyIds.length} selected
-                  </p>
-                </div>
-
-                {formData.notes && (
-                  <div>
-                    <strong style={{ color: 'var(--text)' }}>Notes:</strong>
-                    <p style={{ color: 'var(--text-dim)', marginTop: 'var(--gap-1)' }}>
-                      {formData.notes}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {currentStep === 'confirm-entities' && (
-            <div className="step-content">
-              <h3 style={{ color: 'var(--text)', marginBottom: 'var(--gap-3)' }}>
-                Confirm Entity Tree
-              </h3>
-              
-              <div style={{ 
-                backgroundColor: 'var(--panel-elev)', 
-                padding: 'var(--gap-3)', 
-                borderRadius: 'var(--radius-md)',
-                maxHeight: '300px',
-                overflowY: 'auto'
-              }}>
-                {selectedProperties.map((property) => (
-                  <div key={property.id} style={{ marginBottom: 'var(--gap-2)' }}>
-                    <div style={{ color: 'var(--text)', fontWeight: 'bold' }}>
-                      📍 {property.name || `Property ${property.id}`}
-                    </div>
-                    <div style={{ color: 'var(--text-dim)', fontSize: '0.9em', marginLeft: 'var(--gap-2)' }}>
-                      • {property.units || 0} units
-                      <br />
-                      • Location: {property.city}, {property.state}
-                      <br />
-                      • Type: {property.type || 'Unknown'}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ 
-                marginTop: 'var(--gap-3)', 
-                padding: 'var(--gap-2)', 
-                backgroundColor: 'var(--warn)', 
-                color: 'var(--altus-black)', 
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.9em'
-              }}>
-                ⚠️ This will create immutable snapshots of all related entities (properties, units, leases, tenants, work orders) and generate an accounting report for review.
-              </div>
-            </div>
-          )}
-
-          {currentStep === 'manage-workflow' && (
-            <div className="step-content">
-              <h3 style={{ color: 'var(--text)', marginBottom: 'var(--gap-3)' }}>
-                Transfer Workflow
-              </h3>
-
-              {transferId && (
-                <div style={{ 
-                  backgroundColor: 'var(--panel-elev)', 
-                  padding: 'var(--gap-3)', 
-                  borderRadius: 'var(--radius-md)',
-                  marginBottom: 'var(--gap-3)'
-                }}>
-                  <div style={{ marginBottom: 'var(--gap-2)' }}>
-                    <strong style={{ color: 'var(--text)' }}>Transfer ID:</strong>
-                    <span style={{ color: 'var(--text-dim)', marginLeft: 'var(--gap-1)' }}>
-                      {transferId}
-                    </span>
-                  </div>
-                  
-                  <div style={{ marginBottom: 'var(--gap-2)' }}>
-                    <strong style={{ color: 'var(--text)' }}>Status:</strong>
-                    <span 
-                      style={{ 
-                        color: transferStatus === 'COMPLETE' ? 'var(--good)' : 'var(--warn)',
-                        marginLeft: 'var(--gap-1)',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      {transferStatus.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: 'var(--gap-2)', flexWrap: 'wrap', marginTop: 'var(--gap-3)' }}>
-                    <button
-                      onClick={handleDownloadReport}
-                      disabled={ownerTransfer.loading}
-                      style={{
-                        padding: 'var(--gap-2) var(--gap-3)',
-                        backgroundColor: 'var(--altus-gold)',
-                        color: 'var(--altus-black)',
-                        border: 'none',
-                        borderRadius: 'var(--radius-md)',
-                        cursor: 'pointer',
-                        fontSize: '0.9em'
-                      }}
-                    >
-                      📊 Download Report
-                    </button>
-
-                    {transferStatus === 'PENDING_ACCOUNTING' && (
-                      <button
-                        onClick={handleApproveAccounting}
-                        disabled={ownerTransfer.loading}
-                        style={{
-                          padding: 'var(--gap-2) var(--gap-3)',
-                          backgroundColor: 'var(--good)',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: 'var(--radius-md)',
-                          cursor: 'pointer',
-                          fontSize: '0.9em'
-                        }}
-                      >
-                        ✅ Mark Approved
-                      </button>
-                    )}
-
-                    {transferStatus === 'APPROVED_ACCOUNTING' && ownerTransfer.canAuthorize && (
-                      <button
-                        onClick={handleAuthorizeExecution}
-                        disabled={ownerTransfer.loading}
-                        style={{
-                          padding: 'var(--gap-2) var(--gap-3)',
-                          backgroundColor: 'var(--warn)',
-                          color: 'var(--altus-black)',
-                          border: 'none',
-                          borderRadius: 'var(--radius-md)',
-                          cursor: 'pointer',
-                          fontSize: '0.9em'
-                        }}
-                      >
-                        🔑 Authorize Execution
-                      </button>
-                    )}
-
-                    {transferStatus === 'READY_EXECUTION' && ownerTransfer.canAuthorize && (
-                      <>
-                        <button
-                          onClick={() => handleExecuteTransfer(true)}
-                          disabled={ownerTransfer.loading}
-                          style={{
-                            padding: 'var(--gap-2) var(--gap-3)',
-                            backgroundColor: 'var(--neutral)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 'var(--radius-md)',
-                            cursor: 'pointer',
-                            fontSize: '0.9em'
-                          }}
-                        >
-                          🧪 Dry Run
-                        </button>
-                        
-                        <button
-                          onClick={() => handleExecuteTransfer(false)}
-                          disabled={ownerTransfer.loading}
-                          style={{
-                            padding: 'var(--gap-2) var(--gap-3)',
-                            backgroundColor: 'var(--bad)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 'var(--radius-md)',
-                            cursor: 'pointer',
-                            fontSize: '0.9em'
-                          }}
-                        >
-                          🚀 Execute Transfer
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {ownerTransfer.error && (
-                <div style={{ 
-                  padding: 'var(--gap-2)', 
-                  backgroundColor: 'var(--bad)', 
-                  color: 'white', 
-                  borderRadius: 'var(--radius-md)',
-                  marginTop: 'var(--gap-2)'
-                }}>
-                  Error: {ownerTransfer.error}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="modal-footer">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button 
-              onClick={onClose}
-              style={{
-                padding: 'var(--gap-2) var(--gap-3)',
-                backgroundColor: 'transparent',
-                color: 'var(--text-dim)',
-                border: '1px solid var(--line)',
-                borderRadius: 'var(--radius-md)',
-                cursor: 'pointer'
-              }}
-            >
-              Close
-            </button>
-
-            <div style={{ display: 'flex', gap: 'var(--gap-2)' }}>
-              {currentStep !== 'select-owner' && currentStep !== 'manage-workflow' && (
-                <button 
-                  onClick={() => {
-                    const steps: Step[] = ['select-owner', 'set-date', 'confirm-entities', 'manage-workflow'];
-                    const currentIndex = steps.indexOf(currentStep);
-                    if (currentIndex > 0) {
-                      setCurrentStep(steps[currentIndex - 1]);
-                    }
-                  }}
-                  style={{
-                    padding: 'var(--gap-2) var(--gap-3)',
-                    backgroundColor: 'var(--panel-elev)',
-                    color: 'var(--text)',
-                    border: '1px solid var(--line)',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Back
-                </button>
-              )}
-
-              {currentStep !== 'manage-workflow' && (
-                <button 
-                  onClick={handleNext}
-                  disabled={
-                    ownerTransfer.loading ||
-                    (currentStep === 'select-owner' && (!formData.newOwnerId || !formData.effectiveDate)) ||
-                    formData.propertyIds.length === 0
-                  }
-                  style={{
-                    padding: 'var(--gap-2) var(--gap-3)',
-                    backgroundColor: 'var(--altus-gold)',
-                    color: 'var(--altus-black)',
-                    border: 'none',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer',
-                    opacity: (ownerTransfer.loading || 
-                              (currentStep === 'select-owner' && (!formData.newOwnerId || !formData.effectiveDate)) ||
-                              formData.propertyIds.length === 0) ? 0.5 : 1
-                  }}
-                >
-                  {ownerTransfer.loading ? 'Loading...' : 
-                   currentStep === 'confirm-entities' ? 'Initiate Transfer' : 'Next'}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.8)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+    }}>
+      <div style={{
+        background: 'var(--panel-bg)',
+        borderRadius: 'var(--radius-lg)',
+        width: '90%',
+        maxWidth: '600px',
+        maxHeight: '90vh',
+        overflow: 'hidden',
+      }}>
+        <TransferOwnershipModal
+          ownerId={ownerId}
+          onClose={onClose}
+          onNext={handleNext}
+        />
       </div>
-
-      <style jsx>{`
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.8);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-
-        .modal-content {
-          background: var(--panel-bg);
-          border-radius: var(--radius-lg);
-          width: 90%;
-          max-width: 800px;
-          max-height: 90vh;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: var(--gap-4);
-          border-bottom: 1px solid var(--line);
-        }
-
-        .modal-body {
-          padding: var(--gap-4);
-          overflow-y: auto;
-          flex: 1;
-        }
-
-        .modal-footer {
-          padding: var(--gap-4);
-          border-top: 1px solid var(--line);
-        }
-
-        .transfer-progress {
-          display: flex;
-          padding: var(--gap-3) var(--gap-4);
-          border-bottom: 1px solid var(--line);
-          background: var(--panel-elev);
-        }
-
-        .progress-step {
-          flex: 1;
-          text-align: center;
-          padding: var(--gap-2);
-          color: var(--text-dim);
-          font-size: 0.9em;
-          position: relative;
-        }
-
-        .progress-step.active {
-          color: var(--altus-gold);
-          font-weight: bold;
-        }
-
-        .progress-step:not(:last-child)::after {
-          content: '→';
-          position: absolute;
-          right: -10px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: var(--text-dim);
-        }
-
-        .step-content {
-          min-height: 300px;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-          font-family: inherit;
-        }
-      `}</style>
     </div>
   );
 }
