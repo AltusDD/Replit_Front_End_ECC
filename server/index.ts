@@ -11,6 +11,7 @@ import {
   getTransferDetails,
   type InitiateInput
 } from "./services/ownerTransferService";
+import { ownersRouter } from './routes/owners';
 import * as fs from "fs";
 import * as path from "path";
 
@@ -25,6 +26,7 @@ import * as path from "path";
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/api/owners', ownersRouter);
 
 const PORT = Number(process.env.PORT_API || 8787);
 
