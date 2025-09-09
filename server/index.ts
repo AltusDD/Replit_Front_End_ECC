@@ -1,6 +1,8 @@
 import { installOwnerRoutes } from "./routes/owners";
 import { installPropertyRoutes } from "./routes/properties";
 import { installGeocodeRoutes } from "./routes/geocode";
+import { installOwnerTransferRoutes } from "./routes/ownerTransfer";
+import { runDueTransfersTick } from "./lib/ownerTransfer";
 import express from "express";
 import cors from "cors";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
@@ -31,6 +33,7 @@ const app = express();
   installOwnerRoutes(app);
   installPropertyRoutes(app);
   installGeocodeRoutes(app);
+  installOwnerTransferRoutes(app);
 
 app.use(cors());
 app.use(express.json());
@@ -682,3 +685,6 @@ app.listen(PORT, () => {
     console.log(`[Dev API] Supabase REST URL: ${supa.restUrl}`);
   }
 });
+
+// owner transfer tiny scheduler (5 min)
+setInterval(() => runDueTransfersTick().catch(()=>{}), 5*60*1000);
