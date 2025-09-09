@@ -25,11 +25,10 @@ export async function syncLeases(updated_after?: string) {
     status:     l.status ?? null,
   }));
 
-  const { error, count } = await sbAdmin
+  const { error } = await sbAdmin
     .from('leases')
-    .upsert(mapped, { onConflict: 'doorloop_lease_id' })
-    .select('*', { count: 'exact' });
+    .upsert(mapped, { onConflict: 'doorloop_lease_id' });
 
   if (error) throw error;
-  return { fetched: rows.length, upserted: count ?? mapped.length };
+  return { fetched: rows.length, upserted: mapped.length };
 }

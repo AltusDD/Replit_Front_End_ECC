@@ -29,11 +29,10 @@ export async function syncOwners(updated_after?: string) {
     display_name: displayName(o),
   }));
 
-  const { error, count } = await sbAdmin
+  const { error } = await sbAdmin
     .from('owners')
-    .upsert(mapped, { onConflict: 'doorloop_owner_id' })
-    .select('*', { count: 'exact' });
+    .upsert(mapped, { onConflict: 'doorloop_owner_id' });
 
   if (error) throw error;
-  return { fetched: rows.length, upserted: count ?? mapped.length };
+  return { fetched: rows.length, upserted: mapped.length };
 }

@@ -23,11 +23,10 @@ export async function syncTenants(updated_after?: string) {
     phone:      t.phone ?? null,
   }));
 
-  const { error, count } = await sbAdmin
+  const { error } = await sbAdmin
     .from('tenants')
-    .upsert(mapped, { onConflict: 'doorloop_tenant_id' })
-    .select('*', { count: 'exact' });
+    .upsert(mapped, { onConflict: 'doorloop_tenant_id' });
 
   if (error) throw error;
-  return { fetched: rows.length, upserted: count ?? mapped.length };
+  return { fetched: rows.length, upserted: mapped.length };
 }

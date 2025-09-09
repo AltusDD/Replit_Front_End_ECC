@@ -29,11 +29,10 @@ export async function syncProperties(updated_after?: string) {
     zip: p.zip ?? null,
   }));
 
-  const { error, count } = await sbAdmin
+  const { error } = await sbAdmin
     .from('properties')
-    .upsert(mapped, { onConflict: 'doorloop_property_id' })
-    .select('*', { count: 'exact' });
+    .upsert(mapped, { onConflict: 'doorloop_property_id' });
 
   if (error) throw error;
-  return { fetched: rows.length, upserted: count ?? mapped.length };
+  return { fetched: rows.length, upserted: mapped.length };
 }
