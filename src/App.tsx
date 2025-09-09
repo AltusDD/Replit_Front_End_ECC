@@ -30,6 +30,9 @@ import ReportsCreatePage from "./pages/reports/Create";
 import ReportsSavedPage from "./pages/reports/Saved";
 import ReportsTemplatesPage from "./pages/reports/Templates";
 
+// Admin Pages
+import AdminSyncPage from "./features/admin/pages/AdminSyncPage";
+
 // Dashboard Page
 import DashboardPage from "./features/dashboard/pages/DashboardPage";
 
@@ -82,6 +85,10 @@ export default function App() {
           <Route path="/reports/saved" component={ReportsSavedPage} />
           <Route path="/reports/templates" component={ReportsTemplatesPage} />
           {/* ------------------------------- */}
+
+          {/* -------- Admin Pages -------- */}
+          <Route path="/admin/sync" component={AdminSyncPage} />
+          {/* ----------------------------- */}
 
           {/* Keep any other existing routes you have here.
              Do NOT route to the old mock pages (Properties.tsx, etc.). */}
