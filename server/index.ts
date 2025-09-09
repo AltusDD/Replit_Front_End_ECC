@@ -13,6 +13,7 @@ import {
 } from "./services/ownerTransferService";
 import { ownersRouter } from './routes/owners';
 import adminSyncRoute from './routes/adminSync';
+import { startAutoSyncLoop } from './lib/sync/auto';
 import * as fs from "fs";
 import * as path from "path";
 
@@ -663,6 +664,9 @@ app.get("/api/owner-transfer/:id", async (req, res) => {
 
 app.use("/api", (_req, res) => res.status(404).json({ ok: false, message: "Not found" }));
 app.get("/", (_req, res) => res.type("text/plain").send("ECC Dev API running"));
+
+// Start auto-sync (idempotent; logs if disabled)
+startAutoSyncLoop();
 
 app.listen(PORT, () => {
   console.log(`[Dev API] Listening on :${PORT}`);
