@@ -1,71 +1,80 @@
-// server/lib/geocode.ts
-// Uses Node18+ global fetch. No extra deps.
+/**
+ * Lightweight geocoding helper with Google (preferred) or OSM fallback.
+ * Uses: GEOCODER_PROVIDER=google|osm, GOOGLE_MAPS_API_KEY
+ */
+type GeoResult = { lat: number; lng: number } | null;
 
-import { pool } from "../db"; // your existing pg Pool
+const sleep = (ms:number)=> new Promise(r=>setTimeout(r, ms));
 
-const PROVIDER = (process.env.GEOCODER_PROVIDER || "google").toLowerCase();
-const GOOGLE_KEY = process.env.GOOGLE_MAPS_API_KEY;
-
-type Hit = { lat: number; lng: number; provider: string; confidence?: number | null };
-
-export async function geocode(address: string): Promise<Hit | null> {
-  if (!address?.trim()) return null;
-
-  // 1) cache
-  const c = await cacheGet(address);
-  if (c) return c;
-
-  // 2) provider
-  const hit = PROVIDER === "google" && GOOGLE_KEY
-    ? await geocodeGoogle(address)
-    : await geocodeOSM(address);
-
-  if (hit) await cachePut(address, hit);
-  return hit;
-}
-
-async function geocodeGoogle(address: string): Promise<Hit | null> {
+async function geocodeGoogle(address: string): Promise<GeoResult> {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY || "";
+  if (!apiKey) return null;
   const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
   url.searchParams.set("address", address);
-  url.searchParams.set("key", GOOGLE_KEY!);
-  const r = await fetch(url);
-  if (!r.ok) return null;
-  const j = await r.json();
-  const g = j?.results?.[0]?.geometry?.location;
-  if (!g) return null;
-  return { lat: g.lat, lng: g.lng, provider: "google", confidence: 1 };
+  url.searchParams.set("key", apiKey);
+  const res = await fetch(url.toString());
+  if (!res.ok) return null;
+  const j = await res.json();
+  const loc = j?.results?.[0]?.geometry?.location;
+  if (!loc || typeof loc.lat !== "number" || typeof loc.lng !== "number") return null;
+  return { lat: loc.lat, lng: loc.lng };
 }
 
-async function geocodeOSM(address: string): Promise<Hit | null> {
+async function geocodeOSM(address: string): Promise<GeoResult> {
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("q", address);
-  url.searchParams.set("format", "jsonv2");
-  const r = await fetch(url, {
-    headers: { "User-Agent": "Altus-Empire/1.0 (contact: admin@altus.example)" },
-  });
-  if (!r.ok) return null;
-  const a = await r.json();
-  const f = a?.[0];
-  if (!f) return null;
-  return { lat: parseFloat(f.lat), lng: parseFloat(f.lon), provider: "osm", confidence: f.importance ?? null };
+  url.searchParams.set("format", "json");
+  url.searchParams.set("limit", "1");
+  const res = await fetch(url.toString(), { headers: { "User-Agent": "ECC/1.0" }});
+  if (!res.ok) return null;
+  const j = await res.json();
+  const row = j?.[0];
+  if (!row || !row.lat || !row.lon) return null;
+  return { lat: Number(row.lat), lng: Number(row.lon) };
 }
 
-// cache
-async function cacheGet(address: string): Promise<Hit | null> {
-  const { rows } = await pool.query(
-    "SELECT lat,lng,provider,confidence FROM geocode_cache WHERE address=$1",
-    [address]
-  );
-  const r = rows[0];
-  return r ? { lat: r.lat, lng: r.lng, provider: r.provider, confidence: r.confidence } : null;
+export async function geocodeAddress(address: string): Promise<GeoResult> {
+  const provider = (process.env.GEOCODER_PROVIDER || "google").toLowerCase();
+  if (provider === "google") {
+    const g = await geocodeGoogle(address);
+    if (g) return g;
+    return geocodeOSM(address);
+  } else {
+    const o = await geocodeOSM(address);
+    if (o) return o;
+    return geocodeGoogle(address);
+  }
 }
 
-async function cachePut(address: string, hit: Hit) {
-  await pool.query(
-    `INSERT INTO geocode_cache(address,lat,lng,provider,confidence)
-     VALUES($1,$2,$3,$4,$5)
-     ON CONFLICT(address)
-     DO UPDATE SET lat=EXCLUDED.lat,lng=EXCLUDED.lng,provider=EXCLUDED.provider,confidence=EXCLUDED.confidence,updated_at=now()`,
-    [address, hit.lat, hit.lng, hit.provider, hit.confidence ?? null]
-  );
+export async function backfillPropertyCoords(
+  { limit=50, delayMs=1100, admin, fromOwnerId }:
+  { limit?: number; delayMs?: number; admin: any; fromOwnerId?: number }
+) {
+  // fetch properties missing lat/lng (optionally only a specific owner)
+  let q = admin.from("properties")
+    .select("id,name,address1,city,state,zip,lat,lng")
+    .is("lat", null)
+    .is("lng", null)
+    .limit(limit);
+
+  if (fromOwnerId) q = q.eq("owner_id", fromOwnerId);
+
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+
+  let updated = 0;
+  for (const p of (data || [])) {
+    const parts = [p.address1, p.city, p.state, p.zip].filter(Boolean);
+    if (!parts.length) continue;
+    const addr = parts.join(", ");
+    const geo = await geocodeAddress(addr);
+    if (geo) {
+      const { error: uerr } = await admin.from("properties")
+        .update({ lat: geo.lat, lng: geo.lng })
+        .eq("id", p.id);
+      if (!uerr) updated++;
+    }
+    await sleep(delayMs); // be polite to APIs
+  }
+  return { checked: (data||[]).length, updated };
 }
