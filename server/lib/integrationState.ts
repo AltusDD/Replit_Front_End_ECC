@@ -18,3 +18,13 @@ export async function setSinceCursor(name: string, cursor: string) {
     value: { last_cursor: cursor },
   });
 }
+
+export async function getState(key: string) {
+  const { data, error } = await sbAdmin.from("integration_state").select("key,value").eq("key", key).maybeSingle();
+  if (error) return null;
+  return data as { key: string; value: any } | null;
+}
+
+export async function upsertState(key: string, value: any) {
+  await sbAdmin.from("integration_state").upsert({ key, value }).throwOnError();
+}
