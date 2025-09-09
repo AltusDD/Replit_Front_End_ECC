@@ -7,15 +7,7 @@ import express from "express";
 import cors from "cors";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { PropertyOut, UnitOut, LeaseOut, TenantOut, OwnerOut } from "./mappings";
-import {
-  initiateTransfer,
-  generateAccountingReport,
-  markApprovedByAccounting,
-  authorizeExecution,
-  executeTransfer,
-  getTransferDetails,
-  type InitiateInput
-} from "./services/ownerTransferService";
+//
 import adminSyncRoute from './routes/adminSync';
 import { startAutoSyncLoop } from './lib/sync/auto';
 import * as fs from "fs";

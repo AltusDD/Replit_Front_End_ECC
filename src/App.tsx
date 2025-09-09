@@ -33,6 +33,9 @@ import ReportsTemplatesPage from "./pages/reports/Templates";
 // Admin Pages
 import AdminSyncPage from "./features/admin/pages/AdminSyncPage";
 
+// Owner Transfer
+import OwnerTransferPage from "./features/owners/pages/OwnerTransferPage";
+
 // Dashboard Page
 import DashboardPage from "./features/dashboard/pages/DashboardPage";
 
@@ -89,6 +92,10 @@ export default function App() {
           {/* -------- Admin Pages -------- */}
           <Route path="/admin/sync" component={AdminSyncPage} />
           {/* ----------------------------- */}
+          
+          {/* -------- Owner Transfer -------- */}
+          <Route path="/owner-transfer" component={OwnerTransferPage} />
+          {/* -------------------------------- */}
 
           {/* Keep any other existing routes you have here.
              Do NOT route to the old mock pages (Properties.tsx, etc.). */}
