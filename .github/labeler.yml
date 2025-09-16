@@ -1,0 +1,14 @@
+frontend:
+  - "src/**"
+asset-cards:
+  - "src/features/cards/**"
+  - "src/features/*/components/**"
+portfolio:
+  - "src/features/portfolio/**"
+kpi:
+  - "src/lib/format.ts"
+  - "src/features/dashboard/**"
+tests:
+  - "tests/**"
+  - "**/*.test.ts"
+  - "**/*.spec.ts"
