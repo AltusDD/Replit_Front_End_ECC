@@ -6,6 +6,7 @@
 @import "./no-overlays.css";
 @import "./app.css";
 @import "./genesis.css";
+@import "./_dashboard.css";
 
 /* Hard guards to survive HMR */
 :root{
