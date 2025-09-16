@@ -1,24 +1,27 @@
 import { KPIRow } from "@/components/cardkit/KPIRow";
 import { KPI } from "@/components/cardkit/KPI";
+import { formatNumber, formatPercent, formatCurrencyFromCents } from "@/lib/format";
 
 export default function HeroBlock({ data }: { data: any }) {
-  const safe = <T,>(v: T | null | undefined, d: T) => (v ?? d);
-  const n = (v?: number | null) => (typeof v === "number" ? v : undefined);
+  const addressParts = [
+    data.property?.address?.line1,
+    data.property?.address?.city,
+    data.property?.address?.state,
+    data.property?.address?.zip
+  ].filter(Boolean);
+  const address = addressParts.length > 0 ? addressParts.join(", ") : "No address";
 
   return (
-    <KPIRow data-testid="property-kpis">
-      <KPI label="Units" value={n(data.kpis?.units)?.toLocaleString() ?? "—"} />
-      <KPI label="Active Leases" value={n(data.kpis?.activeLeases)?.toLocaleString() ?? "—"} />
-      <KPI label="Occupancy" value={
-        typeof data.kpis?.occupancyPct === "number"
-          ? `${Math.round(data.kpis.occupancyPct)}%`
-          : "—"
-      } />
-      <KPI label="Avg Rent" value={
-        typeof data.kpis?.avgRentCents === "number"
-          ? `$${Math.round(data.kpis.avgRentCents / 100).toLocaleString()}`
-          : "—"
-      } />
-    </KPIRow>
+    <>
+      <div data-testid="address" style={{ marginBottom: "16px", fontSize: "14px", opacity: 0.8 }}>
+        {address}
+      </div>
+      <KPIRow data-testid="property-kpis">
+        <KPI data-testid="kpi-units" label="Units" value={formatNumber(data.kpis?.units)} />
+        <KPI data-testid="kpi-active" label="Active Leases" value={formatNumber(data.kpis?.activeLeases)} />
+        <KPI data-testid="kpi-occupancy" label="Occupancy" value={formatPercent(data.kpis?.occupancyPct)} />
+        <KPI data-testid="kpi-avgrent" label="Avg Rent" value={formatCurrencyFromCents(data.kpis?.avgRentCents)} />
+      </KPIRow>
+    </>
   );
 }

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import FilterBar from "../../components/FilterBar";
 import DataTable, { Column } from "../../components/DataTable";
 import { useAllProperties } from "../../lib/ecc-resolvers";
+import { formatPercent } from "../../lib/format";
 
 type PropertyRow = {
   id: string;
@@ -23,10 +24,10 @@ export default function Properties() {
     const mapped: PropertyRow[] = data.map((prop: any) => ({
       id: String(prop.id),
       name: prop.name || prop.label || `Property ${prop.id}`,
-      address: [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") || "—",
-      units: prop.units || 0,
-      occupancy: prop.occupancy_pct ? `${Math.round(prop.occupancy_pct)}%` : "—",
-      market: prop.city || prop.state || "—"
+      address: [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") || "No address",
+      units: typeof prop.units === "number" ? prop.units : 0,
+      occupancy: formatPercent(prop.occupancy_pct),
+      market: prop.city || prop.state || "Unknown"
     }));
 
     // Apply search filter

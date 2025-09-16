@@ -10,7 +10,7 @@ type TenantRow = {
   unit: string;
   email: string;
   phone: string;
-  status: "Current" | "Former" | "Prospect";
+  status: string;
 };
 
 export default function Tenants() {
@@ -24,10 +24,10 @@ export default function Tenants() {
     const mapped: TenantRow[] = data.map((tenant: any) => ({
       id: String(tenant.id),
       name: tenant.display_name || tenant.name || `Tenant ${tenant.id}`,
-      property: tenant.property_name || "—",
-      unit: tenant.unit_label || "—",
-      email: tenant.email || "—",
-      phone: tenant.phone || "—",
+      property: tenant.property_name || "No property",
+      unit: tenant.unit_label || "No unit",
+      email: tenant.email || "No email",
+      phone: tenant.phone || "No phone",
       status: tenant.status || "Current"
     }));
 
