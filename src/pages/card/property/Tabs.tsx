@@ -1,70 +1,39 @@
-import React, { useState } from 'react';
-import { PropertyCardDTO } from '../types';
-import Overview from './Overview';
-import Details from './Details';
-import Financials from './Financials';
-import Legal from './Legal';
-import Files from './Files';
-import Linked from './Linked';
-import Activity from './Activity';
+import {} from '@/lib/ecc-resolvers';
+import React from 'react';
 
-interface TabsProps {
-  data: PropertyCardDTO;
+export type TabKey = 'overview'|'details'|'financials'|'legal'|'files'|'linked'|'activity';
+
+export interface TabDef {
+  key: TabKey;
+  label: string;
+  content: React.ReactNode;
 }
 
-const tabs = [
-  { id: 'overview', label: 'Overview', component: Overview },
-  { id: 'details', label: 'Details', component: Details },
-  { id: 'financials', label: 'Financials', component: Financials },
-  { id: 'legal', label: 'Legal', component: Legal },
-  { id: 'files', label: 'Files', component: Files },
-  { id: 'linked', label: 'Linked', component: Linked },
-  { id: 'activity', label: 'Activity', component: Activity }
-];
-
-export default function Tabs({ data }: TabsProps) {
-  const [activeTab, setActiveTab] = useState('overview');
-  
-  const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || Overview;
-
+export default function PropertyTabs({
+  tabs,
+  defaultKey = 'overview',
+}: {
+  tabs: TabDef[];
+  defaultKey?: TabKey;
+}) {
+  const [active, setActive] = React.useState<TabKey>(defaultKey);
   return (
-    <div>
-      {/* Tab Navigation */}
-      <div style={{
-        display: 'flex',
-        gap: 'var(--gap-1)',
-        borderBottom: '1px solid var(--border)',
-        marginBottom: 'var(--gap-3)'
-      }}>
-        {tabs.map(tab => (
+    <div className="ecc-object ecc-section">
+      <nav className="flex flex-wrap gap-2 mb-3">
+        {tabs.map(t => (
           <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              background: activeTab === tab.id ? 'var(--surface-2)' : 'transparent',
-              border: 'none',
-              padding: '12px 16px',
-              borderRadius: 'var(--radius-sm) var(--radius-sm) 0 0',
-              color: activeTab === tab.id ? 'var(--text)' : 'var(--text-subtle)',
-              fontWeight: activeTab === tab.id ? 600 : 400,
-              cursor: 'pointer',
-              fontSize: 'var(--fs-14)'
-            }}
+            key={t.key}
+            className={`px-3 py-1.5 rounded ${active === t.key ? 'bg-white/10' : 'hover:bg-white/5'}`}
+            onClick={() => setActive(t.key)}
+            aria-current={active === t.key ? 'page' : undefined}
+            data-testid={`tab-${t.key}`}
           >
-            {tab.label}
+            {t.label}
           </button>
         ))}
-      </div>
-
-      {/* Tab Content */}
-      <div style={{
-        background: 'var(--surface)',
-        borderRadius: 'var(--radius-lg)',
-        padding: 'var(--gap-4)',
-        minHeight: '400px'
-      }}>
-        <ActiveComponent data={data} />
-      </div>
+      </nav>
+      <div className="ecc-divider" />
+      <div>{tabs.find(t => t.key === active)?.content}</div>
     </div>
   );
 }

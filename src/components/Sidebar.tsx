@@ -24,7 +24,7 @@ type IconName =
   | "LayoutDashboard" | "Boxes" | "FileText" | "Shield" | "Scale" | "MessageSquare"
   | "Hammer" | "BarChart3" | "PieChart" | "Settings" | "Database" | "Users"
   | "IdCard" | "Package" | "FolderOpen" | "ClipboardList" | "Workflow" | "Receipt"
-  | "Building2" | "Wrench" | "Cpu" | "Link2" | "ChartNoAxesColumn" | "FileSpreadsheet";
+  | "Building2" | "Wrench" | "Cpu" | "Link2" | "ChartNoAxesColumn" | "FileSpreadsheet" | "Shuffle";
 
 type NavChild = { title: string; path: string; icon?: IconName };
 type NavParent = { title: string; icon: IconName; path?: string; children?: NavChild[] };
@@ -39,6 +39,7 @@ const NAV: NavParent[] = [
       { title: "Leases", path: "/portfolio/leases", icon: "FileSpreadsheet" },
       { title: "Tenants", path: "/portfolio/tenants", icon: "Users" },
       { title: "Owners", path: "/portfolio/owners", icon: "IdCard" },
+      { title: "Owner Transfer", path: "/owners/transfer", icon: "Shuffle" },
     ],
   },
   {
@@ -72,8 +73,11 @@ const NAV: NavParent[] = [
   },
   { title: "Growth", icon: "PieChart", children: [{ title: "Marketing", path: "/growth/marketing", icon: "PieChart" }] },
   {
-    title: "System", icon: "Settings",
-    children: [ { title: "Settings", path: "/system/settings", icon: "Settings" } ],
+    title: "Systems", icon: "Settings",
+    children: [ 
+      { title: "Settings", path: "/system/settings", icon: "Settings" },
+      { title: "Integrations", path: "/systems/integrations", icon: "Link2" },
+    ],
   },
   {
     title: "Data Management", icon: "Database",
@@ -162,7 +166,7 @@ export default function Sidebar() {
     setFlyTitle(parent.title);
     setFlyIcon(parent.icon);
     setFlyItems(parent.children || []);
-    setFlyStyle({ position: "fixed", left: x, top: y, width: FLYOUT_WIDTH });
+    setFlyStyle({ left: x, top: y, width: FLYOUT_WIDTH }); // Removed fixed positioning
     setFlyOpen(true);
   };
   const scheduleOpen = (parent: NavParent, rect: DOMRect) => {
@@ -241,9 +245,11 @@ export default function Sidebar() {
             // If it's a direct link with no children, the whole row is a Link.
             if (p.path && !hasKids) {
               return (
-                <Link key={p.title} href={p.path} ref={rowRef} className={`ecc-row ${parentActive ? "is-active" : ""}`}>
+                <div key={p.title} ref={rowRef}>
+                  <Link href={p.path} className={`ecc-row ${parentActive ? "is-active" : ""}`}>
                     {rowContent}
-                </Link>
+                  </Link>
+                </div>
               );
             }
 

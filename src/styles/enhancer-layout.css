@@ -1,0 +1,15 @@
+/* Centers the enhancer content with same rhythm as main pages */
+.ecc-enhancer-block {
+  max-width: 1200px;
+  margin: 16px auto;
+  padding: 0 16px;
+}
+.ecc-enhancer-root-inset { width: 100%; display: block; }
+.ecc-enhancer-root-fallback { position: relative; width: calc(100% - 40px); max-width: 1200px; padding-right: 16px; }
+
+/* Keep visual consistency with dark theme */
+.ecc-enhancer-block .card {
+  background: #0f0f10;
+  border: 1px solid #27272a;
+  border-radius: 14px;
+}

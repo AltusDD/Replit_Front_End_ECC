@@ -48,7 +48,7 @@ export default function LeasesPage() {
   // Normalize rows the table needs (defensive against schema drift)
   const rows: Row[] = React.useMemo(() => {
     return leases.data.map((l) => {
-      const prop = (pById as any)[l.property_id]?.name ?? "—";
+      const prop = (pById as any)[l.property_id]?.name || "Unknown property";
       const t1 = (tById as any)[l.primary_tenant_id];
       const t2 = (tById as any)[l.tenant_id];
 
@@ -59,7 +59,7 @@ export default function LeasesPage() {
         t2?.display_name ||
         t2?.full_name ||
         [t2?.first_name, t2?.last_name].filter(Boolean).join(" ") ||
-        "—";
+        "No tenant assigned";
 
       const rent =
         typeof l.rent === "number"
@@ -83,9 +83,9 @@ export default function LeasesPage() {
   const total = rows.length;
   const active = rows.filter((r) => r.status === "active");
   const ended = rows.filter((r) => r.status === "ended");
-  const mrr = active.reduce((s, r) => s + (r.rent || 0), 0);
+  const mrr = active.reduce((s, r) => s + (Number.isFinite(Number(r.rent)) ? Number(r.rent) : 0), 0);
   const avg = rows.length
-    ? rows.reduce((s, r) => s + (r.rent || 0), 0) / rows.length
+    ? rows.reduce((s, r) => s + (Number.isFinite(Number(r.rent)) ? Number(r.rent) : 0), 0) / rows.length
     : 0;
 
   // Columns
@@ -97,7 +97,7 @@ export default function LeasesPage() {
       header: "RENT",
       className: "is-right",
       render: (r) => money(r.rent),
-      sort: (a, b) => (a.rent || 0) - (b.rent || 0),
+      sort: (a, b) => (Number.isFinite(Number(a.rent)) ? Number(a.rent) : 0) - (Number.isFinite(Number(b.rent)) ? Number(b.rent) : 0),
     },
     { key: "start", header: "START", render: (r) => shortDate(r.start) },
     { key: "end", header: "END", render: (r) => shortDate(r.end) },

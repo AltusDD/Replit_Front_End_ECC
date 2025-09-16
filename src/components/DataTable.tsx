@@ -14,6 +14,7 @@
    ZERO external deps; works with existing column configs & mappers.
 */
 import React, { useEffect, useMemo, useState } from "react";
+import { useLocation } from "wouter";
 import "../styles/table.css";
 
 type Align = "left" | "right";
@@ -31,19 +32,22 @@ export type DataColumn<Row = any> = {
 
 type SortState = { key: string; dir: SortDir };
 
-type DataTableProps<Row = any> = {
+export type DataTableProps<Row = any> = {
   columns: DataColumn<Row>[];
   rows: Row[];
   loading?: boolean;
   error?: string | null;
 
-  // Row identity / behavior
   getRowId?: (row: Row, idx: number) => string | number | undefined;
-  onRowDoubleClick?: (row: Row) => void;
-  rowHref?: (row: Row) => string; // if provided, double-click navigates
 
-  // Optional row actions cell (rendered at far right)
+  // Navigation & actions
+  rowHref?: (row: Row) => string;
+  onRowDoubleClick?: (row: Row) => void;
   rowActions?: (row: Row) => React.ReactNode;
+
+  // These are passed by portfolio pages; make them optional so TS stops complaining.
+  csvName?: string;
+  drawerTitle?: (row: Row) => string;
 
   // Initial sort
   initialSort?: SortState[];
@@ -123,6 +127,14 @@ export default function DataTable<Row = any>(props: DataTableProps<Row>) {
     rowActions,
     initialSort = [],
   } = props;
+
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!loading) {
+      console.debug("[DataTable] ready", { rows: rows?.length ?? 0 });
+    }
+  }, [rows?.length, loading]);
 
   // derive column types & enums
   const colMeta = useMemo(() => {
@@ -244,9 +256,16 @@ export default function DataTable<Row = any>(props: DataTableProps<Row>) {
   const closeDrawer = () => setDrawerRow(null);
 
   function handleDbl(row: Row) {
+    // Prefer SPA navigation; fall back to hard nav
     if (rowHref) {
       const href = rowHref(row);
-      if (href) window.location.assign(href);
+      console.debug("[DT/DBL]", { href, row });
+      if (typeof href === "string" && href.length > 0) {
+        try { setLocation(href); }
+        catch { window.location.assign(href); }
+      } else {
+        console.error("[DT/DBL] empty href for row", row);
+      }
       return;
     }
     if (onRowDoubleClick) onRowDoubleClick(row);
@@ -264,13 +283,8 @@ export default function DataTable<Row = any>(props: DataTableProps<Row>) {
     setFilters((f) => ({ ...f, [key]: { kind: "number", min, max } }));
   }
 
-  // row id
-  function rowId(r: Row, idx: number) {
-    return (getRowId?.(r, idx) ??
-      (r as any)?.id ??
-      (r as any)?.uuid ??
-      idx) as React.Key;
-  }
+  const rowId = (row: Row, idx: number) =>
+    (getRowId?.(row, idx)) ?? (row as any)?.id ?? idx;
 
   /* ---------- render ---------- */
   return (
@@ -432,14 +446,41 @@ export default function DataTable<Row = any>(props: DataTableProps<Row>) {
             current.map((row, idx) => (
               <tr
                 key={rowId(row, idx)}
+                data-testid="datatable-row"
                 onDoubleClick={() => handleDbl(row)}
-                className="ecc-row"
+                className="ecc-row cursor-pointer hover:bg-white/5"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter") handleDbl(row); }}
               >
-                {colMeta.map((c) => {
+                {colMeta.map((c, cellIdx) => {
                   const v = (row as any)[c.key];
                   const content =
                     c.render ? c.render(v, row) : v == null ? "—" : (v as any);
                   const isRight = c.align === "right" || c.type === "number";
+                  const isFirstCell = cellIdx === 0;
+                  
+                  if (isFirstCell) {
+                    return (
+                      <td key={c.key} className={`min-w-[120px] ${isRight ? "is-right" : ""}`}>
+                        <div className="flex items-center gap-2">
+                          {rowHref && (
+                            <a
+                              data-testid="row-link"
+                              href={rowHref(row)}
+                              onClick={(e) => { e.preventDefault(); handleDbl(row); }}
+                              className="underline decoration-dotted underline-offset-4 opacity-70 hover:opacity-100"
+                              title="Open card"
+                            >
+                              Open
+                            </a>
+                          )}
+                          {content}
+                        </div>
+                      </td>
+                    );
+                  }
+                  
                   return (
                     <td key={c.key} className={isRight ? "is-right" : undefined}>
                       {content}

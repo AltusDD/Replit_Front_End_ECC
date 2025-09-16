@@ -1,16 +1,15 @@
-import { installOwnerRoutes } from "./routes/owners";
-import { installPropertyRoutes } from "./routes/properties";
-import { installGeocodeRoutes } from "./routes/geocode";
-import { installOwnerTransferRoutes } from "./routes/ownerTransfer";
-import { runDueTransfersTick } from "./lib/ownerTransfer";
 import express from "express";
 import cors from "cors";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { PropertyOut, UnitOut, LeaseOut, TenantOut, OwnerOut } from "./mappings";
-//
-import adminSyncRoute from './routes/adminSync';
+import { installOwnerRoutes } from './routes/owners';
+import { integrations } from './routes/admin/integrations';
+import { sync } from './routes/admin/sync';
+import ownerTransferRouter from './routes/ownerTransfer.js';
+import entitiesRouter from './routes/entities.js';
+import rpcRouter from './routes/rpc';
 import { startAutoSyncLoop } from './lib/sync/auto';
-import * as fs from "fs";
+import bff from "./bff.js";
 import * as path from "path";
 
 /** ───────────────────────────────────────────────────────────────────
@@ -22,16 +21,106 @@ import * as path from "path";
  *  ─────────────────────────────────────────────────────────────────── */
 
 const app = express();
-  installOwnerRoutes(app);
-  installPropertyRoutes(app);
-  installGeocodeRoutes(app);
-  installOwnerTransferRoutes(app);
 
-app.use(cors());
+// Secure CORS configuration
+const corsOptions = {
+  origin: function (origin: any, callback: any) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Define allowed origins
+    const allowedOrigins = [
+      'https://258f1742-e4c0-4f32-8eb6-bd862a90d7be-00-24bv9skxcb4sk.us-east-2.replit.dev', // Replit dev
+      'https://empirecommandcenter.replit.app', // Published app
+      'http://localhost:5173', // Local dev
+      'http://localhost:3000', // Alternative local dev
+      'http://0.0.0.0:5000'    // Replit internal
+    ];
+    
+    // Add custom allowed origins from env
+    const customOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
+    allowedOrigins.push(...customOrigins);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-token']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
-app.use('/api/admin/sync', adminSyncRoute);
 
-const PORT = Number(process.env.PORT_API || 8787);
+// Only mount BFF if properly configured - DISABLED for testing
+const hasBffConfig = false; // !!(process.env.API_BASE_URL && process.env.ADMIN_SYNC_TOKEN);
+if (hasBffConfig) {
+  app.use(bff);
+  console.log('[Security] BFF endpoints mounted with authentication');
+} else {
+  console.warn('[Security] BFF endpoints temporarily disabled for testing');
+  // Mount a stub that explains why BFF is disabled
+  app.use('/bff', (req, res) => {
+    res.status(503).json({
+      error: 'BFF temporarily disabled for testing'
+    });
+  });
+}
+installOwnerRoutes(app);
+app.use('/api/admin/sync', sync); // Enhanced sync controls with SSE, DLQ, circuit breaker
+app.use('/api/admin/integrations', integrations);
+app.use('/api', ownerTransferRouter);
+app.use("/api/entities", entitiesRouter);
+app.use("/api/rpc", rpcRouter);
+
+// --- alias-aware env helpers (top of file, after imports) ---
+function mask(v?: string) {
+  if (!v) return "MISSING";
+  return v.slice(0, 6) + "…" + v.slice(-4);
+}
+function pickKey(...candidates: string[]) {
+  for (const k of candidates) if (process.env[k]) return k;
+  return "MISSING";
+}
+
+// Prefer server-only keys; include public aliases for completeness
+const KEY_SUPABASE_URL  = pickKey("SUPABASE_URL","NEXT_PUBLIC_SUPABASE_URL","PUBLIC_SUPABASE_URL");
+const KEY_ANON          = pickKey("SUPABASE_ANON_KEY","NEXT_PUBLIC_SUPABASE_ANON_KEY","PUBLIC_SUPABASE_ANON_KEY");
+const KEY_SERVICE_ROLE  = pickKey("SUPABASE_SERVICE_ROLE_KEY","SUPABASE_SERVICE_ROLE","SERVICE_ROLE");
+
+function envSummary() {
+  return {
+    SUPABASE_URL_KEY: KEY_SUPABASE_URL,
+    SUPABASE_URL: KEY_SUPABASE_URL === "MISSING" ? "MISSING" : process.env[KEY_SUPABASE_URL],
+    ANON_KEY_KEY: KEY_ANON,
+    ANON_KEY_MASKED: KEY_ANON === "MISSING" ? "MISSING" : mask(process.env[KEY_ANON]),
+    SERVICE_ROLE_KEY: KEY_SERVICE_ROLE,
+    SERVICE_ROLE_MASKED: KEY_SERVICE_ROLE === "MISSING" ? "MISSING" : mask(process.env[KEY_SERVICE_ROLE]),
+    NODE_ENV: process.env.NODE_ENV || "dev",
+  };
+}
+console.log("[EnvLock]", envSummary());
+
+// If you initialize Supabase here, make sure you use the resolved keys:
+const SUPABASE_URL = KEY_SUPABASE_URL === "MISSING" ? undefined : process.env[KEY_SUPABASE_URL]!;
+const SERVICE_ROLE = KEY_SERVICE_ROLE === "MISSING" ? undefined : process.env[KEY_SERVICE_ROLE]!;
+if (!SUPABASE_URL || !SERVICE_ROLE) {
+  console.error("[EnvLock] Missing required server envs for Supabase (URL or SERVICE_ROLE)");
+}
+
+const PORT = Number(process.env.API_PORT ?? 8787);
+
+// Add process-level error guards for development
+process.on('unhandledRejection', (e) => {
+  console.error('[unhandledRejection]', e);
+});
+process.on('uncaughtException', (e) => {
+  console.error('[uncaughtException]', e);
+});
 
 // Map of logical collections -> table names (override via Replit secrets)
 const TABLE: Record<string, string> = {
@@ -128,6 +217,50 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
+app.get("/api/diag/env", (_req, res) => {
+  res.json(envSummary());
+});
+
+/** Health sync alias - UI compatibility */
+app.get("/api/health/sync", async (req, res) => {
+  // Redirect to main health endpoint for UI compatibility
+  req.url = "/api/health";
+  req.path = "/api/health";
+  return app._router.handle(req, res);
+});
+
+/** Config integrations endpoint - public endpoint for UI */
+app.get("/api/config/integrations", async (_req, res) => {
+  res.json({
+    ok: true,
+    integrations: {
+      doorloop: {
+        configured: !!(process.env.DOORLOOP_BASE_URL && process.env.DOORLOOP_API_KEY),
+        baseUrl: process.env.DOORLOOP_BASE_URL ? "***configured***" : null
+      },
+      supabase: {
+        configured: !!(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY)),
+        connected: !!supa.client
+      },
+      teams: {
+        configured: !!process.env.INTEGRATIONS_TEAMS_WEBHOOK
+      },
+      admin: {
+        available: !!process.env.ADMIN_SYNC_TOKEN
+      }
+    },
+    endpoints: [
+      '/api/portfolio/properties',
+      '/api/portfolio/units', 
+      '/api/portfolio/leases',
+      '/api/portfolio/tenants',
+      '/api/portfolio/owners',
+      '/api/admin/sync/status',
+      '/api/admin/integrations/doorloop/ping'
+    ]
+  });
+});
+
 /** Geocode properties endpoint for adding coordinates */
 app.post("/api/geocode/properties", async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
@@ -140,7 +273,7 @@ app.post("/api/geocode/properties", async (req, res) => {
     }
 
     // Import geocoding function
-    const { geocode } = await import("./lib/geocode.js");
+    const { geocodeAddress: geocode } = await import("./lib/geocode");
     
     const results = [];
     
@@ -208,10 +341,14 @@ app.get("/api/portfolio/properties", async (req, res) => {
     // Get properties - use actual column names from the current database
     const { data: propertiesData, error: propsError } = await supa.client
       .from(TABLE.properties)
-      .select("*")
+      .select("id, name, doorloop_id, address_city, address_state, address_zip, type, class, active, lat, lng")
       .limit(5000);
 
     if (propsError) throw propsError;
+
+    // build property maps by id and by doorloop_id
+    const byId = new Map((propertiesData??[]).map(p => [String(p.id), p]));
+    const byDL = new Map((propertiesData??[]).filter(p => p.doorloop_id).map(p => [String(p.doorloop_id), p]));
 
     // Get units data for occupancy calculation
     const { data: unitsData, error: unitsError } = await supa.client
@@ -219,25 +356,34 @@ app.get("/api/portfolio/properties", async (req, res) => {
       .select(`
         id,
         property_id,
+        doorloop_property_id,
         status
       `);
 
     if (unitsError) throw unitsError;
 
-    // Group units by property
+    // Group units by property using dual-key mapping
     const unitsByProperty = new Map();
     const occupiedByProperty = new Map();
 
     (unitsData || []).forEach((unit: any) => {
-      const propId = String(unit.property_id);
-      if (!unitsByProperty.has(propId)) {
-        unitsByProperty.set(propId, 0);
-        occupiedByProperty.set(propId, 0);
+      // when attributing a unit to a property:
+      const p =
+        (unit.property_id && byId.get(String(unit.property_id))) ||
+        (unit.doorloop_property_id && byDL.get(String(unit.doorloop_property_id))) ||
+        null;
+      const propKey = p ? String(p.id) : String(unit.property_id ?? '');
+      
+      if (!propKey) return;
+      
+      if (!unitsByProperty.has(propKey)) {
+        unitsByProperty.set(propKey, 0);
+        occupiedByProperty.set(propKey, 0);
       }
-      unitsByProperty.set(propId, unitsByProperty.get(propId) + 1);
+      unitsByProperty.set(propKey, unitsByProperty.get(propKey) + 1);
       
       if (unit.status && ['occupied', 'occ', 'active'].includes(unit.status.toLowerCase())) {
-        occupiedByProperty.set(propId, occupiedByProperty.get(propId) + 1);
+        occupiedByProperty.set(propKey, occupiedByProperty.get(propKey) + 1);
       }
     });
 
@@ -280,25 +426,29 @@ app.get("/api/portfolio/units", async (req, res) => {
       .limit(5000);
     if (error) throw error;
 
-    // Now get property names for the units
-    const propertyIds = [...new Set((data || []).map((u: any) => u.property_id).filter(Boolean))];
-    const { data: propertiesData } = await supa.client
-      .from(TABLE.properties)
-      .select("id, name")
-      .in('id', propertyIds);
+    // build property maps by id and by doorloop_id
+    const { data: propertiesData } = await supa.client.from(TABLE.properties).select("id, name, doorloop_id").limit(5000);
+    const byId = new Map((propertiesData??[]).map(p => [String(p.id), p]));
+    const byDL = new Map((propertiesData??[]).filter(p => p.doorloop_id).map(p => [String(p.doorloop_id), p]));
 
-    const propertyMap = new Map((propertiesData || []).map((p: any) => [p.id, p.name || "—"]));
+    const units: UnitOut[] = (data || []).map((row: any) => {
+      // when attributing a unit to a property:
+      const p =
+        (row.property_id && byId.get(String(row.property_id))) ||
+        (row.doorloop_property_id && byDL.get(String(row.doorloop_property_id))) ||
+        null;
 
-    const units: UnitOut[] = (data || []).map((row: any) => ({
-      id: row.id,
-      propertyName: propertyMap.get(row.property_id) || "—",
-      unitLabel: row.unit_number || row.number || row.name || "—",
-      beds: row.beds || row.bedrooms,
-      baths: row.baths || row.bathrooms,
-      sqft: row.sq_ft || row.square_feet || row.sqft,
-      status: row.status,
-      marketRent: row.rent_amount || row.market_rent || 0
-    }));
+      return {
+        id: row.id,
+        propertyName: p?.name || "—",
+        unitLabel: row.unit_number || row.number || row.name || "—",
+        beds: row.beds || row.bedrooms,
+        baths: row.baths || row.bathrooms,
+        sqft: row.sq_ft || row.square_feet || row.sqft,
+        status: row.status,
+        marketRent: row.rent_amount || row.market_rent || 0
+      };
+    });
 
     res.json(units);
   } catch (e: any) {
@@ -665,18 +815,24 @@ app.get("/api/owner-transfer/:id", async (req, res) => {
 app.use("/api", (_req, res) => res.status(404).json({ ok: false, message: "Not found" }));
 app.get("/", (_req, res) => res.type("text/plain").send("ECC Dev API running"));
 
-// Start auto-sync (idempotent; logs if disabled)
-startAutoSyncLoop();
-
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`[Dev API] Listening on :${PORT}`);
   if (!supa.client) {
     console.warn(`[Dev API] Supabase not ready: ${supa.error}`);
+  }
+  
+  // Start auto-sync after server is listening (idempotent; logs if disabled)
+  // DISABLED for testing - auto-sync causing server crashes
+  try {
+    // startAutoSyncLoop();
+    console.log(`[Dev API] Auto-sync loop temporarily disabled for testing`);
+  } catch (e) {
+    console.warn(`[Dev API] Auto-sync disabled:`, e);
+  }
+  
+  if (!supa.client) {
     console.warn(`[Dev API] Raw SUPABASE_URL sample: ${(process.env.SUPABASE_URL || "").slice(0, 80)}…`);
   } else {
     console.log(`[Dev API] Supabase REST URL: ${supa.restUrl}`);
   }
 });
-
-// owner transfer tiny scheduler (5 min)
-setInterval(() => runDueTransfersTick().catch(()=>{}), 5*60*1000);

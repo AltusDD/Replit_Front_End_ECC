@@ -1,0 +1,25 @@
+/* ECC — Card/Panel/Section normalizer (canonical) */
+.ecc-object,
+.section,
+.card,
+.panel,
+.gen-card,
+.gen-panel {
+  background: var(--surface-object);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--pad-lg);
+}
+
+/* Standard header row inside cards (title + actions) */
+.ecc-object .ecc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Neutralize legacy text transforms on our content */
+.ecc-object, .ecc-object * { text-transform: none; }
+.ecc-label { font-size: 12px; opacity: .7; text-transform: none; }

@@ -1,4 +1,20 @@
+const BASE = import.meta.env.VITE_API_BASE || "";
 export const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+
+export async function api(path: string, init?: RequestInit) {
+  const res = await fetch(BASE + path, init);
+  const text = await res.text();
+  let json: any = null; 
+  try { 
+    json = JSON.parse(text); 
+  } catch {}
+  
+  if (!res.ok) {
+    throw new Error(`${res.status} ${res.statusText} :: ${text.slice(0,200)}`);
+  }
+  
+  return json ?? {};
+}
 
 export async function getJSON<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(API_BASE + path, { headers: { "Accept":"application/json" }, ...init });
@@ -36,4 +52,33 @@ export async function fetchBadgeCounts(): Promise<BadgeCounts> {
     tryJSON<number>("/ops/work/inventory/low-count", 0),
   ]);
   return { workOrdersOpen: wo ?? 0, collectionsOpen: col ?? 0, inventoryLow: inv ?? 0 };
+}
+
+/** Entity fetcher with fallback for both path param and query param patterns */
+export async function fetchEntity(entityPlural: string, id: string) {
+  const base = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE || "/api").replace(/\/$/, "");
+  
+  // Azure Functions structure: /api/entities/{type}/{id?}
+  const tryUrls = [
+    `${base}/entities/${entityPlural}/${id}`,
+    `${base}/entities/${entityPlural}?id=${encodeURIComponent(id)}`
+  ];
+  
+  let lastErr: any;
+  for (const url of tryUrls) {
+    try {
+      const r = await fetch(url);
+      if (r.ok) {
+        const json = await r.json();
+        
+        // Azure Functions returns entity directly, not wrapped in {item: data}
+        // Handle both formats for compatibility
+        if (json?.item) {
+          return json.item; // Current Express format
+        }
+        return json; // Azure Functions format
+      }
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error("Failed to fetch entity");
 }

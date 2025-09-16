@@ -1,0 +1,58 @@
+:root {
+  /* Palette */
+  --ecc-bg: #0b0e12;
+  --ecc-surface: #1b1f26;          /* app chrome */
+  --ecc-object: #232834;           /* light-grey card surface (relative to dark bg) */
+  --ecc-border: #2f3542;
+  --ecc-border-soft: #2a2f3b;
+  --ecc-text: #d7dbe3;
+  --ecc-text-dim: #a5adba;
+  --ecc-gold: #d6b36a;
+  --ecc-green: #35c28d;
+  --ecc-red: #f47575;
+  --ecc-yellow: #d6b86a;
+
+  /* Spacing + radius */
+  --ecc-radius-card: 14px;
+  --ecc-radius-btn: 10px;
+  --ecc-gap-1: 8px;
+  --ecc-gap-2: 12px;
+  --ecc-gap-3: 16px;
+}
+
+html, body, #root { height: 100%; background: var(--ecc-bg); color: var(--ecc-text); }
+* { box-sizing: border-box; }
+
+/* The normalized card surface */
+.ecc-object {
+  background: var(--ecc-object);
+  border: 1px solid var(--ecc-border);
+  border-radius: var(--ecc-radius-card);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.02);
+}
+
+/* Section grammar */
+.ecc-section {
+  padding: 16px;
+}
+.ecc-section + .ecc-section { margin-top: 12px; }
+.ecc-section__head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.ecc-section__title {
+  font-weight: 600; letter-spacing: .2px; color: var(--ecc-text);
+}
+.ecc-section__hint {
+  color: var(--ecc-text-dim); font-size: 12px;
+}
+.ecc-divider { height: 1px; background: var(--ecc-border-soft); margin: 8px 0 12px; }
+
+/* FieldRows baseline (atoms will add variants) */
+.ecc-fields { display: grid; grid-template-columns: 180px 1fr; gap: 8px 16px; }
+.ecc-label { color: var(--ecc-text-dim); }
+.ecc-value { color: var(--ecc-text); }
+
+/* Simple skeleton */
+@keyframes ecc-skel { 0%{opacity:.6} 50%{opacity:.3} 100%{opacity:.6} }
+.ecc-skel { background: var(--ecc-border-soft); border-radius: 8px; height: 12px; animation: ecc-skel 1.2s ease-in-out infinite; }

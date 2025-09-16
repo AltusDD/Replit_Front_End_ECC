@@ -1,0 +1,20 @@
+/* === ECC Kill-Switch: never allow viewport covers (dev or prod) === */
+#vite-error-overlay, .vite-error-overlay { display: none !important; } /* Vite/React overlays */
+body > div[id*="overlay"], body > div[class*="overlay"],
+body > div[class*="backdrop"], body > div[class*="fullscreen"],
+body > div[class*="full-screen"], body > div[class*="loading-screen"],
+body > div[class*="page-cover"], body > div[class*="scrim"],
+body > div[class*="modal-backdrop"] { display: none !important; }
+
+/* Any element attempting a fixed full-viewport cover */
+*[style*="position:fixed"][style*="inset: 0"],
+*[style*="position:fixed"][style*="top: 0"][style*="left: 0"][style*="right: 0"][style*="bottom: 0"],
+*[style*="position:absolute"][style*="inset: 0"][style*="z-index:"] { display: none !important; }
+
+/* Keep app surface interactive */
+#root, #app { isolation: isolate; }
+
+/* Anti-scroll/pointer/visibility hacks */
+html, body { overflow: auto !important; }
+#root { display: block !important; visibility: visible !important; }
+* { pointer-events: auto !important; } /* local components can still disable on themselves */

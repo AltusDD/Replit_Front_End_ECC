@@ -1,0 +1,68 @@
+[
+  {
+    "rel": "src/pages/portfolio/columns.tsx",
+    "columns": 0,
+    "hasOverflowX": false,
+    "dashMasks": 0
+  },
+  {
+    "rel": "src/pages/portfolio/Leases.tsx",
+    "columns": 0,
+    "hasOverflowX": false,
+    "dashMasks": 0
+  },
+  {
+    "rel": "src/pages/portfolio/leases/index.tsx",
+    "columns": 0,
+    "hasOverflowX": false,
+    "dashMasks": 0
+  },
+  {
+    "rel": "src/pages/portfolio/Owners.tsx",
+    "columns": 0,
+    "hasOverflowX": false,
+    "dashMasks": 0
+  },
+  {
+    "rel": "src/pages/portfolio/owners/index.tsx",
+    "columns": 0,
+    "hasOverflowX": false,
+    "dashMasks": 0
+  },
+  {
+    "rel": "src/pages/portfolio/Properties.tsx",
+    "columns": 0,
+    "hasOverflowX": false,
+    "dashMasks": 0
+  },
+  {
+    "rel": "src/pages/portfolio/properties/index.tsx",
+    "columns": 0,
+    "hasOverflowX": false,
+    "dashMasks": 0
+  },
+  {
+    "rel": "src/pages/portfolio/Tenants.tsx",
+    "columns": 0,
+    "hasOverflowX": false,
+    "dashMasks": 0
+  },
+  {
+    "rel": "src/pages/portfolio/tenants/index.tsx",
+    "columns": 0,
+    "hasOverflowX": false,
+    "dashMasks": 0
+  },
+  {
+    "rel": "src/pages/portfolio/Units.tsx",
+    "columns": 0,
+    "hasOverflowX": false,
+    "dashMasks": 0
+  },
+  {
+    "rel": "src/pages/portfolio/units/index.tsx",
+    "columns": 0,
+    "hasOverflowX": false,
+    "dashMasks": 0
+  }
+]

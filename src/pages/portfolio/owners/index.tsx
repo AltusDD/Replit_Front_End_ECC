@@ -1,12 +1,12 @@
 import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
-import useCollection from "../../../features/data/useCollection";
+import { useAllOwners, useAllProperties } from "../../../lib/ecc-resolvers";
 import { OWNER_COLUMNS, mapOwner } from "../columns";
 import "../../../styles/table.css";
 
 export default function OwnersPage() {
-  const owners = useCollection<any>("/api/portfolio/owners");
-  const properties = useCollection<any>("/api/portfolio/properties");
+  const owners = useAllOwners();
+  const properties = useAllProperties();
 
   const { rows, loading, error } = useMemo(() => {
     // Backend already provides structured data
@@ -25,7 +25,7 @@ export default function OwnersPage() {
     const total = rows.length;
     const active = rows.filter((o) => o.active).length;
     // Count properties by owner_id if available, else use total
-    const totalProps = properties.data?.length || 0;
+    const totalProps = Array.isArray(properties.data) ? properties.data.length : 0;
     return { total, active, totalProps };
   }, [rows, properties.data]);
 

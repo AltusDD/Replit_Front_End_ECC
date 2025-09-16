@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import FilterBar from "../../components/FilterBar";
 import DataTable, { Column } from "../../components/DataTable";
+import { useAllUnits } from "../../lib/ecc-resolvers";
 
 type UnitRow = {
   id: string;
@@ -12,24 +13,33 @@ type UnitRow = {
   rent: string;
 };
 
-const MOCK: UnitRow[] = [
-  { id: "U-1", property: "Crescent Ridge Apts", unit: "A-102", beds: 2, baths: 2, status: "Occupied", rent: "$1,850" },
-  { id: "U-2", property: "Crescent Ridge Apts", unit: "B-206", beds: 1, baths: 1, status: "Vacant", rent: "$1,295" },
-  { id: "U-3", property: "Maple Grove", unit: "3-114", beds: 3, baths: 2, status: "Notice", rent: "$2,145" },
-];
-
 export default function Units() {
   const [q, setQ] = useState("");
+  const { data, isLoading, isFetching, error } = useAllUnits();
 
   const rows = useMemo(() => {
+    if (!data) return [];
+    
+    // Map API data to table format
+    const mapped: UnitRow[] = data.map((unit: any) => ({
+      id: String(unit.id),
+      property: unit.property_name || "—",
+      unit: unit.label || unit.unit_number || `Unit ${unit.id}`,
+      beds: unit.beds || 0,
+      baths: unit.baths || 0,
+      status: unit.status || "Vacant",
+      rent: unit.market_rent_cents ? `$${Math.round(unit.market_rent_cents / 100).toLocaleString()}` : "—"
+    }));
+
+    // Apply search filter
     const t = q.trim().toLowerCase();
-    if (!t) return MOCK;
-    return MOCK.filter(r =>
+    if (!t) return mapped;
+    return mapped.filter(r =>
       r.property.toLowerCase().includes(t) ||
       r.unit.toLowerCase().includes(t) ||
       r.status.toLowerCase().includes(t)
     );
-  }, [q]);
+  }, [data, q]);
 
   const columns: Column<UnitRow>[] = [
     { key: "unit", header: "Unit", width: 100 },
@@ -42,8 +52,20 @@ export default function Units() {
 
   return (
     <section className="ecc-page">
-      <FilterBar title="Units" value={q} onChange={setQ} placeholder="Search units / property / status" />
-      <DataTable columns={columns} rows={rows} />
+      <FilterBar 
+        title="Units" 
+        value={q} 
+        onChange={setQ} 
+        placeholder="Search units / property / status" 
+      />
+      <DataTable 
+        columns={columns} 
+        rows={rows} 
+        loading={isLoading || (isFetching && rows.length === 0)}
+        error={error ? String(error) : undefined}
+        rowHref={(r) => `/card/unit/${r.id}`}
+        getRowId={(r) => r.id}
+      />
     </section>
   );
 }

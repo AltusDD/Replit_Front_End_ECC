@@ -12,6 +12,10 @@ install = "npm ci || npm install"
 hidden = [".cache", ".vite", "dist", "node_modules"]
 
 [[ports]]
+localPort = 5000
+externalPort = 5173
+
+[[ports]]
 localPort = 5173
 externalPort = 80
 
@@ -61,6 +65,7 @@ args = "PORT=${PORT:-5173} npm run dev"
 
 [nix]
 channel = "stable-25_05"
+packages = ["pnpm", "jq"]
 
 [agent]
 integrations = ["javascript_supabase==1.0.0", "javascript_database==1.0.0"]

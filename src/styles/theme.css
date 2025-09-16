@@ -1,8 +1,31 @@
-/* Altus UI – Theme & Style Contract (authoritative) — tokens only
-   Import this once in your app entry (e.g., src/app/main.tsx or App.tsx) */
-
+/* ===== ECC_STYLE_CONTRACT::THEME_TOKENS (DO NOT REMOVE) ===== */
 :root{
-  /* Genesis v2 Palette - Cooler Neutrals */
+  /* Brand (Altus) */
+  --altus-black: #0B0E12;
+  --altus-gold:  #FFD700;   /* primary accent */
+  --altus-green: #10B981;   /* positive */
+  --altus-red:   #EF4444;   /* negative */
+  /* Absolutely NO orange anywhere. */
+
+  /* Text */
+  --text-strong:  #E9EDF4;
+  --text-normal:  #C2C7D0;
+  --text-muted:   #8C93A1;
+
+  /* Surfaces */
+  --surface-app:     #0F141B;
+  --surface-panel:   #161C24;   /* background behind cards */
+  --surface-object:  #2A2F38;   /* light-grey inner box per design contract */
+  --surface-border:  rgba(255,255,255,0.06);
+
+  /* Radius/Spacing */
+  --radius-lg: 16px;
+  --pad-lg:    16px;
+
+  /* Motion */
+  --ease-std: cubic-bezier(.2,.8,.2,1);
+
+  /* Genesis compatibility aliases - keeping existing for backward compatibility */
   --bg:            #0b0e12;  /* Genesis altus-black */
   --surface:       #171a1f;  /* Genesis panel-bg */
   --surface-2:     #1c2026;  /* Genesis panel-elev */
@@ -10,14 +33,10 @@
 
   --text:          #e8eaf0;  /* Genesis text */
   --text-subtle:   #a6adbb;  /* Genesis text-dim */
-  --text-muted:    #a6adbb;  /* Genesis text-dim */
 
   --gold:          #d6b36a;  /* Genesis Altus Gold */
   --gold-700:      #c7a55a;  /* hover/pressed Altus Gold */
   
-  /* Genesis compatibility aliases */
-  --altus-black:   #0b0e12;
-  --altus-gold:    #d6b36a;
   --panel-bg:      #171a1f;
   --panel-elev:    #1c2026;
   --line:          #2a2f36;
@@ -28,7 +47,6 @@
   --warning:       #f3c969;  /* Genesis warn */
   --danger:        #ef5953;  /* Genesis bad */
   
-  /* Genesis compatibility aliases */
   --good:          #2cc38a;
   --warn:          #f3c969;
   --bad:           #ef5953;
@@ -64,5 +82,23 @@
   --focus: 0 0 0 2px #000, 0 0 0 4px var(--gold);
 }
 
-/* App base */
-html, body { background: var(--bg); color: var(--text); font-family: var(--font); }
+/* --- ECC Object Surface Tokens (canonical) --- */
+:root, .theme-ecc, [data-theme="ecc"] {
+  --ecc-object-bg: #2A2F38;           /* light grey (on dark) for inner boxes */
+  --ecc-object-border: rgba(255,255,255,0.08);
+  --ecc-object-radius: 16px;
+  --ecc-object-pad: 16px;
+}
+
+html, body {
+  background: var(--surface-app);
+  color: var(--text-normal);
+  font-family: var(--font);
+}
+
+/* Skeleton shimmer (shared) */
+@keyframes ecc-shimmer {
+  0% { background-position: 0% 0; }
+  100% { background-position: 200% 0; }
+}
+/* ===== END THEME_TOKENS ===== */

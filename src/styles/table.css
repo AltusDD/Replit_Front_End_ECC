@@ -281,24 +281,29 @@
   100% { background-position: 0 0; }
 }
 
-/* ---------- Drawer ---------- */
+/* Drawer: INLINE, never full-screen */
 .ecc-drawer{
-  position: fixed; inset: 0; display:flex; justify-content:flex-end; z-index: 50;
+  position: static;           /* was: fixed; inset:0 */
+  display: block;
+  z-index: auto;
 }
 .ecc-drawer__backdrop{
-  position:absolute; inset:0; background: rgba(0,0,0,.5);
+  display: none !important;   /* never render a page mask */
 }
 .ecc-drawer__panel{
-  position:relative; width: 520px; max-width: 90vw; background: var(--surface-1);
-  border-left:1px solid var(--line-1); height: 100%;
-  display:flex; flex-direction:column;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  height: auto;               /* was: 100% */
+  background: var(--surface-1);
+  border: 1px solid var(--line-1);
+  border-radius: 12px;
+  overflow: hidden;
 }
-.ecc-drawer__head{
-  display:flex; align-items:center; justify-content:space-between;
-  padding: 14px; border-bottom:1px solid var(--line-1);
-}
+.ecc-drawer__head{ display:flex; align-items:center; justify-content:space-between;
+  padding: 14px; border-bottom:1px solid var(--line-1); }
 .ecc-drawer__title{ font-weight:800; color:var(--ink-1); }
-.ecc-drawer__body{ padding: 14px; overflow:auto; }
+.ecc-drawer__body{ padding:14px; overflow:auto; max-height: 60vh; }
 .ecc-grid{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
 .ecc-field__label{ color: var(--altus-light-gray); font-size: 12px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
 .ecc-field__value{ color: var(--altus-text); font-weight: 600; }
@@ -387,14 +392,12 @@
 }
 
 .ecc-actions-dropdown {
-  position: absolute;
   top: 100%;
   right: 0;
   background: var(--altus-dark-gray);
   border: 1px solid var(--line-1);
   border-radius: 8px;
   box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
-  z-index: 1000;
   min-width: 180px;
   overflow: hidden;
   margin-top: 4px;

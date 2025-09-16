@@ -1,11 +1,11 @@
 import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
-import useCollection from "../../../features/data/useCollection";
+import { useAllProperties } from "../../../lib/ecc-resolvers";
 import { PROPERTY_COLUMNS } from "../columns";
 import "../../../styles/table.css";
 
 export default function PropertiesPage() {
-  const properties = useCollection<any>("/api/portfolio/properties");
+  const properties = useAllProperties();
 
   const { rows, loading, error } = useMemo(() => {
     // Backend now handles all relationships and calculations
@@ -21,8 +21,8 @@ export default function PropertiesPage() {
   const kpis = useMemo(() => {
     const total = rows.length;
     const active = rows.filter(r => r.active).length;
-    const totalUnitsKpi = rows.reduce((sum, r) => sum + (r.units ?? 0), 0);
-    const avgOcc = total ? rows.reduce((s, r) => s + (r.occPct || 0), 0) / total : 0;
+    const totalUnitsKpi = rows.reduce((sum, r) => sum + (Number.isFinite(Number(r.units)) ? Number(r.units) : 0), 0);
+    const avgOcc = total ? rows.reduce((s, r) => s + (Number.isFinite(Number(r.occPct)) ? Number(r.occPct) : 0), 0) / total : 0;
     return { total, active, totalUnits: totalUnitsKpi, avgOcc };
   }, [rows]);
 

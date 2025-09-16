@@ -3,6 +3,29 @@ import { pgTable, pgSchema } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Owner transfer status enum for type safety and state machine logic
+export enum OwnerTransferStatus {
+  PENDING_ACCOUNTING = "PENDING_ACCOUNTING",
+  APPROVED_ACCOUNTING = "APPROVED_ACCOUNTING", 
+  READY_EXECUTION = "READY_EXECUTION",
+  COMPLETE = "COMPLETE",
+  FAILED = "FAILED"
+}
+
+// Define valid state transitions for owner transfer workflow
+export const OWNER_TRANSFER_STATE_TRANSITIONS: Record<OwnerTransferStatus, OwnerTransferStatus[]> = {
+  [OwnerTransferStatus.PENDING_ACCOUNTING]: [OwnerTransferStatus.APPROVED_ACCOUNTING, OwnerTransferStatus.FAILED],
+  [OwnerTransferStatus.APPROVED_ACCOUNTING]: [OwnerTransferStatus.READY_EXECUTION, OwnerTransferStatus.FAILED],
+  [OwnerTransferStatus.READY_EXECUTION]: [OwnerTransferStatus.COMPLETE, OwnerTransferStatus.FAILED],
+  [OwnerTransferStatus.COMPLETE]: [], // Terminal state
+  [OwnerTransferStatus.FAILED]: [OwnerTransferStatus.PENDING_ACCOUNTING] // Can restart from beginning
+};
+
+// Helper function to check if status transition is valid
+export function isValidStatusTransition(currentStatus: OwnerTransferStatus, newStatus: OwnerTransferStatus): boolean {
+  return OWNER_TRANSFER_STATE_TRANSITIONS[currentStatus].includes(newStatus);
+}
+
 // Properties table with lat/lng columns for geocoding
 export const properties = pgTable("properties", {
   id: serial("id").primaryKey(),
@@ -19,6 +42,8 @@ export const properties = pgTable("properties", {
   active: boolean("active").default(true),
   lat: decimal("lat", { precision: 10, scale: 8 }),
   lng: decimal("lng", { precision: 11, scale: 8 }),
+  doorloop_id: text("doorloop_id"),
+  owner_id: integer("owner_id").references(() => owners.id),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -39,6 +64,7 @@ export const units = pgTable("units", {
   rent: decimal("rent", { precision: 10, scale: 2 }),
   condition: varchar("condition", { length: 50 }),
   unit_condition: varchar("unit_condition", { length: 50 }),
+  doorloop_id: text("doorloop_id"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -48,6 +74,7 @@ export const leases = pgTable("leases", {
   id: serial("id").primaryKey(),
   property_id: integer("property_id").references(() => properties.id),
   unit_id: integer("unit_id").references(() => units.id),
+  tenant_id: integer("tenant_id").references(() => tenants.id),
   unitDbId: integer("unitDbId").references(() => units.id),
   unitId: integer("unitId").references(() => units.id),
   status: varchar("status", { length: 50 }),
@@ -61,6 +88,7 @@ export const leases = pgTable("leases", {
   totalBalanceDue: decimal("totalBalanceDue", { precision: 10, scale: 2 }),
   balance_due: decimal("balance_due", { precision: 10, scale: 2 }),
   outstanding_balance: decimal("outstanding_balance", { precision: 10, scale: 2 }),
+  doorloop_id: text("doorloop_id"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -75,6 +103,7 @@ export const tenants = pgTable("tenants", {
   balance: decimal("balance", { precision: 10, scale: 2 }),
   current_balance: decimal("current_balance", { precision: 10, scale: 2 }),
   outstanding_balance: decimal("outstanding_balance", { precision: 10, scale: 2 }),
+  doorloop_tenant_id: text("doorloop_tenant_id"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -87,6 +116,7 @@ export const owners = pgTable("owners", {
   email: varchar("email", { length: 255 }),
   phone: varchar("phone", { length: 20 }),
   active: boolean("active").default(true),
+  doorloop_owner_id: text("doorloop_owner_id"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -187,3 +217,16 @@ export type OwnerTransferSnapshot = typeof ownerTransferSnapshots.$inferSelect;
 export type InsertOwnerTransferSnapshot = z.infer<typeof insertOwnerTransferSnapshotSchema>;
 export type AuditEvent = typeof auditEvents.$inferSelect;
 export type InsertAuditEvent = z.infer<typeof insertAuditEventSchema>;
+
+// Enhanced owner transfer type with status enum validation
+export interface EnhancedOwnerTransfer extends OwnerTransfer {
+  status: OwnerTransferStatus;
+}
+
+// Validation schema for owner transfer status updates
+export const ownerTransferStatusSchema = z.object({
+  transfer_id: z.number().positive(),
+  new_status: z.nativeEnum(OwnerTransferStatus),
+  notes: z.string().optional(),
+  actor_id: z.string().optional()
+});

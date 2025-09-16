@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import FilterBar from "../../components/FilterBar";
 import DataTable, { Column } from "../../components/DataTable";
+import { useAllTenants } from "../../lib/ecc-resolvers";
 
 type TenantRow = {
   id: string;
@@ -12,25 +13,34 @@ type TenantRow = {
   status: "Current" | "Former" | "Prospect";
 };
 
-const MOCK: TenantRow[] = [
-  { id: "T-1001", name: "Jose Morales", property: "Crescent Ridge", unit: "A-102", email: "jose@example.com", phone: "(512) 555-7854", status: "Current" },
-  { id: "T-1002", name: "Chau Nguyen", property: "Crescent Ridge", unit: "B-206", email: "chau@example.com", phone: "(512) 555-5512", status: "Prospect" },
-  { id: "T-1003", name: "Ramesh Patel", property: "Maple Grove", unit: "3-114", email: "rpatel@example.com", phone: "(303) 555-2173", status: "Former" },
-];
-
 export default function Tenants() {
   const [q, setQ] = useState("");
+  const { data, isLoading, isFetching, error } = useAllTenants();
 
   const rows = useMemo(() => {
+    if (!data) return [];
+    
+    // Map API data to table format
+    const mapped: TenantRow[] = data.map((tenant: any) => ({
+      id: String(tenant.id),
+      name: tenant.display_name || tenant.name || `Tenant ${tenant.id}`,
+      property: tenant.property_name || "—",
+      unit: tenant.unit_label || "—",
+      email: tenant.email || "—",
+      phone: tenant.phone || "—",
+      status: tenant.status || "Current"
+    }));
+
+    // Apply search filter
     const t = q.trim().toLowerCase();
-    if (!t) return MOCK;
-    return MOCK.filter(r =>
+    if (!t) return mapped;
+    return mapped.filter(r =>
       r.name.toLowerCase().includes(t) ||
       r.property.toLowerCase().includes(t) ||
       r.unit.toLowerCase().includes(t) ||
       r.status.toLowerCase().includes(t)
     );
-  }, [q]);
+  }, [data, q]);
 
   const columns: Column<TenantRow>[] = [
     { key: "name", header: "Tenant" },
@@ -43,8 +53,20 @@ export default function Tenants() {
 
   return (
     <section className="ecc-page">
-      <FilterBar title="Tenants" value={q} onChange={setQ} placeholder="Search name / property / status" />
-      <DataTable columns={columns} rows={rows} />
+      <FilterBar 
+        title="Tenants" 
+        value={q} 
+        onChange={setQ} 
+        placeholder="Search name / property / status" 
+      />
+      <DataTable 
+        columns={columns} 
+        rows={rows} 
+        loading={isLoading || (isFetching && rows.length === 0)}
+        error={error ? String(error) : undefined}
+        rowHref={(r) => `/card/tenant/${r.id}`}
+        getRowId={(r) => r.id}
+      />
     </section>
   );
 }

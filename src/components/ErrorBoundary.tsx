@@ -1,13 +1,17 @@
-import React from "react";
-type State={hasError:boolean; error?:any};
-export default class ErrorBoundary extends React.Component<React.PropsWithChildren,State>{
-  state:State={hasError:false};
-  static getDerivedStateFromError(error:any){ return {hasError:true,error}; }
-  componentDidCatch(error:any, info:any){ console.error("[ECC] crash", error, info); }
-  render(){ if(!this.state.hasError) return this.props.children;
-    return (<div className="panel" style={{margin:16,padding:16}}>
-      <h2>Something broke</h2>
-      <pre style={{whiteSpace:"pre-wrap"}}>{String(this.state.error?.message||this.state.error||"Unknown error")}</pre>
-    </div>);
+import { Component, ReactNode } from "react";
+
+export class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; msg?: string }> {
+  constructor(props:any){ super(props); this.state={ hasError:false, msg: undefined }; }
+  static getDerivedStateFromError(err: any){ return { hasError:true, msg:String(err?.message||err) }; }
+  componentDidCatch(err:any){ console.error("[CardError]", err); }
+  render(){
+    return this.state.hasError
+      ? <div data-testid="contract-error" className="p-3 border border-rose-700 bg-rose-900/30 rounded">
+          <div className="font-semibold">Contract violation</div>
+          <div className="text-sm opacity-80">{this.state.msg}</div>
+        </div>
+      : this.props.children;
   }
 }
+
+export default ErrorBoundary;

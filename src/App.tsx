@@ -1,6 +1,7 @@
-import React from "react";
-import { Route, Switch } from "wouter";
+import React, { useEffect } from "react";
+import { Route, Switch, useLocation } from "wouter";
 import Sidebar from "./components/Sidebar";
+import { ToastContainer } from "./components/ui/ToastContainer";
 
 /**
  * IMPORTANT:
@@ -18,9 +19,9 @@ import LeasesPage from "./pages/portfolio/leases";
 import TenantsPage from "./pages/portfolio/tenants";
 import OwnersPage from "./pages/portfolio/owners";
 
-// Card Pages
+// Working Asset Card Pages (NOT placeholder components)
 import PropertyCardPage from "./pages/card/property";
-import UnitCardPage from "./pages/card/unit";
+import UnitCardPage from "./pages/card/unit"; 
 import LeaseCardPage from "./pages/card/lease";
 import TenantCardPage from "./pages/card/tenant";
 import OwnerCardPage from "./pages/card/owner";
@@ -32,56 +33,83 @@ import ReportsTemplatesPage from "./pages/reports/Templates";
 
 // Admin Pages
 import AdminSyncPage from "./features/admin/pages/AdminSyncPage";
+import AdminGeocodeManagementPage from "./features/admin/pages/AdminGeocodeManagementPage";
+import AdminTransferManagementPage from "./features/admin/pages/AdminTransferManagementPage";
+
+// Systems Pages
+import IntegrationsHealthPage from "./features/systems/integrations/IntegrationsHealthPage";
 
 // Owner Transfer
-import OwnerTransferPage from "./features/owners/pages/OwnerTransferPage";
+import OwnerTransferPage from "./features/ownerTransfer/OwnerTransferPage";
+import OwnerTransferDetailPage from "./features/owners/pages/OwnerTransferDetailPage";
+
+// Property Detail
+import PropertyDetailPage from "./pages/PropertyDetailPage";
 
 // Dashboard Page
 import DashboardPage from "./features/dashboard/pages/DashboardPage";
 
+// DataHub Page
+import DataHub from "./pages/DataHub";
+
+
+function HomeRedirect() {
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    // pick a known-good landing route that exists in this app
+    setLocation("/portfolio/properties");
+  }, [setLocation]);
+  return null;
+}
+
+function NotFound() {
+  return (
+    <div className="p-8 text-center">
+      <h1 className="text-2xl font-semibold mb-2">Route not found</h1>
+      <p className="text-neutral-400 mb-6">
+        The page you requested doesn't exist. Try a known route:
+      </p>
+      <div className="flex gap-3 justify-center">
+        <a className="px-3 py-2 rounded-xl border border-neutral-700" href="/portfolio/properties">Properties</a>
+        <a className="px-3 py-2 rounded-xl border border-neutral-700" href="/portfolio/units">Units</a>
+        <a className="px-3 py-2 rounded-xl border border-neutral-700" href="/portfolio/leases">Leases</a>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
-  // Dev auditor for ?debug=1
-  React.useEffect(() => {
-    if (typeof location !== 'undefined' && 
-        new URLSearchParams(location.search).get('debug') === '1') {
-      import('./dev/auditPortfolio').then(m => m.runPortfolioAudit()).catch(() => {});
-    }
-  }, []);
 
   return (
-    <div className="ecc-shell">
-      <Sidebar />
+    <div id="ecc-app">
+      <div className="ecc-shell">
+        <Sidebar />
 
-      {/* Main content area */}
-      <main className="ecc-main" role="main" id="main">
+        {/* Main content area */}
+        <main className="ecc-main" role="main" id="main">
         <Switch>
-          {/* Home -> Dashboard */}
-          <Route path="/">
-            {() => {
-              // Redirect to dashboard using wouter's approach
-              if (typeof window !== 'undefined') {
-                window.location.pathname = '/dashboard';
-              }
-              return null;
-            }}
-          </Route>
+          {/* Home redirect */}
+          <Route path="/"><HomeRedirect /></Route>
           <Route path="/dashboard" component={DashboardPage} />
+          <Route path="/data" component={DataHub} />
+          
 
           {/* -------- Portfolio V3 (ACTIVE) -------- */}
           <Route path="/portfolio/properties" component={PropertiesPage} />
+          <Route path="/portfolio/properties/:id" component={PropertyDetailPage} />
           <Route path="/portfolio/units" component={UnitsPage} />
           <Route path="/portfolio/leases" component={LeasesPage} />
           <Route path="/portfolio/tenants" component={TenantsPage} />
           <Route path="/portfolio/owners" component={OwnersPage} />
           {/* -------------------------------------- */}
 
-          {/* -------- Card Pages -------- */}
+          {/* -------- Working Asset Card Pages -------- */}
           <Route path="/card/property/:id" component={PropertyCardPage} />
           <Route path="/card/unit/:id" component={UnitCardPage} />
           <Route path="/card/lease/:id" component={LeaseCardPage} />
           <Route path="/card/tenant/:id" component={TenantCardPage} />
           <Route path="/card/owner/:id" component={OwnerCardPage} />
-          {/* ---------------------------- */}
+          {/* ------------------------------------------ */}
 
           {/* -------- Reports Pages -------- */}
           <Route path="/reports/create" component={ReportsCreatePage} />
@@ -91,10 +119,16 @@ export default function App() {
 
           {/* -------- Admin Pages -------- */}
           <Route path="/admin/sync" component={AdminSyncPage} />
+          <Route path="/admin/geocode" component={AdminGeocodeManagementPage} />
+          <Route path="/admin/transfers" component={AdminTransferManagementPage} />
+
+          {/* -------- Systems Pages -------- */}
+          <Route path="/systems/integrations" component={IntegrationsHealthPage} />
           {/* ----------------------------- */}
           
           {/* -------- Owner Transfer -------- */}
-          <Route path="/owner-transfer" component={OwnerTransferPage} />
+          <Route path="/owners/transfer" component={OwnerTransferPage} />
+          <Route path="/owners/transfer/detail" component={OwnerTransferDetailPage} />
           {/* -------------------------------- */}
 
           {/* Keep any other existing routes you have here.
@@ -102,13 +136,12 @@ export default function App() {
 
           {/* 404 */}
           <Route>
-            <section className="ecc-page">
-              <h1 className="ecc-page-title">Not Found</h1>
-              <p>That page doesn’t exist.</p>
-            </section>
+            <NotFound />
           </Route>
         </Switch>
       </main>
+      <ToastContainer />
+      </div>
     </div>
   );
 }

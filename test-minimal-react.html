@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html><head><title>Test</title></head>
+<body>
+<div id="root">Loading...</div>
+<script type="module">
+import React from '/node_modules/.vite/deps/react.js?v=634caf5e';
+import ReactDOM from '/node_modules/.vite/deps/react-dom_client.js?v=2d018d5f';
+console.log('React:', React, 'ReactDOM:', ReactDOM);
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement('div', {}, 'React works!'));
+</script>
+</body></html>

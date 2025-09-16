@@ -12,7 +12,9 @@ export type IconName =
   | "Settings"
   | "Database"
   | "PieChart"
-  | "Link2";
+  | "Link2"
+  | "Cog"
+  | "Shuffle";
 
 export type NavChild = { title: string; path: string; icon?: IconName; badgeKey?: string };
 export type NavParent = { title: string; icon: IconName; path?: string; children?: NavChild[]; badgeKey?: string };
@@ -32,6 +34,7 @@ export const NAV_SECTIONS: NavParent[] = [
       { title: "Leases", path: "/portfolio/leases", icon: "FileText" },
       { title: "Tenants", path: "/portfolio/tenants", icon: "FileText" },
       { title: "Owners", path: "/portfolio/owners", icon: "FileText" },
+      { title: "Owner Transfer", path: "/owners/transfer", icon: "Shuffle" },
     ],
   },
   { title: "Accounting", icon: "FileText", children: [
@@ -112,6 +115,16 @@ export const NAV_SECTIONS: NavParent[] = [
       { title: "Dashboard", path: "/investor/dashboard" },
       { title: "Portfolio Analytics", path: "/investor/portfolio-analytics" },
       { title: "Financial Reports", path: "/investor/financial-reports" },
+    ],
+  },
+  { title: "Systems", icon: "Cog", children: [
+      {
+        title: "Integrations",
+        icon: "Settings",
+        children: [
+          { title: "Health", path: "/systems/integrations", icon: "Shield" }
+        ]
+      },
     ],
   },
   { title: "Integrations", icon: "Link2", children: [

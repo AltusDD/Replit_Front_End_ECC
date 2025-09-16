@@ -102,10 +102,7 @@ export interface FeedData {
 }
 
 // Helper functions for data processing
-function safeNum(value: any): number {
-  const num = Number(value);
-  return Number.isFinite(num) ? num : 0;
-}
+// Note: safeNum removed to prevent masking - use explicit null checks instead
 
 // Mock API fetch functions (replace with actual implementations)
 // These are placeholders and should be replaced with actual API calls
@@ -123,7 +120,7 @@ export function useDashboardData() {
   // Placeholder for rent ready calculation
   const calculateRentReady = (units: any[]): number => {
     return units.filter(u => {
-      const hasRent = safeNum(u.marketRent ?? u.market_rent ?? u.rent) > 0;
+      const hasRent = Number.isFinite(Number(u.marketRent || u.market_rent || u.rent)) && Number(u.marketRent || u.market_rent || u.rent) > 0;
       const condition = (u.condition ?? u.unit_condition ?? '').toString().toLowerCase();
       return hasRent && (!condition || condition === 'good' || condition === 'excellent' || condition === 'ready');
     }).length;
@@ -221,7 +218,7 @@ export function useDashboardData() {
         const vacantUnits = unitsArray.slice(0, vacantUnitCount); // Mock array for filtering
         
         const rentReadyUnits = vacantUnits.filter(u => {
-          const hasRent = safeNum(u.marketRent ?? u.market_rent ?? u.rent) > 0;
+          const hasRent = Number.isFinite(Number(u.marketRent || u.market_rent || u.rent)) && Number(u.marketRent || u.market_rent || u.rent) > 0;
           return hasRent; // Rent ready = vacant + has market rent set
         });
 
@@ -234,22 +231,22 @@ export function useDashboardData() {
             const paymentDate = new Date(payment.date ?? payment.created_at ?? payment.payment_date ?? '1900-01-01');
             return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
           })
-          .reduce((sum, payment) => sum + safeNum(payment.amountReceived ?? payment.amount ?? 0), 0);
+          .reduce((sum, payment) => sum + (Number.isFinite(Number(payment.amountReceived || payment.amount)) ? Number(payment.amountReceived || payment.amount) : 0), 0);
         
         const monthlyCharges = chargesArray
           .filter(charge => {
             const chargeDate = new Date(charge.date ?? charge.created_at ?? charge.charge_date ?? '1900-01-01');
             return chargeDate.getMonth() === currentMonth && chargeDate.getFullYear() === currentYear;
           })
-          .reduce((sum, charge) => sum + safeNum(charge.amount ?? 0), 0);
+          .reduce((sum, charge) => sum + (Number.isFinite(Number(charge.amount)) ? Number(charge.amount) : 0), 0);
         
         const collectionsRate = monthlyCharges > 0 ? (monthlyPayments / monthlyCharges) * 100 : 0;
 
         // Create map properties from live data ONLY - only include properties with real coordinates
         const propertiesForMap: MapProperty[] = propertiesArray
           .filter(property => {
-            const lat = safeNum(property.lat);
-            const lng = safeNum(property.lng);
+            const lat = Number.isFinite(Number(property.lat)) ? Number(property.lat) : 0;
+            const lng = Number.isFinite(Number(property.lng)) ? Number(property.lng) : 0;
             const hasCoordinates = lat !== 0 && lng !== 0 && lat !== null && lng !== null;
             
             // Log warning for properties missing coordinates
@@ -277,7 +274,7 @@ export function useDashboardData() {
                 // Check for delinquent tenants
                 const propertyTenants = []; // Tenants data not fetched in this snippet, assuming it's handled elsewhere or omitted for simplicity
                 const hasDelinquent = propertyTenants.some(t => {
-                  const balance = safeNum(t.balance ?? t.current_balance ?? t.outstanding_balance ?? 0);
+                  const balance = Number.isFinite(Number(t.balance || t.current_balance || t.outstanding_balance)) ? Number(t.balance || t.current_balance || t.outstanding_balance) : 0;
                   return balance > 0;
                 });
 
@@ -285,7 +282,7 @@ export function useDashboardData() {
               } else {
                 // Check if vacant units are rent-ready
                 const rentReadyUnits = propertyUnits.filter(u => {
-                  const hasRent = safeNum(u.marketRent ?? u.market_rent ?? u.rent) > 0;
+                  const hasRent = Number.isFinite(Number(u.marketRent || u.market_rent || u.rent)) && Number(u.marketRent || u.market_rent || u.rent) > 0;
                   const condition = (u.condition ?? u.unit_condition ?? '').toString().toLowerCase();
                   return hasRent && (!condition || condition === 'good' || condition === 'excellent' || condition === 'ready');
                 });
@@ -296,8 +293,8 @@ export function useDashboardData() {
 
             return {
               id: property.id,
-              lat: safeNum(property.lat),
-              lng: safeNum(property.lng),
+              lat: Number.isFinite(Number(property.lat)) ? Number(property.lat) : 0,
+              lng: Number.isFinite(Number(property.lng)) ? Number(property.lng) : 0,
               address: property.address || property.street_address || property.full_address || `Property ${property.id}`,
               city: property.city || '',
               status,
@@ -312,7 +309,7 @@ export function useDashboardData() {
         // Delinquency Alerts - Per Blueprint: leases.totalBalanceDue > 0
         leasesArray
           .filter(lease => {
-            const totalBalance = safeNum(lease.totalBalanceDue ?? lease.balance_due ?? lease.outstanding_balance ?? 0);
+            const totalBalance = Number.isFinite(Number(lease.totalBalanceDue || lease.balance_due || lease.outstanding_balance)) ? Number(lease.totalBalanceDue || lease.balance_due || lease.outstanding_balance) : 0;
             return totalBalance > 0;
           })
           .forEach(lease => {
@@ -321,7 +318,7 @@ export function useDashboardData() {
             const tenant = lease.tenants?.[0] ?? lease.tenant_name ?? 'Unknown Tenant';
             const address = property?.address ?? property?.street_address ?? property?.full_address ?? 'Unknown Property';
             const unitName = unit?.name ?? unit?.unit_number ?? unit?.unit_name ?? '';
-            const balanceDue = safeNum(lease.totalBalanceDue ?? lease.balance_due ?? lease.outstanding_balance ?? 0);
+            const balanceDue = Number.isFinite(Number(lease.totalBalanceDue || lease.balance_due || lease.outstanding_balance)) ? Number(lease.totalBalanceDue || lease.balance_due || lease.outstanding_balance) : 0;
             
             actionFeed.push({
               id: `delinquent-${lease.id}`,

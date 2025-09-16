@@ -1,51 +1,94 @@
-import type { Express } from "express";
-import { initiateTransfer, approveAccounting, authorizeTransfer, executeTransfer } from "../lib/ownerTransfer";
-import { sbAdmin } from "../lib/supabaseAdmin";
+import { Router, Request, Response } from 'express';
+import pool from '../lib/db.js';
 
-function isAdmin(req:any) {
-  const hdr = String(req.headers["authorization"] || "");
-  const token = hdr.startsWith("Bearer ") ? hdr.slice(7) : (req.query.token || "");
-  return token && process.env.ADMIN_SYNC_TOKEN && token === process.env.ADMIN_SYNC_TOKEN;
-}
+const router = Router();
 
-export function installOwnerTransferRoutes(app: Express) {
-  app.post("/api/owner-transfer/initiate", async (req, res) => {
-    try {
-      const result = await initiateTransfer(req.body);
-      res.json({ ok:true, ...result });
-    } catch (e:any) { res.status(400).json({ ok:false, error: e?.message || "failed" }); }
-  });
+// GET /api/owner-transfer/:id - returns { transfer, audit } or 404
+router.get('/owner-transfer/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  
+  try {
+    const transferQuery = `
+      SELECT * FROM owner_transfers 
+      WHERE id = $1
+    `;
+    
+    const auditQuery = `
+      SELECT * FROM owner_transfer_audit 
+      WHERE transfer_id = $1 
+      ORDER BY created_at DESC
+    `;
+    
+    const [transferResult, auditResult] = await Promise.all([
+      pool.query(transferQuery, [id]),
+      pool.query(auditQuery, [id])
+    ]);
+    
+    if (transferResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Transfer not found',
+        message: `No transfer found for id=${id}`
+      });
+    }
+    
+    const transfer = transferResult.rows[0];
+    const audit = auditResult.rows;
+    
+    res.json({ transfer, audit });
+    
+  } catch (error) {
+    console.error('Error fetching owner transfer:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to fetch owner transfer'
+    });
+  }
+});
 
-  app.post("/api/owner-transfer/approve-accounting", async (req, res) => {
-    try {
-      const id = Number(req.body?.transfer_id);
-      await approveAccounting(id);
-      res.json({ ok:true });
-    } catch (e:any) { res.status(400).json({ ok:false, error: e?.message }); }
-  });
+// POST /api/owner-transfer/:id/audit - inserts an audit row, returns it
+router.post('/owner-transfer/:id/audit', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { action, actor = 'system', detail = {} } = req.body;
+  
+  if (!action) {
+    return res.status(400).json({
+      error: 'Bad request',
+      message: 'action field is required'
+    });
+  }
+  
+  try {
+    // Verify transfer exists
+    const transferCheck = await pool.query(
+      'SELECT id FROM owner_transfers WHERE id = $1',
+      [id]
+    );
+    
+    if (transferCheck.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Transfer not found',
+        message: `No transfer found for id=${id}`
+      });
+    }
+    
+    const auditQuery = `
+      INSERT INTO owner_transfer_audit (transfer_id, action, actor, detail)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `;
+    
+    const result = await pool.query(auditQuery, [id, action, actor, detail]);
+    const auditRow = result.rows[0];
+    
+    res.status(201).json(auditRow);
+    
+  } catch (error) {
+    console.error('Error creating audit entry:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to create audit entry'
+    });
+  }
+});
 
-  app.post("/api/owner-transfer/authorize", async (req, res) => {
-    if (!isAdmin(req)) return res.status(401).json({ ok:false, error:"unauthorized" });
-    try {
-      const id = Number(req.body?.transfer_id);
-      await authorizeTransfer(id);
-      res.json({ ok:true });
-    } catch (e:any) { res.status(400).json({ ok:false, error: e?.message }); }
-  });
-
-  app.post("/api/owner-transfer/execute", async (req, res) => {
-    if (!isAdmin(req)) return res.status(401).json({ ok:false, error:"unauthorized" });
-    try {
-      const id = Number(req.body?.transfer_id);
-      const out = await executeTransfer(id);
-      res.json({ ok:true, ...out });
-    } catch (e:any) { res.status(400).json({ ok:false, error: e?.message }); }
-  });
-
-  app.get("/api/owner-transfer/:id", async (req, res) => {
-    const id = Number(req.params.id);
-    const { data, error } = await sbAdmin.from("owner_transfers").select("*").eq("id", id).single();
-    if (error) return res.status(404).json({ ok:false, error:error.message });
-    res.json({ ok:true, transfer: data });
-  });
-}
+export default router;

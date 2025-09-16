@@ -1,11 +1,11 @@
 import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
-import useCollection from "../../../features/data/useCollection";
+import { useAllUnits } from "../../../lib/ecc-resolvers";
 import { UNIT_COLUMNS, mapUnit } from "../columns";
 import "../../../styles/table.css";
 
 export default function UnitsPage() {
-  const units = useCollection<any>("/api/portfolio/units");
+  const units = useAllUnits();
 
   const { rows, loading, error } = useMemo(() => {
     // Backend provides structured data - apply mapping for consistency
@@ -23,7 +23,7 @@ export default function UnitsPage() {
     const total = rows.length;
     const occupied = rows.filter((r) => String(r.status).toLowerCase() === "occupied").length;
     const vacant = total - occupied;
-    const avgRent = rows.length > 0 ? rows.reduce((s, r) => s + (Number(r.marketRent) || 0), 0) / rows.length : 0;
+    const avgRent = rows.length > 0 ? rows.reduce((s, r) => s + (Number.isFinite(Number(r.marketRent)) ? Number(r.marketRent) : 0), 0) / rows.length : 0;
     return { total, occupied, vacant, avgRent };
   }, [rows]);
 

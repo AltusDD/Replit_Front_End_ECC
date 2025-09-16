@@ -1,71 +1,60 @@
-import React from 'react';
-import { useParams } from 'wouter';
-import { usePropertyCard } from './api';
-import Breadcrumbs from '../../../components/layout/Breadcrumbs';
-import Hero from './Hero';
-import Tabs from './Tabs';
-import RightRail from './RightRail';
+import { useRoute } from "wouter";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { CardShell } from "@/components/cardkit/CardShell";
+import RightRailPanel from "@/components/cardkit/RightRailPanel";
+import HeroBlock from "./HeroBlock";
+import Overview from "./Overview";
+import { usePropertyCard } from "@/lib/ecc-resolvers";
 
 export default function PropertyCardPage() {
-  const { id = '' } = useParams();
-  const { data, isLoading, error } = usePropertyCard(id);
+  const [, params] = useRoute("/card/property/:id");
+  const idNum = Number(params?.id);
+  const q = usePropertyCard(idNum);
+  if (!Number.isFinite(idNum)) return <div data-testid="prop-invalid">Invalid property id</div>;
 
-  const breadcrumbs = [
-    { label: 'Portfolio', href: '/portfolio/properties' },
-    { label: 'Properties', href: '/portfolio/properties' },
-    { label: data?.title || 'Property' }
+  const { data } = q;
+  const property = data?.property;
+  const owner = data?.owner;
+  const counts = { 
+    units: data?.kpis?.units !== undefined ? data.kpis.units : 0, 
+    activeLeases: data?.kpis?.activeLeases !== undefined ? data.kpis.activeLeases : 0 
+  };
+
+  const breadcrumbs = ["Portfolio", "Properties", property?.name ?? `Property #${idNum}`];
+  const actions = [
+    { label: "Export PDF", testid: "action-export-pdf" },
+    { label: "Edit", testid: "action-edit" },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="ecc-page">
-        <Breadcrumbs items={breadcrumbs} />
-        <div style={{
-          background: 'var(--surface)',
-          borderRadius: 'var(--radius-lg)',
-          padding: 'var(--gap-4)',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '48px', marginBottom: 'var(--gap-2)' }}>⏳</div>
-          <div style={{ color: 'var(--text)', fontSize: 'var(--fs-16)' }}>Loading property...</div>
-        </div>
-      </div>
-    );
-  }
+  const tabs = [
+    { id: "overview", title: "Overview", element: <Overview property={property} owner={owner} counts={counts} />, testid: "tab-overview" },
+    { id: "financials", title: "Financials", lazy: () => import("./Financials"), props: { data }, testid: "tab-financials" },
+    { id: "legal", title: "Legal", lazy: () => import("./Legal"), props: { data }, testid: "tab-legal" },
+    { id: "files", title: "Files", lazy: () => import("./Files"), props: { data }, testid: "tab-files" },
+  ];
 
-  if (error || !data) {
-    return (
-      <div className="ecc-page">
-        <Breadcrumbs items={breadcrumbs} />
-        <div style={{
-          background: 'var(--surface)',
-          borderRadius: 'var(--radius-lg)',
-          padding: 'var(--gap-4)',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '48px', marginBottom: 'var(--gap-2)' }}>❌</div>
-          <h1 style={{ color: 'var(--text)', marginBottom: '8px' }}>Property Not Found</h1>
-          <p style={{ color: 'var(--text-subtle)' }}>We couldn't find that property.</p>
-        </div>
-      </div>
-    );
-  }
+  const rightRail = (
+    <div className="space-y-4">
+      <RightRailPanel title="Key Dates" data-testid="rr-dates">
+        <div className="text-sm text-neutral-300">Created: {property?.created_at}</div>
+        <div className="text-sm text-neutral-300">Updated: {property?.updated_at}</div>
+      </RightRailPanel>
+      <RightRailPanel title="Contacts" data-testid="rr-contacts">
+        <div className="text-sm text-neutral-300">{owner?.display_name}</div>
+      </RightRailPanel>
+    </div>
+  );
 
   return (
-    <div className="ecc-page">
-      <Breadcrumbs items={breadcrumbs} />
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '1fr 320px', 
-        gap: 'var(--gap-3)',
-        maxWidth: '1400px'
-      }}>
-        <div>
-          <Hero data={data} />
-          <Tabs data={data} />
-        </div>
-        <RightRail data={data} />
-      </div>
-    </div>
+    <ErrorBoundary>
+      <CardShell
+        title={property?.name ?? `Property #${idNum}`}
+        hero={<HeroBlock data={data} isLoading={q.isLoading} />}
+        tabs={tabs}
+        breadcrumbs={breadcrumbs}
+        actions={actions}
+        rightRail={rightRail}
+      />
+    </ErrorBoundary>
   );
 }

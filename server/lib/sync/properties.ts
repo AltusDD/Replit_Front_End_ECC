@@ -1,6 +1,8 @@
 // server/lib/sync/properties.ts
 import { dlPaginate } from '../doorloop';
 import { sbAdmin } from '../supabaseAdmin';
+import { geocodeAddress } from '../geocode/geocode';
+import { recordAudit } from '../audit';
 
 type DlProperty = {
   id: number;
@@ -29,10 +31,38 @@ export async function syncProperties(updated_after?: string) {
     zip: p.zip ?? null,
   }));
 
-  const { error } = await sbAdmin
+  const { data: upserted, error } = await sbAdmin
     .from('properties')
-    .upsert(mapped, { onConflict: 'doorloop_property_id' });
+    .upsert(mapped, { onConflict: 'doorloop_property_id' })
+    .select('id,addr_line1,addr_line2,city,state,zip,lat,lng');
 
   if (error) throw error;
+
+  // After upsert, if missing coords but has address, attempt geocode (non-blocking best effort)
+  if (upserted) {
+    for (const p of upserted) {
+      try {
+        const needsCoords = !p.lat && !p.lng;
+        const hasAddr = !!(p.addr_line1 || p.city || p.zip);
+        if (needsCoords && hasAddr) {
+          const geo = await geocodeAddress({
+            line1: p.addr_line1, line2: p.addr_line2,
+            city: p.city, state: p.state, postal_code: p.zip
+          });
+          if (geo) {
+            await sbAdmin.from("properties").update({ lat: geo.lat, lng: geo.lng }).eq("id", p.id);
+            await recordAudit({ 
+              event_type: "GEOCODE_AUTO_APPLY", 
+              label: "GEOCODE_AUTO", 
+              ref_table: "properties", 
+              ref_id: p.id, 
+              payload: geo 
+            });
+          }
+        }
+      } catch {}
+    }
+  }
+  
   return { fetched: rows.length, upserted: mapped.length };
 }

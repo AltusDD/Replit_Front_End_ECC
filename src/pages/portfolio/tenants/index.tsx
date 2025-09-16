@@ -1,11 +1,11 @@
 import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
-import useCollection from "../../../features/data/useCollection";
+import { useAllTenants } from "../../../lib/ecc-resolvers";
 import { TENANT_COLUMNS, mapTenant } from "../columns";
 import "../../../styles/table.css";
 
 export default function TenantsPage() {
-  const tenants = useCollection<any>("/api/portfolio/tenants");
+  const tenants = useAllTenants();
 
   const { rows, loading, error } = useMemo(() => {
     // Backend already provides structured data with relationships
@@ -23,8 +23,8 @@ export default function TenantsPage() {
   const kpis = useMemo(() => {
     const total = rows.length;
     const contactable = rows.filter((r) => r.email !== "—" || r.phone !== "—").length;
-    const withBalance = rows.filter((r) => (r.balance || 0) > 0).length;
-    const totalBalance = rows.reduce((s, r) => s + (Number(r.balance) || 0), 0);
+    const withBalance = rows.filter((r) => Number.isFinite(Number(r.balance)) && Number(r.balance) > 0).length;
+    const totalBalance = rows.reduce((s, r) => s + (Number.isFinite(Number(r.balance)) ? Number(r.balance) : 0), 0);
     return { total, contactable, withBalance, totalBalance };
   }, [rows]);
 

@@ -2,19 +2,14 @@ import express from "express";
 import cors from "cors";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { PropertyOut, UnitOut, LeaseOut, TenantOut, OwnerOut } from "./mappings";
-import {
-  initiateTransfer,
-  generateAccountingReport,
-  markApprovedByAccounting,
-  authorizeExecution,
-  executeTransfer,
-  getTransferDetails,
-  type InitiateInput
-} from "./services/ownerTransferService";
-import { ownersRouter } from './routes/owners';
-import adminSyncRoute from './routes/adminSync';
+import { installOwnerRoutes } from './routes/owners';
+import { integrations } from './routes/admin/integrations';
+import { sync } from './routes/admin/sync';
+import ownerTransferRouter from './routes/ownerTransfer.js';
+import entitiesRouter from './routes/entities.js';
+import rpcRouter from './routes/rpc.js';
 import { startAutoSyncLoop } from './lib/sync/auto';
-import * as fs from "fs";
+import bff from "./bff.js";
 import * as path from "path";
 
 /** ───────────────────────────────────────────────────────────────────
@@ -26,12 +21,63 @@ import * as path from "path";
  *  ─────────────────────────────────────────────────────────────────── */
 
 const app = express();
-app.use(cors());
-app.use(express.json());
-app.use('/api/owners', ownersRouter);
-app.use('/api/admin/sync', adminSyncRoute);
 
-const PORT = Number(process.env.PORT_API || 8787);
+// Secure CORS configuration
+const corsOptions = {
+  origin: function (origin: any, callback: any) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Define allowed origins
+    const allowedOrigins = [
+      'https://258f1742-e4c0-4f32-8eb6-bd862a90d7be-00-24bv9skxcb4sk.us-east-2.replit.dev', // Replit dev
+      'https://empirecommandcenter.replit.app', // Published app
+      'http://localhost:5173', // Local dev
+      'http://localhost:3000', // Alternative local dev
+      'http://0.0.0.0:5000'    // Replit internal
+    ];
+    
+    // Add custom allowed origins from env
+    const customOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
+    allowedOrigins.push(...customOrigins);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-token']
+};
+
+app.use(cors(corsOptions));
+app.use(express.json());
+
+// Only mount BFF if properly configured
+const hasBffConfig = !!(process.env.API_BASE_URL && process.env.ADMIN_SYNC_TOKEN);
+if (hasBffConfig) {
+  app.use(bff);
+  console.log('[Security] BFF endpoints mounted with authentication');
+} else {
+  console.warn('[Security] BFF endpoints disabled - missing API_BASE_URL or ADMIN_SYNC_TOKEN');
+  // Mount a stub that explains why BFF is disabled
+  app.use('/bff', (req, res) => {
+    res.status(503).json({
+      error: 'BFF not available - missing required configuration (API_BASE_URL, ADMIN_SYNC_TOKEN)'
+    });
+  });
+}
+installOwnerRoutes(app);
+app.use('/api/admin/sync', sync); // Enhanced sync controls with SSE, DLQ, circuit breaker
+app.use('/api/admin/integrations', integrations);
+app.use('/api', ownerTransferRouter);
+app.use("/api/entities", entitiesRouter);
+app.use("/api/rpc", rpcRouter);
+
+const PORT = Number(process.env.PORT_API || 8787); // Ignore generic PORT to prevent conflict with Vite
 
 // Map of logical collections -> table names (override via Replit secrets)
 const TABLE: Record<string, string> = {
@@ -128,6 +174,46 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
+/** Health sync alias - UI compatibility */
+app.get("/api/health/sync", async (req, res) => {
+  // Redirect to main health endpoint for UI compatibility
+  req.url = "/api/health";
+  req.path = "/api/health";
+  return app._router.handle(req, res);
+});
+
+/** Config integrations endpoint - public endpoint for UI */
+app.get("/api/config/integrations", async (_req, res) => {
+  res.json({
+    ok: true,
+    integrations: {
+      doorloop: {
+        configured: !!(process.env.DOORLOOP_BASE_URL && process.env.DOORLOOP_API_KEY),
+        baseUrl: process.env.DOORLOOP_BASE_URL ? "***configured***" : null
+      },
+      supabase: {
+        configured: !!(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY)),
+        connected: !!supa.client
+      },
+      teams: {
+        configured: !!process.env.INTEGRATIONS_TEAMS_WEBHOOK
+      },
+      admin: {
+        available: !!process.env.ADMIN_SYNC_TOKEN
+      }
+    },
+    endpoints: [
+      '/api/portfolio/properties',
+      '/api/portfolio/units', 
+      '/api/portfolio/leases',
+      '/api/portfolio/tenants',
+      '/api/portfolio/owners',
+      '/api/admin/sync/status',
+      '/api/admin/integrations/doorloop/ping'
+    ]
+  });
+});
+
 /** Geocode properties endpoint for adding coordinates */
 app.post("/api/geocode/properties", async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
@@ -140,7 +226,7 @@ app.post("/api/geocode/properties", async (req, res) => {
     }
 
     // Import geocoding function
-    const { geocode } = await import("./lib/geocode.js");
+    const { geocodeAddress: geocode } = await import("./lib/geocode");
     
     const results = [];
     
@@ -665,13 +751,21 @@ app.get("/api/owner-transfer/:id", async (req, res) => {
 app.use("/api", (_req, res) => res.status(404).json({ ok: false, message: "Not found" }));
 app.get("/", (_req, res) => res.type("text/plain").send("ECC Dev API running"));
 
-// Start auto-sync (idempotent; logs if disabled)
-startAutoSyncLoop();
-
 app.listen(PORT, () => {
   console.log(`[Dev API] Listening on :${PORT}`);
   if (!supa.client) {
     console.warn(`[Dev API] Supabase not ready: ${supa.error}`);
+  }
+  
+  // Start auto-sync after server is listening (idempotent; logs if disabled)
+  try {
+    startAutoSyncLoop();
+    console.log(`[Dev API] Auto-sync loop initialized`);
+  } catch (e) {
+    console.warn(`[Dev API] Auto-sync disabled:`, e);
+  }
+  
+  if (!supa.client) {
     console.warn(`[Dev API] Raw SUPABASE_URL sample: ${(process.env.SUPABASE_URL || "").slice(0, 80)}…`);
   } else {
     console.log(`[Dev API] Supabase REST URL: ${supa.restUrl}`);

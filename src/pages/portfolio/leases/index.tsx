@@ -1,11 +1,11 @@
 import React, { useMemo } from "react";
 import DataTable from "../../../components/DataTable";
-import useCollection from "../../../features/data/useCollection";
+import { useAllLeases } from "../../../lib/ecc-resolvers";
 import { LEASE_COLUMNS, mapLease } from "../columns";
 import "../../../styles/table.css";
 
 export default function LeasesPage() {
-  const leases = useCollection<any>("/api/portfolio/leases");
+  const leases = useAllLeases();
 
   const { rows, loading, error } = useMemo(() => {
     // Backend provides structured data - apply mapping for consistency
@@ -26,7 +26,7 @@ export default function LeasesPage() {
     const monthlyRevenue = (leases.data ?? [])
       .filter(l => String(l?.status ?? "").toLowerCase() === "active")
       .reduce((sum, l) => {
-        const cents = Number(l?.rent_cents ?? l?.rent ?? 0);
+        const cents = Number.isFinite(Number(l?.rent_cents || l?.rent)) ? Number(l?.rent_cents || l?.rent) : 0;
         return sum + (Number.isFinite(cents) ? cents : 0);
       }, 0) / 100;
     return { total, active, ended, mrr: monthlyRevenue };

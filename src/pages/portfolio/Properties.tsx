@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import FilterBar from "../../components/FilterBar";
 import DataTable, { Column } from "../../components/DataTable";
+import { useAllProperties } from "../../lib/ecc-resolvers";
 
 type PropertyRow = {
   id: string;
@@ -11,25 +12,33 @@ type PropertyRow = {
   market: string; // region/metro
 };
 
-const MOCK: PropertyRow[] = [
-  { id: "P-1001", name: "Crescent Ridge Apts", address: "1221 W Cedar Ln, Austin, TX", units: 84, occupancy: "96%", market: "Austin" },
-  { id: "P-1002", name: "Maple Grove", address: "77 Maple St, Denver, CO", units: 120, occupancy: "92%", market: "Denver" },
-  { id: "P-1003", name: "Harbor View Homes", address: "15 Harbor Way, Tampa, FL", units: 64, occupancy: "98%", market: "Tampa" },
-];
-
 export default function Properties() {
   const [q, setQ] = useState("");
+  const { data, isLoading, isFetching, error } = useAllProperties();
 
   const rows = useMemo(() => {
+    if (!data) return [];
+    
+    // Map API data to table format
+    const mapped: PropertyRow[] = data.map((prop: any) => ({
+      id: String(prop.id),
+      name: prop.name || prop.label || `Property ${prop.id}`,
+      address: [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") || "—",
+      units: prop.units || 0,
+      occupancy: prop.occupancy_pct ? `${Math.round(prop.occupancy_pct)}%` : "—",
+      market: prop.city || prop.state || "—"
+    }));
+
+    // Apply search filter
     const t = q.trim().toLowerCase();
-    if (!t) return MOCK;
-    return MOCK.filter(r =>
+    if (!t) return mapped;
+    return mapped.filter(r =>
       r.name.toLowerCase().includes(t) ||
       r.address.toLowerCase().includes(t) ||
       r.id.toLowerCase().includes(t) ||
       r.market.toLowerCase().includes(t)
     );
-  }, [q]);
+  }, [data, q]);
 
   const columns: Column<PropertyRow>[] = [
     { key: "id", header: "ID", width: 110 },
@@ -42,8 +51,21 @@ export default function Properties() {
 
   return (
     <section className="ecc-page">
-      <FilterBar title="Properties" value={q} onChange={setQ} createLabel="Add Property" onCreate={() => alert("Create Property")} />
-      <DataTable columns={columns} rows={rows} />
+      <FilterBar 
+        title="Properties" 
+        value={q} 
+        onChange={setQ} 
+        createLabel="Add Property" 
+        onCreate={() => alert("Create Property")} 
+      />
+      <DataTable 
+        columns={columns} 
+        rows={rows} 
+        loading={isLoading || (isFetching && rows.length === 0)}
+        error={error ? String(error) : undefined}
+        rowHref={(r) => `/card/property/${r.id}`}
+        getRowId={(r) => r.id}
+      />
     </section>
   );
 }

@@ -33,17 +33,24 @@ export function useCollection<T = any>(url?: string | null): UseCollectionResult
       return;
     }
 
-    const ctrl = new AbortController();
-    abortRef.current?.abort();
-    abortRef.current = ctrl;
+    // Cleanup previous controller before creating new one
+    if (abortRef.current && !abortRef.current.signal.aborted) {
+      abortRef.current.abort();
+    }
 
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     setLoading(true);
 
     (async () => {
       try {
         const res = await fetch(url, { signal: ctrl.signal });
+        if (ctrl.signal.aborted) return; // Early exit if aborted during fetch
+        
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         const json = await res.json();
+
+        if (ctrl.signal.aborted) return; // Early exit if aborted during parsing
 
         // Normalize array payloads
         const arr: any[] = Array.isArray(json)
@@ -60,18 +67,31 @@ export function useCollection<T = any>(url?: string | null): UseCollectionResult
           console.log(url, "sample", json[0]);
         }
 
-        setData(arr as T[]);
-        setError(null);
+        if (!ctrl.signal.aborted) {
+          setData(arr as T[]);
+          setError(null);
+        }
       } catch (e: any) {
-        if (e?.name === "AbortError") return; // ignore aborted navigations
-        setError(e?.message || "Failed to load");
-        setData([]);
+        if (e?.name === "AbortError" || ctrl.signal.aborted) {
+          return; // Silently ignore aborted operations
+        }
+        
+        if (!ctrl.signal.aborted) {
+          setError(e?.message || "Failed to load");
+          setData([]);
+        }
       } finally {
-        if (!ctrl.signal.aborted) setLoading(false);
+        if (!ctrl.signal.aborted) {
+          setLoading(false);
+        }
       }
     })();
 
-    return () => ctrl.abort();
+    return () => {
+      if (ctrl && !ctrl.signal.aborted) {
+        ctrl.abort();
+      }
+    };
   }, [url, bumpRef.current]);
 
   return { data, loading, error, reload };

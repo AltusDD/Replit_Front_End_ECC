@@ -1,10 +1,15 @@
+import "@/styles/index.css";  // <— must be FIRST
+
+// import "./dev/tap";
+// Removed mountEnhancer AND dev/index - asset cards now use proper routing
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Router } from "wouter";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import EccErrorBoundary from "./components/EccErrorBoundary";
+import DevDiagBar from "./components/DevDiagBar";
 import App from "./App";
-import "./styles/theme.css";
-import "./styles/Dashboard.css";
-import "./styles/app.css";
 
 if (import.meta.env.DEV) {
   // React StrictMode + aborted fetches during HMR
@@ -14,18 +19,19 @@ if (import.meta.env.DEV) {
   window.addEventListener("error", (e: any) => {
     if (String(e?.message || "").includes("AbortError")) e.preventDefault();
   });
-
-  // If Replit injects eruda and it misbehaves, try to kill it silently
-  const erudaAny = (window as any).eruda;
-  if (erudaAny && typeof erudaAny.destroy === "function") {
-    try { erudaAny.destroy(); } catch {}
-  }
 }
 
+const Mode: React.ComponentType<any> = import.meta.env.DEV ? React.Fragment : React.StrictMode;
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <Router>
-      <App />
-    </Router>
-  </React.StrictMode>
+  <Mode>
+    <EccErrorBoundary>
+      {import.meta.env.DEV && <DevDiagBar />}
+      <QueryClientProvider client={queryClient}>
+        <Router>
+          <App />
+        </Router>
+      </QueryClientProvider>
+    </EccErrorBoundary>
+  </Mode>
 );

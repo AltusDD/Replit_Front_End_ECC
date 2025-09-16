@@ -1,0 +1,31 @@
+/* === canonical order: tokens -> theme -> ecc base -> enhancers -> app -> genesis === */
+@import "./tokens.css";
+@import "./theme.css";
+@import "./ecc.css";
+@import "./card-enhancer.css";
+@import "./no-overlays.css";
+@import "./app.css";
+@import "./genesis.css";
+
+/* Hard guards to survive HMR */
+:root{
+  --ecc-bg:#0b0b0d;
+  --ecc-surface:#121216;
+  --ecc-fg:#e9e9f0;
+  --ecc-muted:#9aa0a6;
+  --ecc-accent:#d4af37;
+  font-synthesis-weight:none;
+}
+html,body,#root{height:100%;background:var(--ecc-bg);color:var(--ecc-fg)}
+#ecc-app{min-height:100%;background:var(--ecc-bg);color:var(--ecc-fg)}
+
+.sidebar{background:var(--ecc-surface)}
+.card,.panel,.kpi{background:var(--ecc-surface);border-radius:12px}
+
+/* Layout paddings so top chrome doesn't collapse after HMR */
+.content-wrap{padding:16px 20px 60px}
+
+/* FieldGroup layout (safe defaults even if component CSS didn't load yet) */
+.field-group{display:grid;grid-template-columns:160px 1fr;gap:8px 24px;margin:12px 0}
+.field-group .label{color:var(--ecc-muted)}
+.field-group .value{color:var(--ecc-fg)}

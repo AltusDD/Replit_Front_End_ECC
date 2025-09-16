@@ -1,0 +1,5 @@
+{
+  "test_route": "/card/property/42?debug=1",
+  "test_enhancer": "router_free",
+  "timestamp": "2025-09-09T12:26:33+00:00"
+}

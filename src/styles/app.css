@@ -2,6 +2,61 @@
    ECC — App Shell + Sidebar + Flyout
    ========================================================= */
 
+/* Import Genesis Design System */
+@import "./genesis.css";
+
+/* Tailwind CSS utilities for newer components */
+@layer utilities {
+  .text-xs { font-size: 0.75rem; line-height: 1rem; }
+  .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+  .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+  .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+  .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+  .font-bold { font-weight: 700; }
+  .font-semibold { font-weight: 600; }
+  .font-extrabold { font-weight: 800; }
+  .opacity-70 { opacity: 0.7; }
+  .opacity-80 { opacity: 0.8; }
+  .opacity-90 { opacity: 0.9; }
+  .rounded { border-radius: 0.25rem; }
+  .rounded-xl { border-radius: 0.75rem; }
+  .rounded-2xl { border-radius: 1rem; }
+  .p-2 { padding: 0.5rem; }
+  .p-3 { padding: 0.75rem; }
+  .p-4 { padding: 1rem; }
+  .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+  .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  .mb-1 { margin-bottom: 0.25rem; }
+  .mt-2 { margin-top: 0.5rem; }
+  .gap-2 { gap: 0.5rem; }
+  .gap-3 { gap: 0.75rem; }
+  .space-y-2 > * + * { margin-top: 0.5rem; }
+  .space-y-4 > * + * { margin-top: 1rem; }
+  .grid { display: grid; }
+  .flex { display: flex; }
+  .items-baseline { align-items: baseline; }
+  .justify-between { justify-content: space-between; }
+  .flex-wrap { flex-wrap: wrap; }
+  .w-full { width: 100%; }
+  .border { border-width: 1px; border-color: rgb(229 231 235); }
+  .bg-black { background-color: rgb(0 0 0); }
+  .bg-gray-200 { background-color: rgb(229 231 235); }
+  .bg-yellow-400 { background-color: rgb(250 204 21); }
+  .bg-green-600 { background-color: rgb(22 163 74); }
+  .bg-neutral-900 { background-color: rgb(23 23 23); }
+  .text-white { color: rgb(255 255 255); }
+  .text-black { color: rgb(0 0 0); }
+  .text-red-600 { color: rgb(220 38 38); }
+  .border-neutral-200 { border-color: rgb(229 229 229); }
+}
+
+@media (min-width: 768px) {
+  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.dark .border-neutral-800 { border-color: rgb(38 38 38); }
+
 /* Base */
 *,
 *::before,
@@ -135,11 +190,11 @@ button { background: transparent; border: 0; padding: 0; cursor: pointer; color:
 .ecc-sidebar.is-collapsed .ecc-children,
 .ecc-sidebar.is-collapsed .ecc-badge:not(.small){ display:none; }
 
-/* Flyout */
+/* Flyout (No Fixed Position) */
 .ecc-flyout{
-  position:fixed; max-height:calc(100dvh - 16px); overflow:auto;
+  max-height:calc(100dvh - 16px); overflow:auto;
   width:288px; padding:8px; background:var(--surface); border:1px solid var(--border);
-  border-radius:12px; box-shadow:var(--shadow-2); z-index:var(--z-flyout); pointer-events:auto;
+  border-radius:12px; box-shadow:var(--shadow-2); pointer-events:auto;
 }
 .ecc-flyout::-webkit-scrollbar{ width:8px; }
 .ecc-flyout::-webkit-scrollbar-thumb{ background:var(--border); }
@@ -195,11 +250,10 @@ button { background: transparent; border: 0; padding: 0; cursor: pointer; color:
 
 /* ==== Keep main content beside the fixed sidebar ==== */
 
-/* Sidebar is fixed; main must offset by the rail width */
+/* Sidebar (No Fixed Position) */
 .ecc-sidebar {
-  position: fixed;
-  inset: 0 auto 0 0;            /* top:0; left:0; bottom:0; */
   width: var(--rail-expanded);  /* 320px */
+  float: left;
 }
 .ecc-sidebar.is-collapsed { width: var(--rail-collapsed); } /* 64px */
 
@@ -220,3 +274,6 @@ button { background: transparent; border: 0; padding: 0; cursor: pointer; color:
 @media (max-width: 1024px) {
   .ecc-main { margin-left: var(--rail-collapsed); }
 }
+
+/* CSS safety (ensure no element blocks pointer events on the row) */
+.ecc-row * { pointer-events: auto; }

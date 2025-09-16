@@ -1,15 +1,23 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
-import * as schema from "@shared/schema";
+import 'dotenv/config';
+import { createClient } from '@supabase/supabase-js';
 
-neonConfig.webSocketConstructor = ws;
-
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+function getEnv(name: string, fallback?: string) {
+  return process.env[name] || fallback || '';
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+const SUPABASE_URL = getEnv('SUPABASE_URL');
+const SERVICE_KEY = getEnv('SUPABASE_SERVICE_ROLE_KEY',
+  getEnv('SUPABASE_SERVICE_KEY', getEnv('SUPABASE_KEY', getEnv('SUPABASE_SECRET')))
+);
+
+if (!SUPABASE_URL || !SERVICE_KEY) {
+  console.error('[ECC] Missing Supabase server credentials.');
+}
+
+export function getServerClient() {
+  const supa = createClient(SUPABASE_URL, SERVICE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { 'x-ecc-api': 'rpc-v3' } },
+  });
+  return supa;
+}
