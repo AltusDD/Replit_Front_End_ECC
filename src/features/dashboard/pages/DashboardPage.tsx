@@ -1,7 +1,7 @@
 import React from "react";
-import { useDashboardKpis } from "./hooks/useDashboardKpis";
-import { KpiCard } from "./components/KpiCard";
-import { Sparkline } from "./components/Sparkline";
+import { useDashboardKpis } from "@/features/dashboard/hooks/useDashboardKpis";
+import { KpiCard } from "@/features/dashboard/components/KpiCard";
+import { Sparkline } from "@/features/dashboard/components/Sparkline";
 
 function toPct(n?: number) {
   return Number.isFinite(n!) ? n! * 100 : undefined;
