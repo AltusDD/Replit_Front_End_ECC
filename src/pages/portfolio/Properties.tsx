@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import FilterBar from "../../components/FilterBar";
 import DataTable, { Column } from "../../components/DataTable";
 import { useAllProperties } from "../../lib/ecc-resolvers";
+import { formatPercent, BLANK } from "../../lib/format";
 
 type PropertyRow = {
   id: string;
@@ -10,6 +11,7 @@ type PropertyRow = {
   units: number;
   occupancy: string; // "94%" etc
   market: string; // region/metro
+  occupancyRaw?: number;
 };
 
 export default function Properties() {
@@ -22,11 +24,12 @@ export default function Properties() {
     // Map API data to table format
     const mapped: PropertyRow[] = data.map((prop: any) => ({
       id: String(prop.id),
-      name: prop.name || prop.label || `Property ${prop.id}`,
-      address: [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") || "—",
-      units: prop.units || 0,
-      occupancy: prop.occupancy_pct ? `${Math.round(prop.occupancy_pct)}%` : "—",
-      market: prop.city || prop.state || "—"
+      name: prop.name ? prop.name : (prop.label ? prop.label : `Property ${prop.id}`),
+      address: [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") ? [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") : BLANK,
+      units: typeof prop.units === 'number' ? prop.units : 0,
+      occupancy: formatPercent(prop.occupancy_pct, { basis: 'percent', decimals: 0 }),
+      market: prop.city ? prop.city : (prop.state ? prop.state : BLANK),
+      occupancyRaw: prop.occupancy_pct
     }));
 
     // Apply search filter

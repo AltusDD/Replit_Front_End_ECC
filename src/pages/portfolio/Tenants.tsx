@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import FilterBar from "../../components/FilterBar";
 import DataTable, { Column } from "../../components/DataTable";
 import { useAllTenants } from "../../lib/ecc-resolvers";
+import { BLANK } from "../../lib/format";
 
 type TenantRow = {
   id: string;
@@ -10,7 +11,7 @@ type TenantRow = {
   unit: string;
   email: string;
   phone: string;
-  status: "Current" | "Former" | "Prospect";
+  status: string;
 };
 
 export default function Tenants() {
@@ -23,12 +24,12 @@ export default function Tenants() {
     // Map API data to table format
     const mapped: TenantRow[] = data.map((tenant: any) => ({
       id: String(tenant.id),
-      name: tenant.display_name || tenant.name || `Tenant ${tenant.id}`,
-      property: tenant.property_name || "—",
-      unit: tenant.unit_label || "—",
-      email: tenant.email || "—",
-      phone: tenant.phone || "—",
-      status: tenant.status || "Current"
+      name: tenant.display_name ? tenant.display_name : (tenant.name ? tenant.name : `Tenant ${tenant.id}`),
+      property: tenant.property_name ? tenant.property_name : BLANK,
+      unit: tenant.unit_label ? tenant.unit_label : BLANK,
+      email: tenant.email ? tenant.email : BLANK,
+      phone: tenant.phone ? tenant.phone : BLANK,
+      status: tenant.status ? tenant.status : "Current"
     }));
 
     // Apply search filter

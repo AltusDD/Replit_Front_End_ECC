@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import FilterBar from "../../components/FilterBar";
 import DataTable, { Column } from "../../components/DataTable";
 import { useAllUnits } from "../../lib/ecc-resolvers";
+import { formatCurrencyFromCents, BLANK } from "../../lib/format";
 
 type UnitRow = {
   id: string;
@@ -9,8 +10,9 @@ type UnitRow = {
   unit: string;
   beds: number;
   baths: number;
-  status: "Occupied" | "Vacant" | "Notice";
+  status: string;
   rent: string;
+  marketRentCentsRaw?: number;
 };
 
 export default function Units() {
@@ -23,12 +25,13 @@ export default function Units() {
     // Map API data to table format
     const mapped: UnitRow[] = data.map((unit: any) => ({
       id: String(unit.id),
-      property: unit.property_name || "—",
-      unit: unit.label || unit.unit_number || `Unit ${unit.id}`,
-      beds: unit.beds || 0,
-      baths: unit.baths || 0,
-      status: unit.status || "Vacant",
-      rent: unit.market_rent_cents ? `$${Math.round(unit.market_rent_cents / 100).toLocaleString()}` : "—"
+      property: unit.property_name ? unit.property_name : BLANK,
+      unit: unit.label ? unit.label : (unit.unit_number ? unit.unit_number : `Unit ${unit.id}`),
+      beds: typeof unit.beds === 'number' ? unit.beds : 0,
+      baths: typeof unit.baths === 'number' ? unit.baths : 0,
+      status: unit.status ? unit.status : "Vacant",
+      rent: formatCurrencyFromCents(unit.market_rent_cents),
+      marketRentCentsRaw: unit.market_rent_cents
     }));
 
     // Apply search filter

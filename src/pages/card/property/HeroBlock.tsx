@@ -1,50 +1,33 @@
 import { KPIRow } from "@/components/cardkit/KPIRow";
 import { KPI } from "@/components/cardkit/KPI";
+import { formatNumber, formatPercent, formatCurrencyFromCents } from "@/lib/format";
 
 export default function HeroBlock({ data }: { data: any }) {
-  const n = (v?: number | null) => (typeof v === "number" ? v : undefined);
-
   return (
-    <>
+    <div className="ecc-object">
       <KPIRow data-testid="property-kpis">
         <KPI
-          data-testid="kpi-units"
+          data-testid="hero.property.kpi.unitsTotal"
           label="Units"
-          value={
-            n(data.kpis?.units) !== undefined
-              ? n(data.kpis?.units)!.toLocaleString()
-              : "—"
-          }
+          value={formatNumber(data.kpis?.units)}
         />
         <KPI
-          data-testid="kpi-active"
+          data-testid="hero.property.kpi.activeLeases"
           label="Active Leases"
-          value={
-            n(data.kpis?.activeLeases) !== undefined
-              ? n(data.kpis?.activeLeases)!.toLocaleString()
-              : "—"
-          }
+          value={formatNumber(data.kpis?.activeLeases)}
         />
         <KPI
-          data-testid="kpi-occupancy"
+          data-testid="hero.property.kpi.occupancy"
           label="Occupancy"
-          value={
-            typeof data.kpis?.occupancyPct === "number"
-              ? `${Math.round(data.kpis.occupancyPct)}%`
-              : "—"
-          }
+          value={formatPercent(data.kpis?.occupancyPct, { basis: 'percent', decimals: 0 })}
         />
         <KPI
-          data-testid="kpi-avgrent"
+          data-testid="hero.property.kpi.avgRent"
           label="Avg Rent"
-          value={
-            typeof data.kpis?.avgRentCents === "number"
-              ? `$${Math.round(data.kpis.avgRentCents / 100).toLocaleString()}`
-              : "—"
-          }
+          value={formatCurrencyFromCents(data.kpis?.avgRentCents)}
         />
       </KPIRow>
       <span data-testid="address" style={{ display: "none" }} />
-    </>
+    </div>
   );
 }

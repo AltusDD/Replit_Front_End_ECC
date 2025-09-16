@@ -51,11 +51,26 @@ for (const file of cardFiles) {
 
 // Check required test IDs in hero blocks
 const heroFiles = [
-  { file: "src/pages/card/property/HeroBlock.tsx", testIds: ["kpi-units", "kpi-active", "kpi-occupancy", "kpi-avgrent", "address"] },
-  { file: "src/pages/card/unit/HeroBlock.tsx", testIds: ["kpi-lease-status", "kpi-rent", "kpi-bedbath", "kpi-sqft"] },
-  { file: "src/pages/card/lease/HeroBlock.tsx", testIds: ["kpi-lease-status", "kpi-rent", "kpi-term", "kpi-balance"] },
-  { file: "src/pages/card/tenant/HeroBlock.tsx", testIds: ["kpi-active-leases", "kpi-current-balance", "kpi-on-time-rate", "kpi-open-workorders"] },
-  { file: "src/pages/card/owner/HeroBlock.tsx", testIds: ["kpi-portfolio-units", "kpi-active-leases", "kpi-occupancy", "kpi-avg-rent"] }
+  { 
+    file: "src/pages/card/property/HeroBlock.tsx", 
+    testIds: ["hero.property.kpi.unitsTotal", "hero.property.kpi.activeLeases", "hero.property.kpi.occupancy", "hero.property.kpi.avgRent", "address"] 
+  },
+  { 
+    file: "src/pages/card/unit/HeroBlock.tsx", 
+    testIds: ["hero.unit.kpi.status", "hero.unit.kpi.rent", "hero.unit.kpi.bedBath", "hero.unit.kpi.sqft"] 
+  },
+  { 
+    file: "src/pages/card/lease/HeroBlock.tsx", 
+    testIds: ["hero.lease.kpi.status", "hero.lease.kpi.rent", "hero.lease.kpi.term", "hero.lease.kpi.balance"] 
+  },
+  { 
+    file: "src/pages/card/tenant/HeroBlock.tsx", 
+    testIds: ["hero.tenant.kpi.activeLeases", "hero.tenant.kpi.balance", "hero.tenant.kpi.onTimeRate", "hero.tenant.kpi.openWorkOrders"] 
+  },
+  { 
+    file: "src/pages/card/owner/HeroBlock.tsx", 
+    testIds: ["hero.owner.kpi.unitsTotal", "hero.owner.kpi.activeLeases", "hero.owner.kpi.occupancy", "hero.owner.kpi.avgRent"] 
+  }
 ];
 
 for (const { file, testIds } of heroFiles) {
@@ -143,11 +158,11 @@ for (const [file, pats] of Object.entries(idPatterns)) {
 
 // 5) Required test IDs on heroes
 const required = {
-  "src/pages/card/property/HeroBlock.tsx": ["kpi-units","kpi-active","kpi-occupancy","kpi-avgrent","address"],
-  "src/pages/card/unit/HeroBlock.tsx":     ["kpi-lease-status","kpi-rent","kpi-bedbath","kpi-sqft"],
-  "src/pages/card/lease/HeroBlock.tsx":    ["kpi-lease-status","kpi-rent","kpi-term","kpi-balance"],
-  "src/pages/card/tenant/HeroBlock.tsx":   ["kpi-active-leases","kpi-current-balance","kpi-on-time-rate","kpi-open-workorders"],
-  "src/pages/card/owner/HeroBlock.tsx":    ["kpi-portfolio-units","kpi-active-leases","kpi-occupancy","kpi-avg-rent"],
+  "src/pages/card/property/HeroBlock.tsx": ["hero.property.kpi.unitsTotal","hero.property.kpi.activeLeases","hero.property.kpi.occupancy","hero.property.kpi.avgRent","address"],
+  "src/pages/card/unit/HeroBlock.tsx":     ["hero.unit.kpi.status","hero.unit.kpi.rent","hero.unit.kpi.bedBath","hero.unit.kpi.sqft"],
+  "src/pages/card/lease/HeroBlock.tsx":    ["hero.lease.kpi.status","hero.lease.kpi.rent","hero.lease.kpi.term","hero.lease.kpi.balance"],
+  "src/pages/card/tenant/HeroBlock.tsx":   ["hero.tenant.kpi.activeLeases","hero.tenant.kpi.balance","hero.tenant.kpi.onTimeRate","hero.tenant.kpi.openWorkOrders"],
+  "src/pages/card/owner/HeroBlock.tsx":    ["hero.owner.kpi.unitsTotal","hero.owner.kpi.activeLeases","hero.owner.kpi.occupancy","hero.owner.kpi.avgRent"],
 };
 for (const [file, needles] of Object.entries(required)) {
   const p = path.join(ROOT, file);

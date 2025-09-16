@@ -1,9 +1,8 @@
 import { CardPanel } from "@/components/cardkit/CardPanel";
 import { FieldGroup } from "@/components/cardkit/FieldGroup";
+import { formatNumber } from "@/lib/format";
 
 export default function Overview({ data }: { data: any }) {
-  const n = (v?: number | null) => (typeof v === "number" ? v : undefined);
-
   return (
     <CardPanel>
       <h3>Overview</h3>
@@ -33,23 +32,15 @@ export default function Overview({ data }: { data: any }) {
       />
       <FieldGroup
         label="Units"
-        value={
-          n(data.kpis?.units) !== undefined ? n(data.kpis?.units)! : "—"
-        }
+        value={formatNumber(data.kpis?.units)}
       />
       <FieldGroup
         label="Active Leases"
-        value={
-          n(data.kpis?.activeLeases) !== undefined
-            ? n(data.kpis?.activeLeases)!
-            : "—"
-        }
+        value={formatNumber(data.kpis?.activeLeases)}
       />
       <FieldGroup
         label="Class"
-        value={
-          data.property?.property_class ? data.property.property_class : "—"
-        }
+        value={data.property?.property_class ? data.property.property_class : "—"}
       />
       <FieldGroup
         label="Status"

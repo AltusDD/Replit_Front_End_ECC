@@ -1,24 +1,36 @@
 import { KPI } from "@/components/cardkit/KPI";
 import { KPIRow } from "@/components/cardkit/KPIRow";
+import { formatCurrencyFromCents, BLANK } from "@/lib/format";
 
 export default function HeroBlock({ data }: { data: any }) {
-  const safe = <T,>(v: T | null | undefined, d: T) => (v ?? d);
-  const n = (v?: number | null) => (typeof v === "number" ? v : undefined);
-
   return (
-    <KPIRow data-testid="lease-kpis">
-      <KPI label="Status" value={data.lease?.status ?? "—"} />
-      <KPI label="Monthly Rent" value={
-        typeof data.lease?.rent_cents === "number"
-          ? `$${Math.round(data.lease.rent_cents / 100).toLocaleString()}`
-          : "—"
-      } />
-      <KPI label="Term" value={
-        data.lease?.start_date && data.lease?.end_date
-          ? `${data.lease.start_date} → ${data.lease.end_date}`
-          : "—"
-      } />
-      <KPI label="Balance" value="$0" />
-    </KPIRow>
+    <div className="ecc-object">
+      <KPIRow data-testid="lease-kpis">
+        <KPI
+          data-testid="hero.lease.kpi.status"
+          label="Status"
+          value={data.lease?.status ?? BLANK}
+        />
+        <KPI
+          data-testid="hero.lease.kpi.rent"
+          label="Monthly Rent"
+          value={formatCurrencyFromCents(data.lease?.rent_cents)}
+        />
+        <KPI
+          data-testid="hero.lease.kpi.term"
+          label="Term"
+          value={
+            data.lease?.start_date && data.lease?.end_date
+              ? `${data.lease.start_date} → ${data.lease.end_date}`
+              : BLANK
+          }
+        />
+        <KPI
+          data-testid="hero.lease.kpi.balance"
+          label="Balance"
+          value="$0.00"
+        />
+      </KPIRow>
+    </div>
   );
 }
