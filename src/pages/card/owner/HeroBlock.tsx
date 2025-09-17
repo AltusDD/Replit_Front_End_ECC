@@ -7,18 +7,34 @@ export default function HeroBlock({ data }: { data: any }) {
 
   return (
     <KPIRow data-testid="owner-kpis">
-      <KPI label="Portfolio Units" value={n(data.kpis?.units)?.toLocaleString() ?? "—"} />
-      <KPI label="Active Leases" value={n(data.kpis?.activeLeases)?.toLocaleString() ?? "—"} />
-      <KPI label="Occupancy" value={
-        typeof data.kpis?.occupancyPct === "number"
-          ? `${Math.round(data.kpis.occupancyPct)}%`
-          : "—"
-      } />
-      <KPI label="Avg Rent" value={
-        typeof data.kpis?.avgRentCents === "number"
-          ? `$${Math.round(data.kpis.avgRentCents / 100).toLocaleString()}`
-          : "—"
-      } />
+      <KPI 
+        data-testid="kpi-portfolio-units"
+        label="Portfolio Units" 
+        value={n(data.kpis?.units)?.toLocaleString() ?? "—"} 
+      />
+      <KPI 
+        data-testid="kpi-active-leases"
+        label="Active Leases" 
+        value={n(data.kpis?.activeLeases)?.toLocaleString() ?? "—"} 
+      />
+      <KPI 
+        data-testid="kpi-occupancy"
+        label="Occupancy" 
+        value={
+          typeof data.kpis?.occupancyPct === "number"
+            ? `${Math.round(data.kpis.occupancyPct)}%`
+            : "—"
+        } 
+      />
+      <KPI 
+        data-testid="kpi-avg-rent"
+        label="Avg Rent" 
+        value={
+          typeof data.kpis?.avgRentCents === "number"
+            ? `$${Math.round(data.kpis.avgRentCents / 100).toLocaleString()}`
+            : "—"
+        } 
+      />
     </KPIRow>
   );
 }
