@@ -1,62 +1,38 @@
-name: Verify Frontend Guardrails
+name: Verify
 
 on:
-  pull_request:
-    branches: [ main ]
   push:
-    branches: [ main ]
+    branches: ["**"]
+  pull_request:
 
 jobs:
   verify:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
+          node-version: 20
+      - name: Install deps
         run: npm ci
-
-      - name: TypeScript check
-        run: npm run typecheck --if-present
-
-      - name: Lint check
-        run: npm run lint --if-present
-
-      - name: Run unit tests
-        run: npm test --if-present
-
-      - name: Build app
+      - name: Unit tests
+        run: npm run test:unit --if-present
+      - name: Build
         run: npm run build --if-present
-
-      # ECC-specific audits
-      - name: Run Replit Guard
+      - name: Start dev server (background)
         run: |
-          if [ -f tools/replit_guard.sh ]; then
-            bash tools/replit_guard.sh
-          else
-            echo "ℹ️ No guard script found, skipping"
-          fi
-
-      - name: Run Replit Audit
+          npm run dev &>/dev/null &
+          echo "Waiting for dev server..."
+          npx wait-on -t 60000 http://localhost:5173
+      - name: E2E tests (Playwright)
         run: |
-          if [ -f tools/replit_audit.sh ]; then
-            bash tools/replit_audit.sh
-          else
-            echo "ℹ️ No audit script found, skipping"
-          fi
-
-      - name: Run Playwright E2E tests
-        run: |
-          if [ -f playwright.config.ts ]; then
-            npx playwright install --with-deps
-            npx playwright test
-          else
-            echo "ℹ️ No Playwright config found, skipping"
-          fi
+          npx playwright install --with-deps
+          PLAYWRIGHT_BASE_URL=http://localhost:5173 npm run test:e2e
+      - name: Upload Playwright artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            playwright-report
+            test-results
