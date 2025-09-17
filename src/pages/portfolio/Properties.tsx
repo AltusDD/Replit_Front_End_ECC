@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import FilterBar from "../../components/FilterBar";
 import DataTable, { Column } from "../../components/DataTable";
 import { useAllProperties } from "../../lib/ecc-resolvers";
-import { BLANK } from "../../lib/format";
+import { formatNumber, formatPercent, formatCurrencyFromCents, BLANK } from "@/lib/format";
 
 type PropertyRow = {
   id: string;
@@ -25,8 +25,8 @@ export default function Properties() {
       id: String(prop.id),
       name: prop.name ?? prop.label ?? `Property ${prop.id}`,
       address: [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") ?? BLANK,
-      units: (Number.isFinite(Number(prop.units)) ? Number(prop.units) : 0) + (Number.isFinite(Number(prop.unit_count)) ? Number(prop.unit_count) : 0),
-      occupancy: prop.occupancy_pct ? `${Math.round(prop.occupancy_pct)}%` : BLANK,
+      units: prop.units !== null && prop.units !== undefined ? prop.units : 0,
+      occupancy: prop.occupancy_pct ? formatPercent(prop.occupancy_pct, 0, "percent") : BLANK,
       market: prop.city ?? prop.state ?? BLANK
     }));
 

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import FilterBar from "../../components/FilterBar";
 import DataTable, { Column } from "../../components/DataTable";
 import { useAllUnits } from "../../lib/ecc-resolvers";
-import { BLANK } from "../../lib/format";
+import { formatNumber, formatPercent, formatCurrencyFromCents, BLANK } from "@/lib/format";
 
 type UnitRow = {
   id: string;
@@ -26,10 +26,10 @@ export default function Units() {
       id: String(unit.id),
       property: unit.property_name ?? BLANK,
       unit: unit.label ?? unit.unit_number ?? `Unit ${unit.id}`,
-      beds: (Number.isFinite(Number(unit.beds)) ? Number(unit.beds) : 0) + (Number.isFinite(Number(unit.bedrooms)) ? Number(unit.bedrooms) : 0),
-      baths: (Number.isFinite(Number(unit.baths)) ? Number(unit.baths) : 0) + (Number.isFinite(Number(unit.bathrooms)) ? Number(unit.bathrooms) : 0),
+      beds: unit.beds !== null && unit.beds !== undefined ? unit.beds : 0,
+      baths: unit.baths !== null && unit.baths !== undefined ? unit.baths : 0,
       status: unit.status ?? "Vacant",
-      rent: unit.market_rent_cents ? `$${Math.round(unit.market_rent_cents / 100).toLocaleString()}` : BLANK
+      rent: unit.market_rent_cents ? formatCurrencyFromCents(unit.market_rent_cents) : BLANK
     }));
 
     // Apply search filter

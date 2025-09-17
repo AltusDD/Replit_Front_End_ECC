@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import FilterBar from "../../components/FilterBar";
 import DataTable, { Column } from "../../components/DataTable";
 import { useAllTenants } from "../../lib/ecc-resolvers";
-import { BLANK } from "../../lib/format";
+import { formatNumber, formatPercent, formatCurrencyFromCents, BLANK } from "@/lib/format";
 
 type TenantRow = {
   id: string;
