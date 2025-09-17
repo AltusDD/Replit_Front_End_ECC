@@ -1,19 +1,40 @@
 import * as React from "react";
+import { BLANK } from "@/lib/format";
 
 type KPIProps = React.HTMLAttributes<HTMLDivElement> & {
   label: string;
   value?: React.ReactNode;
   "data-testid"?: string;
   testid?: string; // legacy
+  percent?: boolean;
+  currency?: boolean;
 };
 
-const KPIBase: React.FC<KPIProps> = ({ label, value, testid, ...rest }) => {
+const KPIBase: React.FC<KPIProps> = ({ label, value, testid, percent, currency, ...rest }) => {
   const dataTestid = rest["data-testid"] ?? testid;
   const { className, ...dom } = rest;
+  
+  // Format value based on props
+  let formattedValue = value;
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      formattedValue = BLANK;
+    } else if (percent) {
+      formattedValue = `${value.toLocaleString()}%`;
+    } else if (currency) {
+      formattedValue = value.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      });
+    }
+  } else if (value === null || value === undefined) {
+    formattedValue = BLANK;
+  }
+  
   return (
     <div className={`kpi ${className ?? ""}`} {...dom} data-testid={dataTestid}>
       <div className="kpi-label">{label}</div>
-      <div className="kpi-value">{value ?? "—"}</div>
+      <div className="kpi-value">{formattedValue ?? "—"}</div>
     </div>
   );
 };
