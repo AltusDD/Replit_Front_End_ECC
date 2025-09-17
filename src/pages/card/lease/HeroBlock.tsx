@@ -11,10 +11,26 @@ export default function HeroBlock({ data }: { data: any }) {
 
   return (
     <KPIRow data-testid="lease-kpis">
-      <KPI label="Status" value={<div data-testid="kpi-lease-status">{lease?.status ?? BLANK}</div>} />
-      <KPI label="Monthly Rent" value={<div data-testid="kpi-rent">{formatCurrencyFromCents(lease?.rentCents)}</div>} />
-      <KPI label="Term" value={<div data-testid="kpi-term">{lease?.term ?? BLANK}</div>} />
-      <KPI label="Balance" value={<div data-testid="kpi-balance">{formatCurrencyFromCents(lease?.balanceCents)}</div>} />
+      <KPI 
+        label="Status" 
+        value={lease?.status ?? BLANK}
+        data-testid="kpi-lease-status"
+      />
+      <KPI 
+        label="Monthly Rent" 
+        value={formatCurrencyFromCents(lease?.rentCents)}
+        data-testid="kpi-rent"
+      />
+      <KPI 
+        label="Term" 
+        value={lease?.term ?? BLANK}
+        data-testid="kpi-term"
+      />
+      <KPI 
+        label="Balance" 
+        value={formatCurrencyFromCents(lease?.balanceCents)}
+        data-testid="kpi-balance"
+      />
     </KPIRow>
   );
 }

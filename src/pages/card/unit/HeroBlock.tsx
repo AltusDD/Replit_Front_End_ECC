@@ -12,14 +12,26 @@ export default function HeroBlock({ data }: { data: any }) {
 
   return (
     <KPIRow data-testid="unit-kpis">
-      <KPI label="Status" value={<div data-testid="kpi-lease-status">{unit?.leaseStatus ?? BLANK}</div>} />
-      <KPI label="Rent" value={<div data-testid="kpi-rent">{formatCurrencyFromCents(unit?.rentCents)}</div>} />
-      <KPI label="Bed/Bath" value={
-        <div data-testid="kpi-bedbath">
-          {`${formatNumber(unit?.bedrooms !== null && unit?.bedrooms !== undefined ? unit.bedrooms : 0, 0)} bd / ${formatNumber(unit?.bathrooms !== null && unit?.bathrooms !== undefined ? unit.bathrooms : 0, 0)} ba`}
-        </div>
-      } />
-      <KPI label="Sq Ft" value={<div data-testid="kpi-sqft">{formatNumber(unit?.sqft, 0)}</div>} />
+      <KPI 
+        label="Status" 
+        value={unit?.leaseStatus ?? BLANK}
+        data-testid="kpi-lease-status"
+      />
+      <KPI 
+        label="Rent" 
+        value={formatCurrencyFromCents(unit?.rentCents)}
+        data-testid="kpi-rent"
+      />
+      <KPI 
+        label="Bed/Bath" 
+        value={`${formatNumber(unit?.bedrooms !== null && unit?.bedrooms !== undefined ? unit.bedrooms : 0, 0)} bd / ${formatNumber(unit?.bathrooms !== null && unit?.bathrooms !== undefined ? unit.bathrooms : 0, 0)} ba`}
+        data-testid="kpi-bedbath"
+      />
+      <KPI 
+        label="Sq Ft" 
+        value={formatNumber(unit?.sqft, 0)}
+        data-testid="kpi-sqft"
+      />
     </KPIRow>
   );
 }

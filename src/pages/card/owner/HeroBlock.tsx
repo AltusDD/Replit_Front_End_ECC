@@ -11,10 +11,26 @@ export default function HeroBlock({ data }: { data: any }) {
 
   return (
     <KPIRow data-testid="owner-kpis">
-      <KPI label="Portfolio Units" value={<div data-testid="kpi-portfolio-units">{formatNumber(owner?.portfolioUnits !== null && owner?.portfolioUnits !== undefined ? owner.portfolioUnits : 0, 0)}</div>} />
-      <KPI label="Active Leases" value={<div data-testid="kpi-active-leases">{formatNumber(owner?.activeLeases !== null && owner?.activeLeases !== undefined ? owner.activeLeases : 0, 0)}</div>} />
-      <KPI label="Occupancy" value={<div data-testid="kpi-occupancy">{formatPercent(owner?.occupancyRate, 1, "fraction")}</div>} />
-      <KPI label="Avg Rent" value={<div data-testid="kpi-avg-rent">{formatCurrencyFromCents(owner?.avgRentCents)}</div>} />
+      <KPI 
+        label="Portfolio Units" 
+        value={formatNumber(owner?.portfolioUnits !== null && owner?.portfolioUnits !== undefined ? owner.portfolioUnits : 0, 0)}
+        data-testid="kpi-portfolio-units"
+      />
+      <KPI 
+        label="Active Leases" 
+        value={formatNumber(owner?.activeLeases !== null && owner?.activeLeases !== undefined ? owner.activeLeases : 0, 0)}
+        data-testid="kpi-active-leases"
+      />
+      <KPI 
+        label="Occupancy" 
+        value={formatPercent(owner?.occupancyRate, 1, "fraction")}
+        data-testid="kpi-occupancy"
+      />
+      <KPI 
+        label="Avg Rent" 
+        value={formatCurrencyFromCents(owner?.avgRentCents)}
+        data-testid="kpi-avg-rent"
+      />
     </KPIRow>
   );
 }

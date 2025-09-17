@@ -12,10 +12,26 @@ export default function HeroBlock({ data }: { data: any }) {
 
   return (
     <KPIRow data-testid="tenant-kpis">
-      <KPI label="Active Leases" value={<div data-testid="kpi-active-leases">{formatNumber(tenant?.activeLeases !== null && tenant?.activeLeases !== undefined ? tenant.activeLeases : 0, 0)}</div>} />
-      <KPI label="Current Balance" value={<div data-testid="kpi-current-balance">{formatCurrencyFromCents(tenant?.currentBalanceCents)}</div>} />
-      <KPI label="On-Time Rate" value={<div data-testid="kpi-on-time-rate">{formatPercent(tenant?.onTimeRate, 1, "fraction")}</div>} />
-      <KPI label="Open Work Orders" value={<div data-testid="kpi-open-workorders">{formatNumber(tenant?.openWorkOrders !== null && tenant?.openWorkOrders !== undefined ? tenant.openWorkOrders : 0, 0)}</div>} />
+      <KPI 
+        label="Active Leases" 
+        value={formatNumber(tenant?.activeLeases !== null && tenant?.activeLeases !== undefined ? tenant.activeLeases : 0, 0)}
+        data-testid="kpi-active-leases"
+      />
+      <KPI 
+        label="Current Balance" 
+        value={formatCurrencyFromCents(tenant?.currentBalanceCents)}
+        data-testid="kpi-current-balance"
+      />
+      <KPI 
+        label="On-Time Rate" 
+        value={formatPercent(tenant?.onTimeRate, 1, "fraction")}
+        data-testid="kpi-on-time-rate"
+      />
+      <KPI 
+        label="Open Work Orders" 
+        value={formatNumber(tenant?.openWorkOrders !== null && tenant?.openWorkOrders !== undefined ? tenant.openWorkOrders : 0, 0)}
+        data-testid="kpi-open-workorders"
+      />
     </KPIRow>
   );
 }
