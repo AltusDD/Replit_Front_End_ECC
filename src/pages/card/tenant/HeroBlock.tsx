@@ -1,21 +1,18 @@
 import { KPI } from "@/components/cardkit/KPI";
 import { KPIRow } from "@/components/cardkit/KPIRow";
-import { formatNumber, formatPercent, formatCurrencyFromCents, BLANK } from "@/lib/format";
+import { TESTIDS } from "@/testing/testIds";
+import { BLANK } from "@/lib/format";
 
 export default function HeroBlock({ data }: { data: any }) {
   const safe = <T,>(v: T | null | undefined, d: T) => (v ?? d);
   const n = (v?: number | null) => (typeof v === "number" ? v : undefined);
-  const leases = data.leases ?? [];
-
-  // Extract tenant data with safe access
-  const tenant = data.tenant;
 
   return (
-    <KPIRow data-testid="tenant-kpis">
-      <KPI label="Active Leases" value={<div data-testid="kpi-active-leases">{formatNumber(tenant?.activeLeases !== null && tenant?.activeLeases !== undefined ? tenant.activeLeases : 0, 0)}</div>} />
-      <KPI label="Current Balance" value={<div data-testid="kpi-current-balance">{formatCurrencyFromCents(tenant?.currentBalanceCents)}</div>} />
-      <KPI label="On-Time Rate" value={<div data-testid="kpi-on-time-rate">{formatPercent(tenant?.onTimeRate, 1, "fraction")}</div>} />
-      <KPI label="Open Work Orders" value={<div data-testid="kpi-open-workorders">{formatNumber(tenant?.openWorkOrders !== null && tenant?.openWorkOrders !== undefined ? tenant.openWorkOrders : 0, 0)}</div>} />
+    <KPIRow>
+      <KPI data-testid={TESTIDS.TENANT_HERO_BALANCE} label="Balance" value={n(data?.balance)} currency />
+      <KPI data-testid={TESTIDS.TENANT_HERO_STATUS} label="Status" value={safe<string>(data?.status, "—")} />
+      <KPI label="Since" value={safe<string>(data?.since, BLANK)} />
+      <KPI label="Phone" value={safe<string>(data?.phone, BLANK)} />
     </KPIRow>
   );
 }
