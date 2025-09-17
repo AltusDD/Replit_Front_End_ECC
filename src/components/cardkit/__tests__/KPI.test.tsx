@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-import { KPI } from "@/components/cardkit/KPI";
-import { BLANK } from "@/lib/format";
+import { KPI } from "../KPI";
+import { BLANK } from "../../../lib/format";
 
 describe("<KPI />", () => {
   it("forwards data-testid to the root", () => {
