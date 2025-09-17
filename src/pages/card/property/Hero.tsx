@@ -2,6 +2,7 @@ import React from "react";
 import { joinAddress, humanize } from "../../../lib/format";
 import { money } from "../../../lib/ecc-api-client";
 import { createWorkOrder } from "../../../lib/bff";
+import { HERO_KPI_TEST_IDS } from "@/features/dashboard/constants/testIds";
 // Satisfy guardrail requirement
 import {} from "../../../lib/ecc-resolvers";
 
@@ -51,19 +52,19 @@ export default function Hero({ data }: HeroProps) {
           {title}
         </div>
         <div style={{ display: "flex", gap: "24px", fontSize: "14px" }}>
-          <div>
+          <div data-testid={HERO_KPI_TEST_IDS.PROPERTY_UNITS}>
             <div style={{ fontWeight: 500, color: "var(--gold, #d4af37)" }}>
               {kpiUnits}
             </div>
             <div style={{ opacity: 0.7 }}>Units</div>
           </div>
-          <div>
+          <div data-testid={HERO_KPI_TEST_IDS.PROPERTY_ACTIVE}>
             <div style={{ fontWeight: 500, color: "var(--gold, #d4af37)" }}>
               {kpiActiveLeases}
             </div>
             <div style={{ opacity: 0.7 }}>Active Leases</div>
           </div>
-          <div>
+          <div data-testid={HERO_KPI_TEST_IDS.PROPERTY_AVGRENT}>
             <div style={{ fontWeight: 500, color: "var(--gold, #d4af37)" }}>
               {kpiAvgRent}
             </div>
