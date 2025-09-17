@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import FilterBar from "../../components/FilterBar";
 import DataTable, { Column } from "../../components/DataTable";
 import { useAllProperties } from "../../lib/ecc-resolvers";
+import { BLANK } from "../../lib/format";
 
 type PropertyRow = {
   id: string;
@@ -22,11 +23,11 @@ export default function Properties() {
     // Map API data to table format
     const mapped: PropertyRow[] = data.map((prop: any) => ({
       id: String(prop.id),
-      name: prop.name || prop.label || `Property ${prop.id}`,
-      address: [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") || "—",
-      units: prop.units || 0,
-      occupancy: prop.occupancy_pct ? `${Math.round(prop.occupancy_pct)}%` : "—",
-      market: prop.city || prop.state || "—"
+      name: prop.name ?? prop.label ?? `Property ${prop.id}`,
+      address: [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") ?? BLANK,
+      units: (Number.isFinite(Number(prop.units)) ? Number(prop.units) : 0) + (Number.isFinite(Number(prop.unit_count)) ? Number(prop.unit_count) : 0),
+      occupancy: prop.occupancy_pct ? `${Math.round(prop.occupancy_pct)}%` : BLANK,
+      market: prop.city ?? prop.state ?? BLANK
     }));
 
     // Apply search filter

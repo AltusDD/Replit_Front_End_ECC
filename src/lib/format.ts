@@ -43,3 +43,40 @@ export function moneyCents(n?: number | null) {
     return `$${Math.round(d)}`; 
   }
 }
+
+// BLANK constant for safe fallbacks
+export const BLANK = "—";
+
+// Format number with optional decimals
+export function formatNumber(value?: number | null, decimals: number = 0): string {
+  if (value == null || !Number.isFinite(value)) return BLANK;
+  return value.toLocaleString(undefined, { maximumFractionDigits: decimals });
+}
+
+// Format currency from cents
+export function formatCurrencyFromCents(cents?: number | null): string {
+  if (cents == null || !Number.isFinite(cents)) return BLANK;
+  const dollars = cents / 100;
+  try {
+    return dollars.toLocaleString(undefined, { 
+      style: "currency", 
+      currency: "USD", 
+      maximumFractionDigits: 0 
+    });
+  } catch {
+    return `$${Math.round(dollars).toLocaleString()}`;
+  }
+}
+
+// Format percentage with configurable basis and decimals
+export function formatPercent(
+  value?: number | null, 
+  options?: { decimals?: number; basis?: 'fraction' | 'percent' }
+): string {
+  if (value == null || !Number.isFinite(value)) return BLANK;
+  
+  const { decimals = 1, basis = 'percent' } = options || {};
+  const percentage = basis === 'fraction' ? value * 100 : value;
+  
+  return `${percentage.toFixed(decimals)}%`;
+}

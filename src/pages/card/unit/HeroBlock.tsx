@@ -1,24 +1,21 @@
 import { KPI } from "@/components/cardkit/KPI";
 import { KPIRow } from "@/components/cardkit/KPIRow";
+import { formatNumber, formatCurrencyFromCents, BLANK } from "@/lib/format";
 
 export default function HeroBlock({ data }: { data: any }) {
-  const safe = <T,>(v: T | null | undefined, d: T) => (v ?? d);
-  const n = (v?: number | null) => (typeof v === "number" ? v : undefined);
+  const unit = data?.unit;
+  const lease = data?.lease;
 
   return (
     <KPIRow data-testid="unit-kpis">
-      <KPI label="Status" value={data.lease?.status ?? data.unit?.status ?? "—"} />
-      <KPI label="Rent" value={
-        typeof data.lease?.rent_cents === "number"
-          ? `$${Math.round(data.lease.rent_cents / 100).toLocaleString()}`
-          : "—"
-      } />
+      <KPI label="Status" value={<div data-testid="kpi-lease-status">{lease?.status ?? unit?.status ?? BLANK}</div>} />
+      <KPI label="Rent" value={<div data-testid="kpi-rent">{formatCurrencyFromCents(lease?.rent_cents)}</div>} />
       <KPI label="Bed/Bath" value={
-        (typeof data.unit?.beds === "number" && typeof data.unit?.baths === "number")
-          ? `${data.unit.beds}/${data.unit.baths}`
-          : "—"
+        <div data-testid="kpi-bedbath">
+          {`${formatNumber(unit?.beds || unit?.bedrooms)} bd / ${formatNumber(unit?.baths || unit?.bathrooms)} ba`}
+        </div>
       } />
-      <KPI label="Sq Ft" value={n(data.unit?.sqft)?.toLocaleString() ?? "—"} />
+      <KPI label="Sq Ft" value={<div data-testid="kpi-sqft">{formatNumber(unit?.sqft)}</div>} />
     </KPIRow>
   );
 }
