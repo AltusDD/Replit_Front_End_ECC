@@ -43,3 +43,50 @@ export function moneyCents(n?: number | null) {
     return `$${Math.round(d)}`; 
   }
 }
+
+// Required exports for guardrail compliance
+export const BLANK = "—";
+
+export function formatNumber(value?: number | string | null, decimals = 2): string {
+  if (value == null || value === "" || Number.isNaN(Number(value))) return BLANK;
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  if (!Number.isFinite(num)) return BLANK;
+  
+  try {
+    return num.toLocaleString(undefined, { 
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals 
+    });
+  } catch {
+    return String(num);
+  }
+}
+
+export function formatPercent(value?: number | null, decimals = 1, basis: "fraction" | "percent" = "fraction"): string {
+  if (value == null || Number.isNaN(value)) return BLANK;
+  if (!Number.isFinite(value)) return BLANK;
+  
+  const percent = basis === "fraction" ? value * 100 : value;
+  try {
+    return `${percent.toFixed(decimals)}%`;
+  } catch {
+    return BLANK;
+  }
+}
+
+export function formatCurrencyFromCents(cents?: number | null): string {
+  if (cents == null || Number.isNaN(cents)) return BLANK;
+  if (!Number.isFinite(cents)) return BLANK;
+  
+  const dollars = cents / 100;
+  try {
+    return dollars.toLocaleString(undefined, { 
+      style: "currency", 
+      currency: "USD", 
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2 
+    });
+  } catch {
+    return `$${dollars.toFixed(2)}`;
+  }
+}
