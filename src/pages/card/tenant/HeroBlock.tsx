@@ -8,12 +8,28 @@ export default function HeroBlock({ data }: { data: any }) {
 
   return (
     <KPIRow data-testid="tenant-kpis">
-      <KPI label="Active Leases" value={
-        leases.filter((l: any) => String(l?.status || "").toLowerCase() === "active").length
-      } />
-      <KPI label="Current Balance" value="$0" />
-      <KPI label="On-Time Rate" value="95%" />
-      <KPI label="Open Work Orders" value="0" />
+      <KPI 
+        data-testid="kpi-active-leases"
+        label="Active Leases" 
+        value={
+          leases.filter((l: any) => String(l?.status || "").toLowerCase() === "active").length
+        } 
+      />
+      <KPI 
+        data-testid="kpi-current-balance"
+        label="Current Balance" 
+        value="$0" 
+      />
+      <KPI 
+        data-testid="kpi-on-time-rate"
+        label="On-Time Rate" 
+        value="95%" 
+      />
+      <KPI 
+        data-testid="kpi-open-workorders"
+        label="Open Work Orders" 
+        value="0" 
+      />
     </KPIRow>
   );
 }

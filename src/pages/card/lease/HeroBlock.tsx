@@ -7,18 +7,34 @@ export default function HeroBlock({ data }: { data: any }) {
 
   return (
     <KPIRow data-testid="lease-kpis">
-      <KPI label="Status" value={data.lease?.status ?? "—"} />
-      <KPI label="Monthly Rent" value={
-        typeof data.lease?.rent_cents === "number"
-          ? `$${Math.round(data.lease.rent_cents / 100).toLocaleString()}`
-          : "—"
-      } />
-      <KPI label="Term" value={
-        data.lease?.start_date && data.lease?.end_date
-          ? `${data.lease.start_date} → ${data.lease.end_date}`
-          : "—"
-      } />
-      <KPI label="Balance" value="$0" />
+      <KPI 
+        data-testid="kpi-lease-status"
+        label="Status" 
+        value={data.lease?.status ?? "—"} 
+      />
+      <KPI 
+        data-testid="kpi-rent"
+        label="Monthly Rent" 
+        value={
+          typeof data.lease?.rent_cents === "number"
+            ? `$${Math.round(data.lease.rent_cents / 100).toLocaleString()}`
+            : "—"
+        } 
+      />
+      <KPI 
+        data-testid="kpi-term"
+        label="Term" 
+        value={
+          data.lease?.start_date && data.lease?.end_date
+            ? `${data.lease.start_date} → ${data.lease.end_date}`
+            : "—"
+        } 
+      />
+      <KPI 
+        data-testid="kpi-balance"
+        label="Balance" 
+        value="$0" 
+      />
     </KPIRow>
   );
 }
