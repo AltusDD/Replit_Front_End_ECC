@@ -1,13 +1,19 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from '@playwright/test';
 
-test("Dashboard KPIs render with values", async ({ page }) => {
-  await page.goto("/dashboard");
-  
-  // Since /api/occupancy-dashboard doesn't exist in test environment,
-  // we expect to see either loading state or error state, but page should load
-  await expect(page.locator('main')).toBeVisible();
-  
-  // Dashboard should show either loading or error message, not crash
-  const content = await page.locator('main').textContent();
-  expect(content).toMatch(/(Loading dashboard|Failed to load dashboard)/);
+// Basic smoke test for the main dashboard KPIs
+// Assumes the dev server serves the dashboard at "/" and that KPI cards expose
+// stable data-testid attributes as added in this branch.
+
+test.describe('Dashboard KPIs', () => {
+  test('renders the four top KPIs with test IDs', async ({ page }) => {
+    await page.goto('/');
+
+    const kpis = ['kpi.properties', 'kpi.units', 'kpi.occupancy', 'kpi.revenue'];
+    for (const id of kpis) {
+      await expect(page.getByTestId(id), `Expected ${id} to be visible`).toBeVisible();
+    }
+
+    // Occupancy should be rendered as a percentage string
+    await expect(page.getByTestId('kpi.occupancy')).toContainText('%');
+  });
 });
