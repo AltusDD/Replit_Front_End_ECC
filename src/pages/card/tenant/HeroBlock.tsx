@@ -1,6 +1,5 @@
 import { KPI } from "@/components/cardkit/KPI";
 import { KPIRow } from "@/components/cardkit/KPIRow";
-import { TESTIDS } from "@/testing/testIds";
 import { BLANK } from "@/lib/format";
 
 export default function HeroBlock({ data }: { data: any }) {
@@ -9,10 +8,15 @@ export default function HeroBlock({ data }: { data: any }) {
 
   return (
     <KPIRow>
-      <KPI data-testid={TESTIDS.TENANT_HERO_BALANCE} label="Balance" value={n(data?.balance)} currency />
-      <KPI data-testid={TESTIDS.TENANT_HERO_STATUS} label="Status" value={safe<string>(data?.status, "—")} />
-      <KPI label="Since" value={safe<string>(data?.since, BLANK)} />
-      <KPI label="Phone" value={safe<string>(data?.phone, BLANK)} />
+      <KPI data-testid="kpi-active-leases" label="Active Leases" value={n(data?.activeLeases)} />
+      <KPI data-testid="kpi-current-balance" label="Balance" value={n(data?.balance)} currency />
+      <KPI data-testid="kpi-on-time-rate" label="On-Time Rate" value={safe<string>(data?.onTimeRate, BLANK)} />
+      <KPI data-testid="kpi-open-workorders" label="Open WOs" value={n(data?.openWorkorders)} />
+      <KPI
+        data-testid="tenant-hero-payment-health"
+        label="Payment Health"
+        value={safe<string>(data?.paymentHealth || data?.payment_health || data?.paymentScore, "—")}
+      />
     </KPIRow>
   );
 }
