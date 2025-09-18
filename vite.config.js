@@ -9,6 +9,13 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: ["./src/test-setup.ts"],
+    exclude: ["tests/**", "node_modules/**"],
+    include: ["src/**/*.{test,spec}.{js,ts,tsx}"],
+  },
   server: {
     host: true,
     port: 5173,
