@@ -1,6 +1,5 @@
 import { KPI } from "@/components/cardkit/KPI";
 import { KPIRow } from "@/components/cardkit/KPI";
-import { HERO_KPI_TEST_IDS } from "@/features/dashboard/constants/testIds";
 import { BLANK } from "@/lib/format";
 
 export default function HeroBlock({ data }: { data: any }) {
@@ -12,10 +11,10 @@ export default function HeroBlock({ data }: { data: any }) {
 
   return (
     <KPIRow>
-      <KPI data-testid={HERO_KPI_TEST_IDS.UNIT_LEASE_STATUS} label="Status" value={safe<string>(unit?.lease_status, "—")} />
-      <KPI data-testid={HERO_KPI_TEST_IDS.UNIT_RENT} label="Market Rent" value={unit?.market_rent_cents ? `$${(unit.market_rent_cents / 100).toLocaleString()}` : "—"} />
-      <KPI data-testid={HERO_KPI_TEST_IDS.UNIT_BEDBATH} label="Beds/Baths" value={unit?.beds && unit?.baths ? `${unit.beds} / ${unit.baths}` : BLANK} />
-      <KPI data-testid={HERO_KPI_TEST_IDS.UNIT_SQFT} label="Sq Ft" value={n(unit?.sq_ft)} />
+      <KPI data-testid="kpi-lease-status" label="Status" value={safe<string>(unit?.lease_status, "—")} />
+      <KPI data-testid="kpi-rent" label="Market Rent" value={unit?.market_rent_cents ? `$${(unit.market_rent_cents / 100).toLocaleString()}` : "—"} />
+      <KPI data-testid="kpi-bedbath" label="Beds/Baths" value={unit?.beds && unit?.baths ? `${unit.beds} / ${unit.baths}` : BLANK} />
+      <KPI data-testid="kpi-sqft" label="Sq Ft" value={n(unit?.sq_ft)} />
     </KPIRow>
   );
 }
