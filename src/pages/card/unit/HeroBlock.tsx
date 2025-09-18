@@ -10,18 +10,18 @@ export default function HeroBlock({ data }: { data: any }) {
   return (
     <KPIRow>
       <KPI
-        data-testid={TESTIDS.UNIT_HERO_MARKET_RENT}
+        data-testid="kpi-rent"
         label="Market Rent"
         value={n(data?.marketRent)}
         currency
       />
       <KPI
-        data-testid={TESTIDS.UNIT_HERO_BEDS_BATHS}
+        data-testid="kpi-bedbath"
         label="Beds/Baths"
         value={safe<string>(data?.bedsBaths, BLANK)}
       />
-      <KPI label="Sq Ft" value={n(data?.sqft)} />
-      <KPI label="Status" value={safe<string>(data?.status, "—")} />
+      <KPI data-testid="kpi-sqft" label="Sq Ft" value={n(data?.sqft)} />
+      <KPI data-testid="kpi-lease-status" label="Status" value={safe<string>(data?.status, "—")} />
     </KPIRow>
   );
 }
