@@ -53,9 +53,9 @@ for (const file of cardFiles) {
 const heroFiles = [
   { file: "src/pages/card/property/HeroBlock.tsx", testIds: ["kpi-units", "kpi-active", "kpi-occupancy", "kpi-avgrent", "address"] },
   { file: "src/pages/card/unit/HeroBlock.tsx", testIds: ["kpi-lease-status", "kpi-rent", "kpi-bedbath", "kpi-sqft"] },
-  { file: "src/pages/card/lease/HeroBlock.tsx", testIds: ["kpi-lease-status", "kpi-rent", "kpi-term", "kpi-balance"] },
-  { file: "src/pages/card/tenant/HeroBlock.tsx", testIds: ["kpi-active-leases", "kpi-current-balance", "kpi-on-time-rate", "kpi-open-workorders"] },
-  { file: "src/pages/card/owner/HeroBlock.tsx", testIds: ["kpi-portfolio-units", "kpi-active-leases", "kpi-occupancy", "kpi-avg-rent"] }
+  { file: "src/pages/card/lease/HeroBlock.tsx", testIds: ["kpi-lease-status", "kpi-rent", "kpi-term", "kpi-balance", "kpi-next-due"] },
+  { file: "src/pages/card/tenant/HeroBlock.tsx", testIds: ["kpi-active-leases", "kpi-current-balance", "kpi-on-time-rate", "kpi-open-workorders", "kpi-payment-health"] },
+  { file: "src/pages/card/owner/HeroBlock.tsx", testIds: ["kpi-portfolio-units", "kpi-active-leases", "kpi-occupancy", "kpi-avg-rent", "kpi-vacancy-cost"] }
 ];
 
 for (const { file, testIds } of heroFiles) {
