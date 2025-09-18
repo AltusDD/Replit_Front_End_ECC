@@ -1,0 +1,42 @@
+name: Close superseded after #29
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  close:
+    if: >
+      github.event.pull_request.number == 29 &&
+      github.event.pull_request.merged == true &&
+      github.repository == 'AltusDD/Replit_Front_End_ECC'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close superseded PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: AltusDD
+          REPO: Replit_Front_End_ECC
+          SUPERSEDED: "26 27 28 22"
+          DELETE_BRANCHES: "false"   # set to "true" to delete same-repo branches
+        run: |
+          set -euo pipefail
+          comment="Closing as **superseded by #29** (canonical guardrails/KPI/CodeQL)."
+          for n in $SUPERSEDED; do
+            gh pr comment "$n" --repo "$OWNER/$REPO" -b "$comment"
+            gh pr close   "$n" --repo "$OWNER/$REPO" -d
+            if [ "${DELETE_BRANCHES}" = "true" ]; then
+              ref=$(gh pr view "$n" --repo "$OWNER/$REPO" --json headRefName,headRepositoryOwner,headRepository --jq '.headRefName')
+              same=$(gh pr view "$n" --repo "$OWNER/$REPO" --json headRepository --jq '.headRepository.name=="'"$REPO"'"')
+              if [ "$same" = "true" ] && [ -n "$ref" ]; then
+                echo "Deleting branch $ref ..."
+                gh api -X DELETE "repos/$OWNER/$REPO/git/refs/heads/$ref" || echo "Branch delete failed (non-fatal)"
+              else
+                echo "Skip delete (fork or unknown)."
+              fi
+            fi
+          done
