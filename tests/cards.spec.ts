@@ -36,6 +36,45 @@ test.describe("ECC Asset Cards (UI smoke)", () => {
     await expect(page.getByTestId("rr-dates")).toBeVisible();
   });
 
+  // New test for lease card with next-due KPI
+  test("lease card renders next-due KPI", async ({ page, request }) => {
+    const { L } = await pickIds(request);
+    test.skip(L == null, "No lease IDs in this environment");
+
+    await page.goto(`${WEB}/card/lease/${L}`);
+    await expect(page.getByTestId("kpi-lease-status")).toBeVisible();
+    await expect(page.getByTestId("kpi-rent")).toBeVisible();
+    await expect(page.getByTestId("kpi-term")).toBeVisible();
+    await expect(page.getByTestId("kpi-balance")).toBeVisible();
+    await expect(page.getByTestId("kpi-next-due")).toBeVisible();
+  });
+
+  // New test for tenant card with payment-health KPI
+  test("tenant card renders payment-health KPI", async ({ page, request }) => {
+    const { T } = await pickIds(request);
+    test.skip(T == null, "No tenant IDs in this environment");
+
+    await page.goto(`${WEB}/card/tenant/${T}`);
+    await expect(page.getByTestId("kpi-active-leases")).toBeVisible();
+    await expect(page.getByTestId("kpi-current-balance")).toBeVisible();
+    await expect(page.getByTestId("kpi-on-time-rate")).toBeVisible();
+    await expect(page.getByTestId("kpi-open-workorders")).toBeVisible();
+    await expect(page.getByTestId("kpi-payment-health")).toBeVisible();
+  });
+
+  // New test for owner card with vacancy-cost KPI
+  test("owner card renders vacancy-cost KPI", async ({ page, request }) => {
+    const { O } = await pickIds(request);
+    test.skip(O == null, "No owner IDs in this environment");
+
+    await page.goto(`${WEB}/card/owner/${O}`);
+    await expect(page.getByTestId("kpi-portfolio-units")).toBeVisible();
+    await expect(page.getByTestId("kpi-active-leases")).toBeVisible();
+    await expect(page.getByTestId("kpi-occupancy")).toBeVisible();
+    await expect(page.getByTestId("kpi-avg-rent")).toBeVisible();
+    await expect(page.getByTestId("kpi-vacancy-cost")).toBeVisible();
+  });
+
   for (const type of ["unit","lease","owner","tenant"] as const) {
     test(`${type} card basic render`, async ({ page, request }) => {
       const ids = await pickIds(request);
