@@ -1,22 +1,22 @@
 import { KPI } from "@/components/cardkit/KPI";
 import { KPIRow } from "@/components/cardkit/KPIRow";
-import { TESTIDS } from "@/testing/testIds";
 import { BLANK } from "@/lib/format";
 
 export default function HeroBlock({ data }: { data: any }) {
   const safe = <T,>(v: T | null | undefined, d: T) => (v ?? d);
-  const n = (v?: number | null) => (typeof v === "number" ? v : undefined);
+  const n = (v?: number | null) =>
+    typeof v === "number" && Number.isFinite(v) ? v : undefined;
+
+  // Accept either data.lease or data itself
+  const lease = data?.lease ?? data;
 
   return (
     <KPIRow>
-      <KPI data-testid={TESTIDS.LEASE_HERO_RENT} label="Rent" value={n(data?.rent)} currency />
-      <KPI data-testid={TESTIDS.LEASE_HERO_BALANCE} label="Balance" value={n(data?.balance)} currency />
-      <KPI data-testid={TESTIDS.LEASE_HERO_STATUS} label="Status" value={safe<string>(data?.status, "—")} />
-      <KPI
-        data-testid={TESTIDS.LEASE_HERO_EXPIRATION}
-        label="Expiration"
-        value={safe<string>(data?.expiration, BLANK)}
-      />
+      {/* REQUIRED literal test-ids for guardrail */}
+      <KPI data-testid="kpi-lease-status" label="Lease Status" value={safe(lease?.status, BLANK)} />
+      <KPI data-testid="kpi-rent" label="Monthly Rent" value={n(lease?.rent_cents ? lease.rent_cents / 100 : lease?.rent as number)} currency />
+      <KPI data-testid="kpi-term" label="Term" value={safe(lease?.term ?? lease?.expiration, BLANK)} />
+      <KPI data-testid="kpi-balance" label="Balance" value={n(lease?.balance_cents ? lease.balance_cents / 100 : lease?.balance as number)} currency />
     </KPIRow>
   );
 }
