@@ -60,4 +60,38 @@ test.describe("ECC Asset Cards (UI smoke)", () => {
       expect(seen).toBeGreaterThan(0);
     });
   }
+
+  // New KPI tests for polished cards
+  test("lease card shows next due KPI", async ({ page, request }) => {
+    const { L } = await pickIds(request);
+    test.skip(L == null, "No lease IDs in this environment");
+
+    await page.goto(`${WEB}/card/lease/${L}`);
+    await expect(page.getByTestId("kpi-term")).toBeVisible();
+    // Verify the label shows "Next Due" instead of "Term"
+    const termKpi = page.getByTestId("kpi-term");
+    await expect(termKpi).toContainText("Next Due");
+  });
+
+  test("tenant card shows payment health KPI", async ({ page, request }) => {
+    const { T } = await pickIds(request);
+    test.skip(T == null, "No tenant IDs in this environment");
+
+    await page.goto(`${WEB}/card/tenant/${T}`);
+    await expect(page.getByTestId("kpi-on-time-rate")).toBeVisible();
+    // Verify the label shows "Payment Health"
+    const paymentHealthKpi = page.getByTestId("kpi-on-time-rate");
+    await expect(paymentHealthKpi).toContainText("Payment Health");
+  });
+
+  test("owner card shows vacancy cost KPI", async ({ page, request }) => {
+    const { O } = await pickIds(request);
+    test.skip(O == null, "No owner IDs in this environment");
+
+    await page.goto(`${WEB}/card/owner/${O}`);
+    await expect(page.getByTestId("kpi-avg-rent")).toBeVisible();
+    // Verify the label shows "Vacancy Cost"
+    const vacancyCostKpi = page.getByTestId("kpi-avg-rent");
+    await expect(vacancyCostKpi).toContainText("Vacancy Cost");
+  });
 });
