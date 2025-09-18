@@ -1,0 +1,25 @@
+/**
+ * Test IDs for component testing
+ */
+export const TESTIDS = {
+  // Lease Hero Block
+  LEASE_HERO_RENT: "lease-hero-rent",
+  LEASE_HERO_BALANCE: "lease-hero-balance", 
+  LEASE_HERO_STATUS: "lease-hero-status",
+  LEASE_HERO_EXPIRATION: "lease-hero-expiration",
+  LEASE_HERO_NEXT_DUE: "lease-hero-next-due",
+  
+  // Tenant Hero Block
+  TENANT_HERO_BALANCE: "tenant-hero-balance",
+  TENANT_HERO_STATUS: "tenant-hero-status",
+  TENANT_HERO_PAYMENT_HEALTH: "tenant-hero-payment-health",
+  
+  // Owner Hero Block
+  OWNER_HERO_PROPERTIES: "owner-hero-properties",
+  OWNER_HERO_UNITS: "owner-hero-units",
+  OWNER_HERO_VACANCY_COST: "owner-hero-vacancy-cost",
+  
+  // Unit Hero Block
+  UNIT_HERO_MARKET_RENT: "unit-hero-market-rent",
+  UNIT_HERO_BEDS_BATHS: "unit-hero-beds-baths",
+} as const;
