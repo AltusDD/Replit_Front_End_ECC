@@ -1,18 +1,20 @@
 import { KPI } from "@/components/cardkit/KPI";
 import { KPIRow } from "@/components/cardkit/KPIRow";
-import { TESTIDS } from "@/testing/testIds";
-import { BLANK } from "@/lib/format";
+import { BLANK, formatCurrencyFromCents, formatPercent } from "@/lib/format";
 
 export default function HeroBlock({ data }: { data: any }) {
   const safe = <T,>(v: T | null | undefined, d: T) => (v ?? d);
-  const n = (v?: number | null) => (typeof v === "number" ? v : undefined);
+  const n = (v?: number | null) => (typeof v === "number" && isFinite(v) ? v : undefined);
+  const t = data?.tenant ?? data;
 
   return (
     <KPIRow>
-      <KPI data-testid={TESTIDS.TENANT_HERO_BALANCE} label="Balance" value={n(data?.balance)} currency />
-      <KPI data-testid={TESTIDS.TENANT_HERO_STATUS} label="Status" value={safe<string>(data?.status, "—")} />
-      <KPI label="Since" value={safe<string>(data?.since, BLANK)} />
-      <KPI label="Phone" value={safe<string>(data?.phone, BLANK)} />
+      <KPI data-testid="kpi-active-leases" label="Active Leases" value={n(t?.active_leases ?? t?.activeLeases)} />
+      <KPI data-testid="kpi-current-balance" label="Current Balance" value={formatCurrencyFromCents(t?.current_balance_cents ?? t?.balance_cents ?? t?.balance)} />
+      <KPI data-testid="kpi-on-time-rate" label="On-Time Rate" value={formatPercent(t?.on_time_rate ?? t?.onTimeRate)} />
+      <KPI data-testid="kpi-open-workorders" label="Open Workorders" value={n(t?.open_workorders ?? t?.openWorkorders)} />
+      {/* NEW: mirrors on-time rate as a user-friendly "Payment Health" */}
+      <KPI data-testid="kpi-payment-health" label="Payment Health" value={formatPercent(t?.on_time_rate ?? t?.onTimeRate)} />
     </KPIRow>
   );
 }
