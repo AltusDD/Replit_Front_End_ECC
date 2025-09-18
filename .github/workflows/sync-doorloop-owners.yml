@@ -1,26 +1,41 @@
-name: Sync DoorLoop Owners
+name: Owners Sync
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "15 */6 * * *"   # every 6 hours at :15
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - run: npm i -D tsx @supabase/supabase-js
+          node-version: "20"
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build (if TypeScript)
+        run: |
+          if [ -f tsconfig.json ]; then npm run build || true; fi
+
       - name: Run owners sync
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DOORLOOP_API_KEY: ${{ secrets.DOORLOOP_API_KEY }}
-          DOORLOOP_BASE_URL: ${{ secrets.DOORLOOP_BASE_URL }}
-          OWNERS_ENDPOINT: ${{ secrets.OWNERS_ENDPOINT }}
-          SINCE_DAYS: 30
-        run: npx tsx scripts/sync-doorloop-owners.ts
+          DOORLOOP_BASE_URL: ${{ vars.DOORLOOP_BASE_URL || 'https://api.doorloop.com/v1' }}
+          OWNERS_ENDPOINT: "/owners"
+          SINCE_DAYS: "30"
+          NODE_FETCH_POLYFILL: "0"
+        run: |
+          # If you compile to dist/, run node on the compiled file; otherwise tsx/ts-node.
+          if [ -f dist/scripts/sync_owners.js ]; then
+            node dist/scripts/sync_owners.js
+          else
+            npx tsx scripts/sync_owners.ts
+          fi
