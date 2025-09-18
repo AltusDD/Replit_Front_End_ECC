@@ -1,6 +1,5 @@
 import { KPI } from "@/components/cardkit/KPI";
 import { KPIRow } from "@/components/cardkit/KPIRow";
-import { TESTIDS } from "@/testing/testIds";
 import { BLANK } from "@/lib/format";
 
 export default function HeroBlock({ data }: { data: any }) {
@@ -10,18 +9,26 @@ export default function HeroBlock({ data }: { data: any }) {
   return (
     <KPIRow>
       <KPI
-        data-testid={TESTIDS.UNIT_HERO_MARKET_RENT}
-        label="Market Rent"
-        value={n(data?.marketRent)}
+        data-testid="kpi-lease-status"
+        label="Lease Status"
+        value={safe<string>(data?.leaseStatus ?? data?.status, "—")}
+      />
+      <KPI
+        data-testid="kpi-rent"
+        label="Rent"
+        value={n(data?.rent ?? data?.marketRent)}
         currency
       />
       <KPI
-        data-testid={TESTIDS.UNIT_HERO_BEDS_BATHS}
-        label="Beds/Baths"
-        value={safe<string>(data?.bedsBaths, BLANK)}
+        data-testid="kpi-bedbath"
+        label="Bed/Bath"
+        value={safe<string>(data?.bedsBaths ?? data?.bedBath, BLANK)}
       />
-      <KPI label="Sq Ft" value={n(data?.sqft)} />
-      <KPI label="Status" value={safe<string>(data?.status, "—")} />
+      <KPI 
+        data-testid="kpi-sqft"
+        label="Sq Ft" 
+        value={n(data?.sqft)} 
+      />
     </KPIRow>
   );
 }
