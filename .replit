@@ -69,3 +69,4 @@ packages = ["pnpm", "jq"]
 
 [agent]
 integrations = ["javascript_supabase==1.0.0", "javascript_database==1.0.0"]
+expertMode = true
