@@ -87,9 +87,10 @@
    - Creates GitHub issues as reminders
    - Auto-closes issues when syncs resume
 
-3. **Data syncs** (separate from code):
-   - DoorLoop owners sync (every 6 hours)
-   - Database operations (Supabase)
+3. **Data syncs** (separate from code sync):
+   - DoorLoop owners sync: Automated workflow that pulls owner data from DoorLoop API every 6 hours
+   - Database operations: Direct data changes in Supabase (not tied to code commits)
+   - Note: These sync external data sources, not code changes from Replit
 
 ### ❌ What Requires Manual Action
 
@@ -143,21 +144,21 @@ Morning:
 
 ## Sync Health Indicators
 
-### 🟢 Healthy Sync
-- Commits to GitHub daily or at least weekly
+### 🟢 Healthy Sync (0-6 days)
+- Commits to GitHub within the last 6 days
 - No uncommitted changes pile up
 - Regular use of `npm run sync:check`
 - No sync-reminder issues on GitHub
 
-### 🟡 Needs Attention
-- 3-7 days without commits
+### 🟡 Needs Attention (7 days)
+- Exactly 7 days without commits (automation triggers)
 - Small amount of uncommitted changes
-- Occasional sync reminder issues
+- First sync reminder issue appears
 
-### 🔴 Sync Problem
-- 7+ days without commits
+### 🔴 Sync Problem (8+ days)
+- More than 7 days without commits
 - Many uncommitted changes
-- Multiple sync reminder issues
+- Multiple sync reminder issues or prolonged staleness
 - Developers not aware of sync status
 
 ## Monitoring Points
@@ -176,4 +177,4 @@ Morning:
 
 ---
 
-**Key Takeaway**: Sync is MANUAL but now has TOOLS and MONITORING to prevent gaps.
+Key Takeaway: Sync is manual but now has tools and monitoring to prevent gaps.
