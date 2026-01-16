@@ -11,3 +11,14 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+# --- ECC PROOF/POLLUTION BLOCKS ---
+.local/state/replit/**
+.local/**
+*.bin
+proofpacks/**
+*_PROOF_PACK_*
+*_TRUTH_PACK_*
+*.curl.txt
+*_headers.txt
+*_body.json
+*_raw.txt
