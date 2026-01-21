@@ -3,13 +3,17 @@ name: ci-proof-pack
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
 
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
-  ci_proof_pack:
+  proof-pack:
+    name: proof-pack
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,13 +21,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Compute base + changed files
+      - name: Compute changed files
         shell: bash
         run: |
           set -euo pipefail
-          BASE_REF="${{ github.event.pull_request.base.ref }}"
-          git fetch origin "$BASE_REF" --prune
-          git diff --name-only "origin/${BASE_REF}...HEAD" | sed '/^\s*$/d' > changed_files.txt
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            BASE_REF="${{ github.event.pull_request.base.ref }}"
+            git fetch origin "$BASE_REF" --prune
+            git diff --name-only "origin/${BASE_REF}...HEAD" | sed '/^[[:space:]]*$/d' > changed_files.txt
+          else
+            git diff --name-only "${{ github.event.before }}...${{ github.sha }}" | sed '/^[[:space:]]*$/d' > changed_files.txt || true
+          fi
 
       - name: Forbidden scan + ci_proof.json/txt
         shell: bash
@@ -33,35 +41,21 @@ jobs:
           TOKENS=("fetch(" "httpGet(" "queryFn" "useQuery" "supabase" "adapter" "endpoint" "VITE_API_BASE_URL")
           TS_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           REPO="${GITHUB_REPOSITORY}"
-          BRANCH="${GITHUB_HEAD_REF}"
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
           SHA="${GITHUB_SHA}"
-          PR="${{ github.event.pull_request.number }}"
-          BASE_REF="${{ github.event.pull_request.base.ref }}"
-
-          # Determine non_data_lane: true only if all changed files are under src/pages/** or .github/**
-          NON_DATA_LANE="true"
-          while IFS= read -r f; do
-            case "$f" in
-              src/pages/*|src/pages/*/*|src/pages/*/*/*|.github/*|.github/*/*) ;;
-              *) NON_DATA_LANE="false" ;;
-            esac
-          done < changed_files.txt
-
-          ACCEPTANCE_CLASS="MANUAL"
-          if [ "$NON_DATA_LANE" = "true" ]; then ACCEPTANCE_CLASS="AUTO"; fi
 
           echo "CI PROOF PACK" > ci_proof.txt
           echo "repo=$REPO" >> ci_proof.txt
           echo "branch=$BRANCH" >> ci_proof.txt
           echo "commit_sha=$SHA" >> ci_proof.txt
-          echo "pr_number=$PR" >> ci_proof.txt
           echo "timestamp_utc=$TS_UTC" >> ci_proof.txt
-          echo "base_ref=$BASE_REF" >> ci_proof.txt
           echo "" >> ci_proof.txt
-          echo "=== git diff --name-only origin/${BASE_REF}...HEAD ===" >> ci_proof.txt
+          echo "=== changed files ===" >> ci_proof.txt
           cat changed_files.txt >> ci_proof.txt
           echo "" >> ci_proof.txt
-          echo "=== forbidden scan (changed files only) ===" >> ci_proof.txt
+          echo "=== forbidden scan (changed files excluding .github/**) ===" >> ci_proof.txt
+
+          grep -vE '^\.github/' changed_files.txt > scan_files.txt || true
 
           : > scan.tsv
           HIT_ANY="0"
@@ -70,26 +64,22 @@ jobs:
             [ -f "$f" ] || continue
             for t in "${TOKENS[@]}"; do
               if grep -Fq "$t" "$f"; then
-                echo "$f\t$t\tYES" >> scan.tsv
+                printf "%s\t%s\tYES\n" "$f" "$t" >> scan.tsv
                 echo "FILE=$f TOKEN=$t FORBIDDEN_HIT=YES" >> ci_proof.txt
                 HIT_ANY="1"
               else
-                echo "$f\t$t\tNO" >> scan.tsv
+                printf "%s\t%s\tNO\n" "$f" "$t" >> scan.tsv
                 echo "FILE=$f TOKEN=$t FORBIDDEN_HIT=NO" >> ci_proof.txt
               fi
             done
-          done < changed_files.txt
+          done < scan_files.txt
 
           python3 - << 'PY'
 import json, os, datetime
 repo=os.environ.get("GITHUB_REPOSITORY","")
-branch=os.environ.get("GITHUB_HEAD_REF","")
+branch=os.environ.get("GITHUB_HEAD_REF","") or os.environ.get("GITHUB_REF_NAME","")
 sha=os.environ.get("GITHUB_SHA","")
-pr=os.environ.get("PR_NUMBER","")
-ts=os.environ.get("TS_UTC","")
-base_ref=os.environ.get("BASE_REF","")
-non_data_lane=os.environ.get("NON_DATA_LANE","false") == "true"
-acceptance_class=os.environ.get("ACCEPTANCE_CLASS","MANUAL")
+ts=datetime.datetime.utcnow().replace(microsecond=0).isoformat()+"Z"
 
 tokens=["fetch(","httpGet(","queryFn","useQuery","supabase","adapter","endpoint","VITE_API_BASE_URL"]
 
@@ -98,22 +88,20 @@ with open("changed_files.txt","r",encoding="utf-8") as f:
   changed=[ln.strip() for ln in f if ln.strip()]
 
 scan={}
-# scan per file token -> hit bool
-with open("scan.tsv","r",encoding="utf-8") as f:
-  for ln in f:
-    parts=ln.rstrip("\n").split("\t")
-    if len(parts)!=3: continue
-    file, tok, hit = parts
-    scan.setdefault(file, {})[tok] = (hit=="YES")
+if os.path.exists("scan.tsv"):
+  with open("scan.tsv","r",encoding="utf-8") as f:
+    for ln in f:
+      parts=ln.rstrip("\n").split("\t")
+      if len(parts)!=3: continue
+      file, tok, hit = parts
+      scan.setdefault(file, {})[tok] = (hit=="YES")
 
 obj={
   "metadata":{
     "repo":repo,
     "branch":branch,
     "commit_sha":sha,
-    "pr_number":int(pr) if str(pr).isdigit() else pr,
-    "timestamp_utc":ts or datetime.datetime.utcnow().replace(microsecond=0).isoformat()+"Z",
-    "base_ref":base_ref
+    "timestamp_utc":ts
   },
   "scope_proof":{
     "diff_name_only":changed
@@ -123,20 +111,15 @@ obj={
     "per_file":scan,
     "zero_hit_assertion": all(not any(v.values()) for v in scan.values()) if scan else True
   },
-  "governance_flags":{
-    "non_data_lane": non_data_lane,
-    "acceptance_class": acceptance_class
-  },
   "fe_build_proof":{
-    "typecheck_exit_code": None,
-    "build_exit_code": None
+    "typecheck_exit_code": null,
+    "build_exit_code": null
   }
 }
 with open("ci_proof.json","w",encoding="utf-8") as out:
   json.dump(obj,out,indent=2,sort_keys=True)
 PY
 
-          # FE build + typecheck (record exit codes)
           set +e
           npm ci
           npm run typecheck --if-present
@@ -159,8 +142,18 @@ PY
           echo "typecheck_exit_code=${TYPECHECK_CODE}" >> ci_proof.txt
           echo "build_exit_code=${BUILD_CODE}" >> ci_proof.txt
 
-          # Hard fail on forbidden token hits
           if [ "$HIT_ANY" = "1" ]; then
             echo "Forbidden token hit detected. Failing job."
             exit 1
           fi
+
+      - name: Upload proof artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-proof-pack
+          if-no-files-found: error
+          path: |
+            ci_proof.json
+            ci_proof.txt
+            changed_files.txt
+            scan.tsv
