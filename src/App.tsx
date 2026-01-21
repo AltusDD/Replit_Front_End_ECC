@@ -201,7 +201,7 @@ function PropertyAssetPage() {
       setTenantsRows([]);
 
       setLoadingProperty(true);
-      const propRaw = await jget(`/api/portfolio/properties_detail?property_id=${propertyId}`);
+      const propRaw = await jget(`/api/portfolio/properties/${propertyId}`);
       const propEnv = asEnvelope(propRaw);
       if (!cancelled) {
         setLoadingProperty(false);
@@ -213,9 +213,7 @@ function PropertyAssetPage() {
       }
 
       setLoadingUnits(true);
-      const unitsRaw = await jget(
-        `/api/portfolio/properties_units?property_id=${propertyId}&page=1&pageSize=25`
-      );
+      const unitsRaw = await jget(`/api/portfolio/properties/${propertyId}/units`);
       const unitsEnv = asEnvelope(unitsRaw);
       const units = unitsEnv?.data ?? [];
       const unitId = pickFirstId(units, ["unit_id", "id"]);
@@ -230,7 +228,7 @@ function PropertyAssetPage() {
       if (!unitId) return;
 
       setLoadingLeases(true);
-      const leasesRaw = await jget(`/api/portfolio/units_leases?unit_id=${unitId}&page=1&pageSize=25`);
+      const leasesRaw = await jget(`/api/portfolio/units/${unitId}/leases?page=1&pageSize=25`);
       const leasesEnv = asEnvelope(leasesRaw);
       const leases = leasesEnv?.data ?? [];
       const leaseId = pickFirstId(leases, ["lease_id", "id"]);
@@ -245,7 +243,7 @@ function PropertyAssetPage() {
       if (!leaseId) return;
 
       setLoadingTenants(true);
-      const tenantsRaw = await jget(`/api/portfolio/leases_tenants?lease_id=${leaseId}&page=1&pageSize=25`);
+      const tenantsRaw = await jget(`/api/portfolio/leases/${leaseId}/tenants?page=1&pageSize=25`);
       const tenantsEnv = asEnvelope(tenantsRaw);
       if (!cancelled) {
         setLoadingTenants(false);
