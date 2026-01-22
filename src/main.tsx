@@ -11,6 +11,8 @@ import EccErrorBoundary from "./components/EccErrorBoundary";
 import DevDiagBar from "./components/DevDiagBar";
 import App from "./App";
 
+document.documentElement.setAttribute("data-ecc-build", "7f06456");
+
 if (import.meta.env.DEV) {
   // React StrictMode + aborted fetches during HMR
   window.addEventListener("unhandledrejection", (e: any) => {
