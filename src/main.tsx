@@ -1,37 +1,24 @@
-import "@/styles/index.css";  // <— must be FIRST
-
-// import "./dev/tap";
-// Removed mountEnhancer AND dev/index - asset cards now use proper routing
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { Router } from "wouter";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
-import EccErrorBoundary from "./components/EccErrorBoundary";
-import DevDiagBar from "./components/DevDiagBar";
 import App from "./App";
 
+// Global styles (single import point)
+import "./styles/theme.css";
+import "./styles/app.css";
+
 if (import.meta.env.DEV) {
-  // React StrictMode + aborted fetches during HMR
-  window.addEventListener("unhandledrejection", (e: any) => {
-    if (e?.reason?.name === "AbortError") e.preventDefault();
-  });
-  window.addEventListener("error", (e: any) => {
-    if (String(e?.message || "").includes("AbortError")) e.preventDefault();
-  });
+  import("@/mocks/browser").then(({ worker }) =>
+    worker.start({ 
+      onUnhandledRequest: "bypass",
+      serviceWorker: {
+        url: "/mockServiceWorker.js"
+      }
+    })
+  );
 }
 
-const Mode: React.ComponentType<any> = import.meta.env.DEV ? React.Fragment : React.StrictMode;
-
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <Mode>
-    <EccErrorBoundary>
-      {import.meta.env.DEV && <DevDiagBar />}
-      <QueryClientProvider client={queryClient}>
-        <Router>
-          <App />
-        </Router>
-      </QueryClientProvider>
-    </EccErrorBoundary>
-  </Mode>
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
 );

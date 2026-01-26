@@ -1,62 +1,28 @@
-import React, { useMemo } from "react";
-import DataTable from "../../../components/DataTable";
-import { useAllUnits } from "../../../lib/ecc-resolvers";
-import { UNIT_COLUMNS, mapUnit } from "../columns";
-import "../../../styles/table.css";
+import Table from "../../../components/ui/Table";
+import { useCollection } from "../../../lib/useApi";
 
-export default function UnitsPage() {
-  const units = useAllUnits();
+const cols = [
+  { label:"id", key:"id", width:110, render:(r:any)=> (r.id ? String(r.id).slice(0,8) : "—"), sortKey:(r:any)=> r.id },
+  { label:"property", width:240, render:(r:any)=> r.property_display_name || r.property_name || r.property?.name || "—", sortKey:(r:any)=> r.property_display_name || r.property_name || r.property?.name },
+  { label:"unit", width:120, render:(r:any)=> r.display_name || r.unit_number || r.name || "—", sortKey:(r:any)=> r.display_name || r.unit_number || r.name },
+  { label:"beds", width:70, key:"bedrooms", sortKey:(r:any)=> Number(r.bedrooms) },
+  { label:"baths", width:70, key:"bathrooms", sortKey:(r:any)=> Number(r.bathrooms) },
+  { label:"market_rent", width:120, key:"market_rent", render:(r:any)=> r.market_rent ?? r.rent ?? "—", sortKey:(r:any)=> Number(r.market_rent ?? r.rent) },
+  { label:"status", width:140, render:(r:any)=> r.status || r.occupancy_status || r.unit_status || "—", sortKey:(r:any)=> r.status || r.occupancy_status || r.unit_status },
+];
 
-  const { rows, loading, error } = useMemo(() => {
-    // Backend provides structured data - apply mapping for consistency
-    const mapped = (units.data || []).map(mapUnit);
-    
-    return {
-      rows: mapped,
-      loading: units.loading,
-      error: units.error,
-    };
-  }, [units]);
-
-
-  const kpis = useMemo(() => {
-    const total = rows.length;
-    const occupied = rows.filter((r) => String(r.status).toLowerCase() === "occupied").length;
-    const vacant = total - occupied;
-    const avgRent = rows.length > 0 ? rows.reduce((s, r) => s + (Number.isFinite(Number(r.marketRent)) ? Number(r.marketRent) : 0), 0) / rows.length : 0;
-    return { total, occupied, vacant, avgRent };
-  }, [rows]);
-
+export default function Units(){
+  const { data, loading, error } = useCollection("units", { limit: 500, order: "updated_at.desc" });
   return (
-    <section className="ecc-page">
-      <div className="ecc-kpis">
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.total}</div>
-          <div className="ecc-kpi-l">Units</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.occupied}</div>
-          <div className="ecc-kpi-l">Occupied</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.vacant}</div>
-          <div className="ecc-kpi-l">Vacant</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">${kpis.avgRent.toFixed(0)}</div>
-          <div className="ecc-kpi-l">Avg Market Rent</div>
-        </div>
-      </div>
-
-      <DataTable
-        rows={rows}
-        columns={UNIT_COLUMNS}
-        loading={loading}
-        error={error}
-        csvName="units"
-        drawerTitle={(row) => `${row.property} - Unit ${row.unit}`}
-        rowHref={(row) => `/card/unit/${row.id}`}
+    <>
+      <h1 className="pageTitle">Units</h1>
+      {error ? <div className="panel" style={{padding:12,marginBottom:12}}>API error: {String(error.message||error)}</div> : null}
+      <Table<any>
+        rows={loading ? [] : data}
+        cols={cols}
+        cap={`Loaded ${data.length} units`}
+        empty={loading ? "Loading…" : "No results"}
       />
-    </section>
+    </>
   );
 }

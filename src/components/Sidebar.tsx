@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { createPortal } from "react-dom";
 import * as Icons from "lucide-react";
+import "./layout/sidebar.css";
 
 // =======================================================
 // 1. CORRECT LOGO AND BRANDING SETUP
@@ -24,7 +25,7 @@ type IconName =
   | "LayoutDashboard" | "Boxes" | "FileText" | "Shield" | "Scale" | "MessageSquare"
   | "Hammer" | "BarChart3" | "PieChart" | "Settings" | "Database" | "Users"
   | "IdCard" | "Package" | "FolderOpen" | "ClipboardList" | "Workflow" | "Receipt"
-  | "Building2" | "Wrench" | "Cpu" | "Link2" | "ChartNoAxesColumn" | "FileSpreadsheet" | "Shuffle";
+  | "Building2" | "Wrench" | "Cpu" | "Link2" | "ChartNoAxesColumn" | "FileSpreadsheet";
 
 type NavChild = { title: string; path: string; icon?: IconName };
 type NavParent = { title: string; icon: IconName; path?: string; children?: NavChild[] };
@@ -39,7 +40,6 @@ const NAV: NavParent[] = [
       { title: "Leases", path: "/portfolio/leases", icon: "FileSpreadsheet" },
       { title: "Tenants", path: "/portfolio/tenants", icon: "Users" },
       { title: "Owners", path: "/portfolio/owners", icon: "IdCard" },
-      { title: "Owner Transfer", path: "/owners/transfer", icon: "Shuffle" },
     ],
   },
   {
@@ -62,22 +62,11 @@ const NAV: NavParent[] = [
     title: "Construction & Repair", icon: "Hammer",
     children: [ { title: "Work Orders", path: "/ops/maintenance/work-orders", icon: "Hammer" } ],
   },
-  { 
-    title: "Reports", 
-    icon: "BarChart3", 
-    children: [
-      { title: "Create", path: "/reports/create", icon: "FileText" },
-      { title: "Saved", path: "/reports/saved", icon: "FileText" },
-      { title: "Templates", path: "/reports/templates", icon: "FileText" },
-    ]
-  },
+  { title: "Reports", icon: "BarChart3", path: "/reports" },
   { title: "Growth", icon: "PieChart", children: [{ title: "Marketing", path: "/growth/marketing", icon: "PieChart" }] },
   {
-    title: "Systems", icon: "Settings",
-    children: [ 
-      { title: "Settings", path: "/system/settings", icon: "Settings" },
-      { title: "Integrations", path: "/systems/integrations", icon: "Link2" },
-    ],
+    title: "System", icon: "Settings",
+    children: [ { title: "Settings", path: "/system/settings", icon: "Settings" } ],
   },
   {
     title: "Data Management", icon: "Database",
@@ -160,13 +149,21 @@ export default function Sidebar() {
 
   const isActive = (path?: string) => !!path && (location === path || location.startsWith(path + "/"));
 
+  // helper: child is active if current location starts with the link href
+  const isChildActive = (href: string) =>
+    !!href && (location === href || location.startsWith(href + "/"));
+
+  // helper: parent section is active if any child is active
+  const isParentActive = (children: { path: string }[] = []) =>
+    children.some(c => isChildActive(c.path));
+
   const openFly = (parent: NavParent, rect: DOMRect) => {
     const estH = Math.min(56 * (parent.children?.length || 0) + 56, window.innerHeight - 16);
     const { x, y } = clampToViewport(rect.right + 6, rect.top, FLYOUT_WIDTH, estH);
     setFlyTitle(parent.title);
     setFlyIcon(parent.icon);
     setFlyItems(parent.children || []);
-    setFlyStyle({ left: x, top: y, width: FLYOUT_WIDTH }); // Removed fixed positioning
+    setFlyStyle({ position: "fixed", left: x, top: y, width: FLYOUT_WIDTH });
     setFlyOpen(true);
   };
   const scheduleOpen = (parent: NavParent, rect: DOMRect) => {
@@ -245,11 +242,9 @@ export default function Sidebar() {
             // If it's a direct link with no children, the whole row is a Link.
             if (p.path && !hasKids) {
               return (
-                <div key={p.title} ref={rowRef}>
-                  <Link href={p.path} className={`ecc-row ${parentActive ? "is-active" : ""}`}>
+                <Link key={p.title} href={p.path} ref={rowRef} className={`ecc-row ${parentActive ? "is-active" : ""}`}>
                     {rowContent}
-                  </Link>
-                </div>
+                </Link>
               );
             }
 

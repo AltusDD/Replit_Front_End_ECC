@@ -1,63 +1,27 @@
-import React, { useMemo } from "react";
-import DataTable from "../../../components/DataTable";
-import { useAllTenants } from "../../../lib/ecc-resolvers";
-import { TENANT_COLUMNS, mapTenant } from "../columns";
-import "../../../styles/table.css";
+import Table from "../../../components/ui/Table";
+import { useCollection } from "../../../lib/useApi";
 
-export default function TenantsPage() {
-  const tenants = useAllTenants();
+const cols = [
+  { label:"id", key:"id", width:110, render:(r:any)=> (r.id ? String(r.id).slice(0,8) : "—"), sortKey:(r:any)=> r.id },
+  { label:"name", width:220, render:(r:any)=> r.full_name || r.name || `${r.first_name ?? ""} ${r.last_name ?? ""}`.trim() || "—", sortKey:(r:any)=> r.full_name || r.name || `${r.first_name ?? ""} ${r.last_name ?? ""}`.trim() },
+  { label:"email", width:260, key:"email" },
+  { label:"phone", width:160, key:"phone" },
+  { label:"status", width:120, render:(r:any)=> r.status || r.tenant_status || "—", sortKey:(r:any)=> r.status || r.tenant_status },
+  { label:"balance", width:120, render:(r:any)=> r.balance_due ?? r.balance ?? "—", sortKey:(r:any)=> Number(r.balance_due ?? r.balance) },
+];
 
-  const { rows, loading, error } = useMemo(() => {
-    // Backend already provides structured data with relationships
-    // Use it directly with minimal mapping
-    const mapped = (tenants.data || []).map(mapTenant);
-
-    return {
-      rows: mapped,
-      loading: tenants.loading,
-      error: tenants.error,
-    };
-  }, [tenants]);
-
-
-  const kpis = useMemo(() => {
-    const total = rows.length;
-    const contactable = rows.filter((r) => r.email !== "—" || r.phone !== "—").length;
-    const withBalance = rows.filter((r) => Number.isFinite(Number(r.balance)) && Number(r.balance) > 0).length;
-    const totalBalance = rows.reduce((s, r) => s + (Number.isFinite(Number(r.balance)) ? Number(r.balance) : 0), 0);
-    return { total, contactable, withBalance, totalBalance };
-  }, [rows]);
-
+export default function Tenants(){
+  const { data, loading, error } = useCollection("tenants", { limit: 500, order: "updated_at.desc" });
   return (
-    <section className="ecc-page">
-      <div className="ecc-kpis">
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.total}</div>
-          <div className="ecc-kpi-l">Total Tenants</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.contactable}</div>
-          <div className="ecc-kpi-l">Contactable</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.withBalance}</div>
-          <div className="ecc-kpi-l">With Balance</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">${kpis.totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-          <div className="ecc-kpi-l">Total Balance</div>
-        </div>
-      </div>
-
-      <DataTable
-        rows={rows}
-        columns={TENANT_COLUMNS}
-        loading={loading}
-        error={error}
-        csvName="tenants"
-        drawerTitle={(row) => row.name || `Tenant ${row.id}`}
-        rowHref={(row) => `/card/tenant/${row.id}`}
+    <>
+      <h1 className="pageTitle">Tenants</h1>
+      {error ? <div className="panel" style={{padding:12,marginBottom:12}}>API error: {String(error.message||error)}</div> : null}
+      <Table<any>
+        rows={loading ? [] : data}
+        cols={cols}
+        cap={`Loaded ${data.length} tenants`}
+        empty={loading ? "Loading…" : "No results"}
       />
-    </section>
+    </>
   );
 }

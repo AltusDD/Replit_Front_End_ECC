@@ -1,0 +1,64 @@
+:root{
+  --altus-gold:#FFD700;
+  --altus-muted:#9CA3AF;
+  --altus-border:rgba(255,255,255,.10);
+  --altus-surface:#0f1012;
+  --altus-surface-2:#151618;
+}
+
+/* header container centered, not full-width */
+.properties-header{max-width:1320px;margin:0 auto}
+
+/* KPI grid (not full width) */
+.properties-kpi-grid{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.75rem
+}
+@media (max-width:1200px){.properties-kpi-grid{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:700px){.properties-kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.properties-kpi{
+  border:1px solid var(--altus-border);
+  background:linear-gradient(180deg,var(--altus-surface-2),var(--altus-surface));
+  border-radius:.75rem;padding:.8rem .95rem
+}
+.properties-kpi .label{color:var(--altus-muted);font-size:.75rem}
+.properties-kpi .value{font-weight:600;font-size:1.25rem}
+
+/* action/search row */
+.properties-actions{display:flex;gap:.5rem;align-items:center;margin-top:.75rem}
+.properties-search{flex:1 1 auto;display:flex;gap:.5rem}
+.properties-search input{
+  width:100%;background:rgba(255,255,255,.06);border:1px solid var(--altus-border);
+  border-radius:.5rem;padding:.45rem .6rem;color:#e5e7eb
+}
+.btn,.btn-gold,.btn-ghost{
+  border-radius:.5rem;padding:.45rem .6rem;line-height:1;border:1px solid var(--altus-border);
+  background:transparent;color:#e5e7eb
+}
+.btn-gold{border-color:var(--altus-gold);color:var(--altus-gold)}
+.btn-gold:hover{background:rgba(255,215,0,.12)}
+.btn-ghost:hover{background:rgba(255,255,255,.06)}
+
+/* table chrome */
+.properties-shell{border:1px solid var(--altus-border);border-radius:.75rem}
+.properties-table thead.sticky{position:sticky;top:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px)}
+.properties-table tbody tr:nth-child(even){background:rgba(255,255,255,.06)}
+.properties-filters th{padding:.25rem .5rem}
+.properties-input,.properties-number{
+  width:100%;background:rgba(255,255,255,.06);border:1px solid var(--altus-border);
+  border-radius:.375rem;padding:.25rem .5rem;color:#e5e7eb;font-size:.875rem
+}
+.sortable{cursor:pointer;user-select:none}.sort-ind{opacity:.75;font-size:.75rem;margin-left:.25rem}
+
+/* triage chips */
+.cell-badge{padding:.15rem .45rem;border-radius:.375rem;font-size:.75rem;display:inline-block}
+.badge-ok{background:rgba(16,185,129,.15);color:#34d399}
+.badge-warn{background:rgba(234,179,8,.15);color:#facc15}
+.badge-crit{background:rgba(239,68,68,.15);color:#f87171}
+
+/* occupancy bar */
+.vbar{height:.5rem;border-radius:.375rem;overflow:hidden;background:rgba(255,255,255,.08)}
+.vbar>span{display:block;height:100%;background:#22c55e}
+
+/* mini-card (expanded row) */
+.mini-card{background:rgba(255,255,255,.04);border-top:1px solid var(--altus-border)}
+.mini-card .section{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}

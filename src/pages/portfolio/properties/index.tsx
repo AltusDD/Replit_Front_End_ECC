@@ -1,62 +1,28 @@
-import React, { useMemo } from "react";
-import DataTable from "../../../components/DataTable";
-import { useAllProperties } from "../../../lib/ecc-resolvers";
-import { PROPERTY_COLUMNS } from "../columns";
-import "../../../styles/table.css";
+import Table from "../../../components/ui/Table";
+import { useCollection } from "../../../lib/useApi";
 
-export default function PropertiesPage() {
-  const properties = useAllProperties();
+const cols = [
+  { label: "id", key: "id", width: 110, render: (r:any)=> (r.id ? String(r.id).slice(0,8) : "—"), sortKey:(r:any)=> r.id },
+  { label: "doorloop_id", key: "doorloop_id", width: 130 },
+  { label: "name", width: 280, render: (r:any)=> r.display_name || r.name || r.property_name || r.address_street1 || "—", sortKey:(r:any)=> r.display_name || r.name || r.property_name || r.address_street1 },
+  { label: "type", key: "type", width: 220 },
+  { label: "class", key: "class", width: 140 },
+  { label: "active", key: "active", width: 80, render:(r:any)=> r.active ? "true" : "false", sortKey:(r:any)=> !!r.active },
+  { label: "address_street1", key: "address_street1", width: 320 },
+];
 
-  const { rows, loading, error } = useMemo(() => {
-    // Backend now handles all relationships and calculations
-    const data = properties.data ?? [];
-    return {
-      rows: data, // Use data directly from backend
-      loading: properties.loading,
-      error: properties.error,
-    };
-  }, [properties]);
-
-  // KPIs: derive from backend-calculated rows
-  const kpis = useMemo(() => {
-    const total = rows.length;
-    const active = rows.filter(r => r.active).length;
-    const totalUnitsKpi = rows.reduce((sum, r) => sum + (Number.isFinite(Number(r.units)) ? Number(r.units) : 0), 0);
-    const avgOcc = total ? rows.reduce((s, r) => s + (Number.isFinite(Number(r.occPct)) ? Number(r.occPct) : 0), 0) / total : 0;
-    return { total, active, totalUnits: totalUnitsKpi, avgOcc };
-  }, [rows]);
-
+export default function Properties(){
+  const { data, loading, error } = useCollection("properties", { limit: 500, order: "updated_at.desc" });
   return (
-    <section className="ecc-page">
-      {/* Genesis KPI Strip */}
-      <div className="ecc-kpis">
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.total}</div>
-          <div className="ecc-kpi-l">Properties</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.totalUnits}</div>
-          <div className="ecc-kpi-l">Total Units</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.active}</div>
-          <div className="ecc-kpi-l">Active</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.avgOcc.toFixed(1)}%</div>
-          <div className="ecc-kpi-l">Avg Occupancy</div>
-        </div>
-      </div>
-
-      <DataTable
-        rows={rows}
-        columns={PROPERTY_COLUMNS}
-        loading={loading}
-        error={error}
-        csvName="properties"
-        drawerTitle={(row) => row.name || `Property ${row.id}`}
-        rowHref={(row) => `/card/property/${row.id}`}
+    <>
+      <h1 className="pageTitle">Properties</h1>
+      {error ? <div className="panel" style={{padding:12,marginBottom:12}}>API error: {String(error.message||error)}</div> : null}
+      <Table<any>
+        rows={loading ? [] : data}
+        cols={cols}
+        cap={`Loaded ${data.length} properties`}
+        empty={loading ? "Loading…" : "No results"}
       />
-    </section>
+    </>
   );
 }

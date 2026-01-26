@@ -34,7 +34,7 @@
   --text:          #e8eaf0;  /* Genesis text */
   --text-subtle:   #a6adbb;  /* Genesis text-dim */
 
-  --gold:          #d6b36a;  /* Genesis Altus Gold */
+  --gold:          #FFD700;  /* Genesis Altus Gold */
   --gold-700:      #c7a55a;  /* hover/pressed Altus Gold */
   
   --panel-bg:      #171a1f;
@@ -74,31 +74,13 @@
   --fs-12: 12px;  --fs-14: 14px;  --fs-16: 16px;  --fs-18: 18px;  --fs-22: 22px;  --fs-28: 28px;
   --lh-tight: 1.15;  --lh-normal: 1.35;
 
-  /* Motion */
-  --ease: cubic-bezier(.2,.8,.2,1);
-  --t-fast: 120ms; --t-med: 180ms;
-
-  /* Focus (high contrast) */
-  --focus: 0 0 0 2px #000, 0 0 0 4px var(--gold);
+  /* Sidebar specific - matches sidebar.css */
+  --altus-bg:          #0e141b;
+  --altus-bg-2:        #131a23;
+  --altus-bg-3:        #192231;
+  --altus-text:        #d6dde6;
+  --altus-text-dim:    #9aa6b2;
+  --altus-border:      #263241;
+  --altus-hover:       rgba(255,255,255,0.06);
+  --altus-shadow:      rgba(0,0,0,0.35);
 }
-
-/* --- ECC Object Surface Tokens (canonical) --- */
-:root, .theme-ecc, [data-theme="ecc"] {
-  --ecc-object-bg: #2A2F38;           /* light grey (on dark) for inner boxes */
-  --ecc-object-border: rgba(255,255,255,0.08);
-  --ecc-object-radius: 16px;
-  --ecc-object-pad: 16px;
-}
-
-html, body {
-  background: var(--surface-app);
-  color: var(--text-normal);
-  font-family: var(--font);
-}
-
-/* Skeleton shimmer (shared) */
-@keyframes ecc-shimmer {
-  0% { background-position: 0% 0; }
-  100% { background-position: 200% 0; }
-}
-/* ===== END THEME_TOKENS ===== */

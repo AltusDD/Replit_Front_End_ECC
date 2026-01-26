@@ -20,7 +20,7 @@
 html,body,#root{height:100%;background:var(--ecc-bg);color:var(--ecc-fg)}
 #ecc-app{min-height:100%;background:var(--ecc-bg);color:var(--ecc-fg)}
 
-.sidebar{background:var(--ecc-surface)}
+.ecc-sidebar{background:var(--ecc-surface)}
 .card,.panel,.kpi{background:var(--ecc-surface);border-radius:12px}
 
 /* Layout paddings so top chrome doesn't collapse after HMR */

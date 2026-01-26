@@ -1,67 +1,28 @@
-import React, { useMemo } from "react";
-import DataTable from "../../../components/DataTable";
-import { useAllLeases } from "../../../lib/ecc-resolvers";
-import { LEASE_COLUMNS, mapLease } from "../columns";
-import "../../../styles/table.css";
+import Table from "../../../components/ui/Table";
+import { useCollection } from "../../../lib/useApi";
 
-export default function LeasesPage() {
-  const leases = useAllLeases();
+const cols = [
+  { label:"id", key:"id", width:110, render:(r:any)=> (r.id ? String(r.id).slice(0,8) : "—"), sortKey:(r:any)=> r.id },
+  { label:"tenant", width:220, render:(r:any)=> r.tenant_name || r.tenant?.full_name || r.primary_tenant || "—", sortKey:(r:any)=> r.tenant_name || r.tenant?.full_name || r.primary_tenant },
+  { label:"property", width:240, render:(r:any)=> r.property_display_name || r.property_name || r.property?.name || "—", sortKey:(r:any)=> r.property_display_name || r.property_name || r.property?.name },
+  { label:"rent", width:120, render:(r:any)=> r.monthly_rent ?? r.rent ?? r.scheduled_rent ?? "—", sortKey:(r:any)=> Number(r.monthly_rent ?? r.rent ?? r.scheduled_rent) },
+  { label:"start", key:"start_date", width:120 },
+  { label:"end", key:"end_date", width:120 },
+  { label:"status", width:120, render:(r:any)=> r.status || r.phase || r.lease_status || "—", sortKey:(r:any)=> r.status || r.phase || r.lease_status },
+];
 
-  const { rows, loading, error } = useMemo(() => {
-    // Backend provides structured data - apply mapping for consistency
-    const mapped = (leases.data || []).map(mapLease);
-    
-    return {
-      rows: mapped,
-      loading: leases.loading,
-      error: leases.error,
-    };
-  }, [leases]);
-
-
-  const kpis = useMemo(() => {
-    const total = rows.length;
-    const active = rows.filter((r) => String(r.status).toLowerCase() === "active").length;
-    const ended = rows.filter((r) => String(r.status).toLowerCase() === "ended").length;
-    const monthlyRevenue = (leases.data ?? [])
-      .filter(l => String(l?.status ?? "").toLowerCase() === "active")
-      .reduce((sum, l) => {
-        const cents = Number.isFinite(Number(l?.rent_cents || l?.rent)) ? Number(l?.rent_cents || l?.rent) : 0;
-        return sum + (Number.isFinite(cents) ? cents : 0);
-      }, 0) / 100;
-    return { total, active, ended, mrr: monthlyRevenue };
-  }, [rows, leases]);
-
+export default function Leases(){
+  const { data, loading, error } = useCollection("leases", { limit: 500, order: "updated_at.desc" });
   return (
-    <section className="ecc-page">
-      <div className="ecc-kpis">
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.total}</div>
-          <div className="ecc-kpi-l">Total Leases</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.active}</div>
-          <div className="ecc-kpi-l">Active</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.ended}</div>
-          <div className="ecc-kpi-l">Ended</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">${kpis.mrr.toLocaleString()}</div>
-          <div className="ecc-kpi-l">Monthly Revenue</div>
-        </div>
-      </div>
-
-      <DataTable
-        rows={rows}
-        columns={LEASE_COLUMNS}
-        loading={loading}
-        error={error}
-        csvName="leases"
-        drawerTitle={(row) => `${row.property} - ${row.tenants}`}
-        rowHref={(row) => `/card/lease/${row.id}`}
+    <>
+      <h1 className="pageTitle">Leases</h1>
+      {error ? <div className="panel" style={{padding:12,marginBottom:12}}>API error: {String(error.message||error)}</div> : null}
+      <Table<any>
+        rows={loading ? [] : data}
+        cols={cols}
+        cap={`Loaded ${data.length} leases`}
+        empty={loading ? "Loading…" : "No results"}
       />
-    </section>
+    </>
   );
 }

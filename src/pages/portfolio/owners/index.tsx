@@ -1,64 +1,27 @@
-import React, { useMemo } from "react";
-import DataTable from "../../../components/DataTable";
-import { useAllOwners, useAllProperties } from "../../../lib/ecc-resolvers";
-import { OWNER_COLUMNS, mapOwner } from "../columns";
-import "../../../styles/table.css";
+import Table from "../../../components/ui/Table";
+import { useCollection } from "../../../lib/useApi";
 
-export default function OwnersPage() {
-  const owners = useAllOwners();
-  const properties = useAllProperties();
+const cols = [
+  { label:"id", key:"id", width:110, render:(r:any)=> (r.id ? String(r.id).slice(0,8) : "—"), sortKey:(r:any)=> r.id },
+  { label:"name", width:260, render:(r:any)=> r.full_name || r.company_name || r.name || "—", sortKey:(r:any)=> r.full_name || r.company_name || r.name },
+  { label:"email", width:260, key:"email" },
+  { label:"phone", width:160, key:"phone" },
+  { label:"# properties", width:130, render:(r:any)=> r.properties_count ?? r.property_count ?? r.prop_count ?? "—", sortKey:(r:any)=> Number(r.properties_count ?? r.property_count ?? r.prop_count) },
+  { label:"status", width:120, render:(r:any)=> r.status || "—", sortKey:(r:any)=> r.status },
+];
 
-  const { rows, loading, error } = useMemo(() => {
-    // Backend already provides structured data
-    // Use it directly with minimal mapping
-    const mapped = (owners.data || []).map(mapOwner);
-
-    return {
-      rows: mapped,
-      loading: owners.loading,
-      error: owners.error,
-    };
-  }, [owners]);
-
-
-  const kpis = useMemo(() => {
-    const total = rows.length;
-    const active = rows.filter((o) => o.active).length;
-    // Count properties by owner_id if available, else use total
-    const totalProps = Array.isArray(properties.data) ? properties.data.length : 0;
-    return { total, active, totalProps };
-  }, [rows, properties.data]);
-
+export default function Owners(){
+  const { data, loading, error } = useCollection("owners", { limit: 500, order: "updated_at.desc" });
   return (
-    <section className="ecc-page">
-      <div className="ecc-kpis">
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.total}</div>
-          <div className="ecc-kpi-l">Total Owners</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.active}</div>
-          <div className="ecc-kpi-l">Active</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{kpis.totalProps}</div>
-          <div className="ecc-kpi-l">Total Properties</div>
-        </div>
-        <div className="ecc-kpi">
-          <div className="ecc-kpi-n">—</div>
-          <div className="ecc-kpi-l">—</div>
-        </div>
-      </div>
-
-      <DataTable
-        rows={rows}
-        columns={OWNER_COLUMNS}
-        loading={loading}
-        error={error}
-        csvName="owners"
-        drawerTitle={(row) => row.company || `Owner ${row.id}`}
-        rowHref={(row) => `/card/owner/${row.id}`}
+    <>
+      <h1 className="pageTitle">Owners</h1>
+      {error ? <div className="panel" style={{padding:12,marginBottom:12}}>API error: {String(error.message||error)}</div> : null}
+      <Table<any>
+        rows={loading ? [] : data}
+        cols={cols}
+        cap={`Loaded ${data.length} owners`}
+        empty={loading ? "Loading…" : "No results"}
       />
-    </section>
+    </>
   );
 }
