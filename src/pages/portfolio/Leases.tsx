@@ -1,5 +1,5 @@
 import * as React from "react";
-import DataTable, { Column } from "../../../components/DataTable";
+import DataTable, { Column } from "../../components/DataTable";
 import { useCollection } from "../../../features/data/useCollection";
 import { money, shortDate } from "../../../utils/format";
 import { indexBy } from "../../../utils/dict";
@@ -130,3 +130,4 @@ export default function LeasesPage() {
     </div>
   );
 }
+
