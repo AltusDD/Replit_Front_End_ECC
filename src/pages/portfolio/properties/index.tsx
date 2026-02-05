@@ -55,7 +55,7 @@ export default function PropertiesPage() {
         error={error}
         csvName="properties"
         drawerTitle={(row) => row.name || `Property ${row.id}`}
-        rowHref={(row) => `/card/property/${row.id}`}
+        rowHref={(row) => `/asset/property/${row.id}`}
       />
     </section>
   );
