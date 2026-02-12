@@ -1,0 +1,131 @@
+name: Check Replit Sync Status
+
+on:
+  schedule:
+    # Run every day at 9 AM UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history to check last commit date
+      
+      - name: Check last commit date
+        id: check
+        run: |
+          # Get the date of the last commit
+          LAST_COMMIT_TIMESTAMP=$(git log -1 --format=%ct)
+          CURRENT_TIMESTAMP=$(date +%s)
+          DAYS_SINCE_COMMIT=$(( ($CURRENT_TIMESTAMP - $LAST_COMMIT_TIMESTAMP) / 86400 ))
+          
+          echo "days_since_commit=$DAYS_SINCE_COMMIT" >> $GITHUB_OUTPUT
+          echo "Last commit was $DAYS_SINCE_COMMIT days ago"
+          
+          # Check if it's been more than 7 days
+          if [ $DAYS_SINCE_COMMIT -gt 7 ]; then
+            echo "stale=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Repository is stale - no commits in $DAYS_SINCE_COMMIT days"
+          else
+            echo "stale=false" >> $GITHUB_OUTPUT
+            echo "✅ Repository is active"
+          fi
+      
+      - name: Check for existing sync reminder issue
+        if: steps.check.outputs.stale == 'true'
+        id: check_issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'sync-reminder'
+            });
+            
+            const hasOpenIssue = issues.data.length > 0;
+            core.setOutput('has_open_issue', hasOpenIssue);
+            return hasOpenIssue;
+      
+      - name: Create reminder issue
+        if: steps.check.outputs.stale == 'true' && steps.check_issue.outputs.has_open_issue == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const daysSince = '${{ steps.check.outputs.days_since_commit }}';
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔄 Sync Reminder: No commits from Replit in ${daysSince} days`,
+              body: `## Replit Sync Status Check
+              
+              ⚠️ **Alert**: This repository hasn't received commits from Replit in **${daysSince} days**.
+              
+              ### Action Required
+              
+              If you're actively working in Replit, please sync your changes to GitHub:
+              
+              \`\`\`bash
+              # In Replit Shell
+              git add .
+              git commit -m "sync: your commit message"
+              git push origin main
+              \`\`\`
+              
+              ### Check Sync Status
+              
+              Run in Replit:
+              \`\`\`bash
+              npm run sync:check
+              \`\`\`
+              
+              ### Resources
+              
+              - 📖 [Replit Sync Guide](./REPLIT_SYNC_GUIDE.md)
+              - 🔍 [Last commit](../../commits/main)
+              
+              ### Note
+              
+              This issue will be automatically closed once new commits are pushed from Replit.
+              
+              If you're not currently working on this project, you can safely close this issue.`,
+              labels: ['sync-reminder', 'replit', 'automation']
+            });
+      
+      - name: Close stale sync reminder issues
+        if: steps.check.outputs.stale == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'sync-reminder'
+            });
+            
+            for (const issue of issues.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: '✅ New commits detected! Closing this sync reminder.'
+              });
+              
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }
