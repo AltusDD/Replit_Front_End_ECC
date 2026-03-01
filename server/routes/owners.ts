@@ -4,6 +4,7 @@ import { sbAdmin } from "../lib/supabaseAdmin";
 export function installOwnerRoutes(app: Express) {
   // live type-ahead (company or first/last)
   app.get("/api/owners/search", async (req, res) => {
+    res.setHeader('x-ecc-handler', '410_gone');
     res.status(410).json({
       ok: false,
       error: "deprecated_route",
@@ -14,6 +15,7 @@ export function installOwnerRoutes(app: Express) {
 
   // properties that belong to an owner (for Owner Card & Transfer modal)
   app.get("/api/owners/:id/properties", async (req, res) => {
+    res.setHeader('x-ecc-handler', '410_gone');
     res.status(410).json({
       ok: false,
       error: "deprecated_route",
