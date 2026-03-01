@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { requireServerEnv } from './env';
+import { requireServerEnv, getDatabaseUrl } from './env';
 
 let _pool: Pool | null = null;
 
@@ -7,7 +7,11 @@ export function getDbPool(): Pool {
   requireServerEnv();
 
   if (!_pool) {
-    const dbUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
+    const dbUrl = getDatabaseUrl();
+
+    if (!dbUrl) {
+      throw new Error('Database functionality requested, but no database URL is available via DATABASE_URL, SUPABASE_DB_URL, or PG* vars.');
+    }
 
     _pool = new Pool({
       connectionString: dbUrl,

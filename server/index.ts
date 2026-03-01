@@ -75,10 +75,12 @@ import { getMissingServerEnv, serverEnvPresence } from './lib/env.js';
 /** Health check — pure env presence, does not crash or throw */
 app.get("/api/health", (_req, res) => {
   console.log('HIT API HEALTH HANDLER');
-  const missing = getMissingServerEnv();
+  const missing = getMissingServerEnv(); // Only checks Supabase credentials now
+  const envInfo = serverEnvPresence();
 
   if (missing.length === 0) {
-    return res.json({ ok: true, mode: 'ready', env: serverEnvPresence() });
+    const warnings = envInfo.DATABASE_URL === 'missing' ? ["database_url_unset_using_supabase_only"] : [];
+    return res.json({ ok: true, mode: 'ready', warnings, env: envInfo });
   } else {
     // 503 allows monitoring tools to see degraded but app stays alive
     return res.status(503).json({
@@ -86,7 +88,7 @@ app.get("/api/health", (_req, res) => {
       mode: 'degraded',
       error: 'Server misconfigured',
       missing_env: missing,
-      env: serverEnvPresence()
+      env: envInfo
     });
   }
 });
