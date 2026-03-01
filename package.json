@@ -9,7 +9,8 @@
     "preview": "vite preview --host 0.0.0.0 --port 5173",
     "dev:web": "vite",
     "dev:api": "tsx server/index.ts",
-    "guardrail": "node scripts/guardrail-check.mjs"
+    "guardrail": "node scripts/guardrail-check.mjs",
+    "ecc:smoke": "node scripts/ecc_route_smoke.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

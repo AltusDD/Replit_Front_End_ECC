@@ -71,6 +71,17 @@ if (hasBffConfig) {
   });
 }
 import { getMissingServerEnv, serverEnvPresence } from './lib/env.js';
+import { getRouteManifest } from './lib/routeRegistry.js';
+import { installPropertyRoutes } from './routes/properties.js';
+import { installOwnerRoutes as installOwnerRoutesNew } from './routes/owners.js'; // Renamed to avoid conflict with existing import
+
+/** Built-in route manifest for ECC-ROUTE-LOCK-01 */
+app.get("/api/_meta/routes", (_req, res) => {
+  res.json({
+    ok: true,
+    routes: getRouteManifest()
+  });
+});
 
 /** Health check — pure env presence, does not crash or throw */
 app.get("/api/health", (_req, res) => {
@@ -99,12 +110,15 @@ app.get("/api/diag/env", (_req, res) => {
 });
 
 
-installOwnerRoutes(app);
 app.use('/api/admin/sync', sync); // Enhanced sync controls with SSE, DLQ, circuit breaker
 app.use('/api/admin/integrations', integrations);
 app.use('/api', ownerTransferRouter);
 app.use("/api/entities", entitiesRouter);
 app.use("/api/rpc", rpcRouter);
+
+// LEGACY 410 MOUNTS
+installPropertyRoutes(app);
+installOwnerRoutesNew(app); // Using the renamed import
 
 // --- alias-aware env helpers (top of file, after imports) ---
 function mask(v?: string) {
