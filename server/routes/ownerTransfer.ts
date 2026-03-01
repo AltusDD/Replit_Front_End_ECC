@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import pool from '../lib/db.js';
 import { getDatabaseUrl } from '../lib/env.js';
+import { setContract } from '../lib/contractHeaders.js';
 
 const router = Router();
 
@@ -39,6 +40,7 @@ router.get('/owner-transfer/:id', async (req: Request, res: Response) => {
     const transfer = transferResult.rows[0];
     const audit = auditResult.rows;
 
+    setContract(req, res, '/api/owner-transfer/:id');
     res.json({ transfer, audit });
 
   } catch (error) {
@@ -89,6 +91,7 @@ router.post('/owner-transfer/:id/audit', async (req: Request, res: Response) => 
     const result = await pool.query(auditQuery, [id, action, actor, detail]);
     const auditRow = result.rows[0];
 
+    setContract(req, res, '/api/owner-transfer/:id/audit');
     res.status(201).json(auditRow);
 
   } catch (error) {

@@ -6,6 +6,8 @@ import { installOwnerRoutes } from './routes/owners';
 import { integrations } from './routes/admin/integrations';
 import { sync } from './routes/admin/sync';
 import ownerTransferRouter from './routes/ownerTransfer.js';
+import { installPropertyRoutes } from './routes/properties.js'; // Ensure file exists or logic remains valid
+import syncHealth from './routes/syncHealth.js';
 import entitiesRouter from './routes/entities.js';
 import rpcRouter from './routes/rpc';
 import { startAutoSyncLoop } from './lib/sync/auto';
@@ -72,11 +74,13 @@ if (hasBffConfig) {
 }
 import { getMissingServerEnv, serverEnvPresence } from './lib/env.js';
 import { getRouteManifest } from './lib/routeRegistry.js';
+import { setContract } from './lib/contractHeaders.js';
 import { installPropertyRoutes } from './routes/properties.js';
 import { installOwnerRoutes as installOwnerRoutesNew } from './routes/owners.js'; // Renamed to avoid conflict with existing import
 
 /** Built-in route manifest for ECC-ROUTE-LOCK-01 */
-app.get("/api/_meta/routes", (_req, res) => {
+app.get("/api/_meta/routes", (req, res) => {
+  setContract(req, res, '/api/_meta/routes');
   res.json({
     ok: true,
     routes: getRouteManifest()
@@ -84,16 +88,18 @@ app.get("/api/_meta/routes", (_req, res) => {
 });
 
 /** Health check — pure env presence, does not crash or throw */
-app.get("/api/health", (_req, res) => {
+app.get("/api/health", (req, res) => {
   console.log('HIT API HEALTH HANDLER');
   const missing = getMissingServerEnv(); // Only checks Supabase credentials now
   const envInfo = serverEnvPresence();
 
   if (missing.length === 0) {
     const warnings = envInfo.DATABASE_URL === 'missing' ? ["database_url_unset_using_supabase_only"] : [];
+    setContract(req, res, '/api/health');
     return res.json({ ok: true, mode: 'ready', warnings, env: envInfo });
   } else {
     // 503 allows monitoring tools to see degraded but app stays alive
+    setContract(req, res, '/api/health');
     return res.status(503).json({
       ok: false,
       mode: 'degraded',
@@ -104,14 +110,23 @@ app.get("/api/health", (_req, res) => {
   }
 });
 
-app.get("/api/diag/env", (_req, res) => {
+app.get("/api/diag/env", (req, res) => {
   // Use new env summary where possible, fallback to old inline format
+  setContract(req, res, '/api/diag/env');
   res.json({ env: serverEnvPresence() });
 });
 
 
-app.use('/api/admin/sync', sync); // Enhanced sync controls with SSE, DLQ, circuit breaker
+// Canonical Admin/Control Mounts
+app.use('/api/control/sync/health', syncHealth);
+app.use('/api/control/sync', sync);
+app.use('/api/control/integrations', integrations);
+
+// Deprecated Alias Admin Mounts
+app.use('/api/admin/sync/health', syncHealth);
+app.use('/api/admin/sync', sync);
 app.use('/api/admin/integrations', integrations);
+
 app.use('/api', ownerTransferRouter);
 app.use("/api/entities", entitiesRouter);
 app.use("/api/rpc", rpcRouter);
@@ -245,7 +260,8 @@ function sendErr(res: express.Response, http: number, err: any) {
 
 
 /** Config integrations endpoint - public endpoint for UI */
-app.get("/api/config/integrations", async (_req, res) => {
+app.get("/api/config/integrations", async (req, res) => {
+  setContract(req, res, '/api/config/integrations');
   res.json({
     ok: true,
     integrations: {
@@ -438,7 +454,8 @@ app.get("/api/portfolio/properties", async (req, res) => {
       };
     });
 
-    res.json(properties);
+    setContract(req, res, '/api/portfolio/properties');
+    res.json({ data: properties, meta: { totalCount: properties.length } });
   } catch (e: any) {
     return sendErr(res, 500, e);
   }
@@ -479,7 +496,8 @@ app.get("/api/portfolio/units", async (req, res) => {
       };
     });
 
-    res.json(units);
+    setContract(req, res, '/api/portfolio/units');
+    res.json({ data: units, meta: { totalCount: units.length } });
   } catch (e: any) {
     return sendErr(res, 500, e);
   }
@@ -527,7 +545,8 @@ app.get("/api/portfolio/leases", async (req, res) => {
       rent: row.rent_cents ? row.rent_cents / 100 : 0
     }));
 
-    res.json(leases);
+    setContract(req, res, '/api/portfolio/leases');
+    res.json({ data: leases, meta: { totalCount: leases.length } });
   } catch (e: any) {
     return sendErr(res, 500, e);
   }
@@ -581,7 +600,8 @@ app.get("/api/portfolio/tenants", async (req, res) => {
       };
     }));
 
-    res.json(tenants);
+    setContract(req, res, '/api/portfolio/tenants');
+    res.json({ data: tenants, meta: { totalCount: tenants.length } });
   } catch (e: any) {
     return sendErr(res, 500, e);
   }
@@ -609,7 +629,8 @@ app.get("/api/portfolio/owners", async (req, res) => {
       active: Boolean(row.active)
     }));
 
-    res.json(owners);
+    setContract(req, res, '/api/portfolio/owners');
+    res.json({ data: owners, meta: { totalCount: owners.length } });
   } catch (e: any) {
     return sendErr(res, 500, e);
   }
@@ -648,7 +669,8 @@ app.get("/api/maintenance/workorders", async (req, res) => {
       }
     ];
 
-    res.json(workOrders);
+    setContract(req, res, '/api/maintenance/workorders');
+    res.json({ data: workOrders, meta: { totalCount: workOrders.length } });
   } catch (e: any) {
     return sendErr(res, 500, e);
   }
@@ -685,7 +707,8 @@ app.get("/api/accounting/transactions", async (req, res) => {
       }
     }
 
-    res.json(transactions);
+    setContract(req, res, '/api/accounting/transactions');
+    res.json({ data: transactions, meta: { totalCount: transactions.length } });
   } catch (e: any) {
     return sendErr(res, 500, e);
   }
@@ -707,6 +730,7 @@ app.get("/api/portfolio/_debug/sql", async (req, res) => {
       query_text: `${query} LIMIT ${limit}`
     });
     if (error) throw error;
+    setContract(req, res, '/api/portfolio/_debug/sql');
     res.json(data || []);
   } catch (e: any) {
     // Fallback to table queries if RPC doesn't work
@@ -714,6 +738,7 @@ app.get("/api/portfolio/_debug/sql", async (req, res) => {
       if (query.includes("FROM properties")) {
         const { data, error } = await supa.client.from(TABLE.properties).select("*").limit(limit);
         if (error) throw error;
+        setContract(req, res, '/api/portfolio/_debug/sql');
         res.json(data || []);
       } else {
         return sendErr(res, 400, "RPC not available, use table-specific queries");
@@ -732,6 +757,7 @@ app.post("/api/owner-transfer/initiate", async (req, res) => {
     const input: InitiateInput = req.body;
     const result = await initiateTransfer(input);
 
+    setContract(req, res, '/api/owner-transfer/initiate');
     res.status(201).json({
       transferId: result.transferId,
       reportUrl: result.reportUrl ? result.reportUrl : `/api/owner-transfer/${result.transferId}/report`,
@@ -752,6 +778,7 @@ app.post("/api/owner-transfer/approve-accounting", async (req, res) => {
   try {
     const { transferId, actorId } = req.body;
     await markApprovedByAccounting(transferId, actorId);
+    setContract(req, res, '/api/owner-transfer/approve-accounting');
     res.json({ ok: true, message: "Transfer approved by accounting" });
   } catch (e: any) {
     if (e.name === 'ZodError') {
@@ -771,6 +798,7 @@ app.post("/api/owner-transfer/authorize", async (req, res) => {
 
     const { transferId, actorId } = req.body;
     await authorizeExecution(transferId, actorId);
+    setContract(req, res, '/api/owner-transfer/authorize');
     res.json({ ok: true, message: "Transfer authorized for execution" });
   } catch (e: any) {
     if (e.name === 'ZodError') {
@@ -787,6 +815,7 @@ app.post("/api/owner-transfer/execute", async (req, res) => {
   try {
     const { transferId, dryRun = true, actorId } = req.body;
     const result = await executeTransfer(transferId, { dryRun });
+    setContract(req, res, '/api/owner-transfer/execute');
     res.json({
       ok: true,
       applied: result.applied,
@@ -835,6 +864,7 @@ app.get("/api/owner-transfer/:id", async (req, res) => {
     }
 
     const details = await getTransferDetails(transferId);
+    setContract(req, res, '/api/owner-transfer/:id');
     res.json(details);
   } catch (e: any) {
     return sendErr(res, 500, e);

@@ -1,0 +1,36 @@
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Vary: Origin
+Access-Control-Allow-Credentials: true
+Content-Type: application/json; charset=utf-8
+Content-Length: 232
+ETag: W/"e8-X7LQLJwajLyO3xoHRK5JxLBME6U"
+Date: Sun, 01 Mar 2026 20:29:22 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"ok":true,"mode":"ready","warnings":["database_url_unset_using_supabase_only"],"env":{"SUPABASE_URL":"present","SUPABASE_SERVICE_ROLE_KEY":"present","DATABASE_URL":"missing","VITE_SUPABASE_URL":"missing","VITE_API_BASE":"missing"}}
+HTTP/1.1 500 Internal Server Error
+X-Powered-By: Express
+Vary: Origin
+Access-Control-Allow-Credentials: true
+Content-Type: application/json; charset=utf-8
+Content-Length: 377
+ETag: W/"179-3zmnInw+0XY9JIDWsRzhj2CDwBU"
+Date: Sun, 01 Mar 2026 20:29:23 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"ok":false,"message":"TypeError: fetch failed","details":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13510:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async <anonymous> (C:\\Users\\Dionr\\OneDrive\\Documents\\GitHub\\LEGACY__Replit_Front_End_ECC__20260116\\server\\index.ts:357:57)","code":"","hint":""}
+HTTP/1.1 503 Service Unavailable
+X-Powered-By: Express
+Vary: Origin
+Access-Control-Allow-Credentials: true
+Content-Type: application/json; charset=utf-8
+Content-Length: 272
+ETag: W/"110-CTx7Y0x0tCe3Qcqb4aDdlQTIvGM"
+Date: Sun, 01 Mar 2026 20:29:27 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"ok":false,"mode":"degraded","error":"Server misconfigured","missing_env":["SUPABASE_URL","SUPABASE_SERVICE_ROLE_KEY"],"env":{"SUPABASE_URL":"missing","SUPABASE_SERVICE_ROLE_KEY":"missing","DATABASE_URL":"missing","VITE_SUPABASE_URL":"missing","VITE_API_BASE":"missing"}}

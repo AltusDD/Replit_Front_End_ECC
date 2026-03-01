@@ -1,6 +1,6 @@
-// server/routes/syncHealth.ts
 import { Router } from 'express';
-import { getState } from '../lib/integrationState';
+import { getState } from '../lib/integrationState.js';
+import { setContract } from '../lib/contractHeaders.js';
 
 const router = Router();
 
@@ -24,14 +24,15 @@ router.get('/sync', async (req, res) => {
 
     // Get status 
     const statusState = await getState("AUTO_SYNC_STATUS");
-    const status = statusState?.value || { 
-      last_run_at: null, 
-      last_success_at: null, 
-      next_run_at: null, 
+    const status = statusState?.value || {
+      last_run_at: null,
+      last_success_at: null,
+      next_run_at: null,
       mode: null,
       status: "never_run"
     };
 
+    setContract(req, res, '/api/control/sync/health');
     res.json({
       enabled,
       intervalMinutes,

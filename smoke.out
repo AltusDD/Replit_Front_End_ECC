@@ -1,0 +1,8 @@
+
+> ecc-genesis-refactor-baseline@1.0.0 ecc:smoke
+> node scripts/ecc_route_smoke.mjs
+
+[ECC Smoke] Fetching route manifest from http://localhost:8787...
+[ECC Smoke] Found 6 canonical portfolio endpoints to test.
+[ECC Smoke] PASS [410] /api/owners/search -> Correctly deprecated linking to /api/portfolio/owners
+[ECC Smoke] PASS [410] /api/owners/:id/properties -> Correctly deprecated linking to /api/portfolio/properties
