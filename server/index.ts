@@ -8,9 +8,11 @@ import { sync } from './routes/admin/sync';
 import ownerTransferRouter from './routes/ownerTransfer.js';
 import { installPropertyRoutes } from './routes/properties.js'; // Ensure file exists or logic remains valid
 import syncHealth from './routes/syncHealth.js';
+import m365Router from './routes/m365.js';
 import entitiesRouter from './routes/entities.js';
 import rpcRouter from './routes/rpc';
 import { startAutoSyncLoop } from './lib/sync/auto';
+import { supabaseGuard } from './lib/supabaseGuard.js';
 import bff from "./bff.js";
 import * as path from "path";
 
@@ -78,6 +80,64 @@ import { setContract } from './lib/contractHeaders.js';
 import { installPropertyRoutes } from './routes/properties.js';
 import { installOwnerRoutes as installOwnerRoutesNew } from './routes/owners.js'; // Renamed to avoid conflict with existing import
 
+// GLOBAL T1 HEADER MIDDLEWARE
+app.use((req, res, next) => {
+  const method = req.method;
+  const cleanPath = req.path;
+  const registry = getRouteManifest();
+
+  const match = registry.find(r => {
+    if (r.method !== method) return false;
+    if (r.path === cleanPath) return true;
+    if (r.path.includes(':')) {
+      const pattern = r.path.replace(/:[^\/]+/g, '[^/]+');
+      return new RegExp('^' + pattern + '$').test(cleanPath);
+    }
+    return false;
+  });
+
+  if (match) {
+    res.locals.ecc = {
+      handler: match.handler,
+      contract: match.contract_name || match.contract_family || 'SYSTEM',
+      version: match.contract_version || 'v1',
+      canonical: match.canonical ?? false
+    };
+  } else {
+    res.locals.ecc = { handler: 'unhandled', contract: 'SYSTEM', version: 'v1', canonical: null };
+  }
+
+  const originalJson = res.json;
+  res.json = function (body) {
+    if (!res.headersSent) {
+      res.setHeader('x-ecc-handler', res.locals.ecc.handler || 'unhandled');
+      res.setHeader('x-ecc-contract', res.locals.ecc.contract || 'SYSTEM');
+      res.setHeader('x-ecc-contract-version', res.locals.ecc.version || 'v1');
+      res.setHeader('x-ecc-route-canonical', String(res.locals.ecc.canonical !== null ? res.locals.ecc.canonical : 'unknown'));
+    }
+
+    if (res.statusCode === 404 && res.locals.ecc.handler === 'unhandled') {
+      if (!body || typeof body === 'string' || body.error === 'Not found') {
+        body = { ok: false, message: "Not found" };
+      }
+    }
+    return originalJson.call(this, body);
+  };
+
+  const originalSend = res.send;
+  res.send = function (body) {
+    if (!res.headersSent) {
+      res.setHeader('x-ecc-handler', res.locals.ecc.handler || 'unhandled');
+      res.setHeader('x-ecc-contract', res.locals.ecc.contract || 'SYSTEM');
+      res.setHeader('x-ecc-contract-version', res.locals.ecc.version || 'v1');
+      res.setHeader('x-ecc-route-canonical', String(res.locals.ecc.canonical !== null ? res.locals.ecc.canonical : 'unknown'));
+    }
+    return originalSend.call(this, body);
+  };
+
+  next();
+});
+
 /** Built-in route manifest for ECC-ROUTE-LOCK-01 */
 app.get("/api/_meta/routes", (req, res) => {
   setContract(req, res, '/api/_meta/routes');
@@ -118,14 +178,48 @@ app.get("/api/diag/env", (req, res) => {
 
 
 // Canonical Admin/Control Mounts
-app.use('/api/control/sync/health', syncHealth);
-app.use('/api/control/sync', sync);
-app.use('/api/control/integrations', integrations);
+const markCanonical = (req: any, res: any, next: any) => { res.locals.ecc.canonical = true; next(); };
+app.use('/api/control/sync/health', markCanonical, syncHealth);
+app.use('/api/control/sync', markCanonical, sync);
+app.use('/api/control/integrations', markCanonical, integrations);
+
+// T2: 501 Placeholders for unimplemented endpoints
+app.post('/api/control/sync/reset-lock', (req, res) => {
+  res.locals.ecc = { handler: 'not_implemented', contract: 'ADMIN_SYNC', version: 'v1', canonical: true };
+  res.status(501).json({ ok: false, message: 'Not implemented' });
+});
+app.post('/api/control/sync/quick-run', (req, res) => {
+  res.locals.ecc = { handler: 'not_implemented', contract: 'ADMIN_SYNC', version: 'v1', canonical: true };
+  res.status(501).json({ ok: false, message: 'Not implemented' });
+});
+app.post('/api/control/integrations/m365/planner/tasks', (req, res) => {
+  res.locals.ecc = { handler: 'not_implemented', contract: 'WORKFLOW', version: 'v1', canonical: true };
+  res.status(501).json({ ok: false, message: 'Not implemented' });
+});
 
 // Deprecated Alias Admin Mounts
-app.use('/api/admin/sync/health', syncHealth);
-app.use('/api/admin/sync', sync);
-app.use('/api/admin/integrations', integrations);
+const markAlias = (req: any, res: any, next: any) => {
+  if (!res.locals.ecc) res.locals.ecc = {};
+  res.locals.ecc.canonical = false;
+  res.locals.ecc.handler = 'alias_forward';
+  next();
+};
+app.use('/api/admin/sync/health', markAlias, syncHealth);
+app.use('/api/admin/sync', markAlias, sync);
+app.use('/api/admin/integrations', markAlias, integrations);
+
+app.post('/api/admin/sync/reset-lock', (req, res) => {
+  res.locals.ecc = { handler: 'not_implemented', contract: 'ADMIN_SYNC', version: 'v1', canonical: false };
+  res.status(501).json({ ok: false, message: 'Not implemented' });
+});
+app.post('/api/admin/sync/quick-run', (req, res) => {
+  res.locals.ecc = { handler: 'not_implemented', contract: 'ADMIN_SYNC', version: 'v1', canonical: false };
+  res.status(501).json({ ok: false, message: 'Not implemented' });
+});
+app.post('/api/admin/integrations/m365/planner/tasks', (req, res) => {
+  res.locals.ecc = { handler: 'not_implemented', contract: 'WORKFLOW', version: 'v1', canonical: false };
+  res.status(501).json({ ok: false, message: 'Not implemented' });
+});
 
 app.use('/api', ownerTransferRouter);
 app.use("/api/entities", entitiesRouter);
@@ -750,7 +844,7 @@ app.get("/api/portfolio/_debug/sql", async (req, res) => {
 });
 
 /** POST /api/owner-transfer/initiate - Initiate owner transfer */
-app.post("/api/owner-transfer/initiate", async (req, res) => {
+app.post("/api/owner-transfer/initiate", supabaseGuard, async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
 
   try {
@@ -772,7 +866,7 @@ app.post("/api/owner-transfer/initiate", async (req, res) => {
 });
 
 /** POST /api/owner-transfer/approve-accounting - Mark approved by accounting */
-app.post("/api/owner-transfer/approve-accounting", async (req, res) => {
+app.post("/api/owner-transfer/approve-accounting", supabaseGuard, async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
 
   try {
@@ -789,7 +883,7 @@ app.post("/api/owner-transfer/approve-accounting", async (req, res) => {
 });
 
 /** POST /api/owner-transfer/authorize - Authorize transfer execution (admin only) */
-app.post("/api/owner-transfer/authorize", async (req, res) => {
+app.post("/api/owner-transfer/authorize", supabaseGuard, async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
 
   try {
@@ -809,7 +903,7 @@ app.post("/api/owner-transfer/authorize", async (req, res) => {
 });
 
 /** POST /api/owner-transfer/execute - Execute transfer with dry-run support */
-app.post("/api/owner-transfer/execute", async (req, res) => {
+app.post("/api/owner-transfer/execute", supabaseGuard, async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
 
   try {
@@ -830,7 +924,7 @@ app.post("/api/owner-transfer/execute", async (req, res) => {
 });
 
 /** GET /api/owner-transfer/:id/report - Download Excel report */
-app.get("/api/owner-transfer/:id/report", async (req, res) => {
+app.get("/api/owner-transfer/:id/report", supabaseGuard, async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
 
   try {
@@ -854,7 +948,7 @@ app.get("/api/owner-transfer/:id/report", async (req, res) => {
 });
 
 /** GET /api/owner-transfer/:id - Get transfer details */
-app.get("/api/owner-transfer/:id", async (req, res) => {
+app.get("/api/owner-transfer/:id", supabaseGuard, async (req, res) => {
   if (!supa.client) return sendErr(res, 500, supa.error || "Supabase not configured");
 
   try {
@@ -872,6 +966,20 @@ app.get("/api/owner-transfer/:id", async (req, res) => {
 });
 
 app.use("/api", (_req, res) => res.status(404).json({ ok: false, message: "Not found" }));
+
+// T2: Global JSON Error Envelope
+app.use((err: any, req: any, res: any, next: any) => {
+  if (res.headersSent) return next(err);
+
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    ok: false,
+    error: err.message || 'Server error',
+    code: err.code || 'ECC_UNHANDLED',
+    route: `${req.method} ${req.path}`
+  });
+});
+
 app.get("/", (_req, res) => res.type("text/plain").send("ECC Dev API running"));
 
 app.listen(PORT, '0.0.0.0', () => {

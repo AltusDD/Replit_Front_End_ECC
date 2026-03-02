@@ -1,15 +1,17 @@
 import { Router } from 'express';
 import { getState } from '../lib/integrationState.js';
 import { setContract } from '../lib/contractHeaders.js';
+import { supabaseGuard } from '../lib/supabaseGuard.js';
 
 const router = Router();
+router.use(supabaseGuard);
 
 function env(name: string, fallback?: string) {
   return (process.env[name] ?? fallback ?? "").trim();
 }
 
-// GET /api/health/sync - Health check endpoint
-router.get('/sync', async (req, res) => {
+// GET /api/control/sync/health - Health check endpoint
+router.get('/', async (req, res, next) => {
   try {
     const enabled = env("AUTO_SYNC_ENABLED", "false").toLowerCase() === "true";
     const intervalMinutes = Math.max(2, Number(env("AUTO_SYNC_INTERVAL_MINUTES", "10")));
@@ -58,7 +60,7 @@ router.get('/sync', async (req, res) => {
     });
   } catch (error) {
     console.error('[sync-health] error:', error);
-    res.status(500).json({ error: 'Failed to get sync health' });
+    next(error);
   }
 });
 

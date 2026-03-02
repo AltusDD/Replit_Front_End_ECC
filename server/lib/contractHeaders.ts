@@ -14,11 +14,19 @@ export function setContract(req: Request, res: Response, canonicalPath: string) 
 
     if (!entry) return;
 
-    res.setHeader('x-ecc-handler', entry.handler);
+    if (!res.locals.ecc) {
+        res.locals.ecc = { handler: 'unhandled', contract: 'SYSTEM', version: 'v1', canonical: null };
+    }
+
+    res.locals.ecc.handler = entry.handler;
 
     if (entry.status !== '410_gone') {
-        res.setHeader('x-ecc-contract', entry.contract_name || 'UNKNOWN');
-        res.setHeader('x-ecc-contract-version', entry.contract_version || 'v1');
-        res.setHeader('x-ecc-route-canonical', String(entry.canonical ?? false));
+        res.locals.ecc.contract = entry.contract_name || 'UNKNOWN';
+        res.locals.ecc.version = entry.contract_version || 'v1';
+        if (res.locals.ecc.canonical === null) {
+            res.locals.ecc.canonical = entry.canonical ?? false;
+        }
+    } else {
+        res.locals.ecc.contract = '410_gone';
     }
 }

@@ -247,6 +247,15 @@ rpc.post('/:functionName', async (req, res) => {
   try {
     const { functionName } = req.params;
     const payload = req.body || {};
+
+    if (!process.env.SUPABASE_URL && !process.env.SUPABASE_REST_URL) {
+      if (!res.locals.ecc) res.locals.ecc = {};
+      res.locals.ecc.handler = 'rpc_guard';
+      res.locals.ecc.contract = 'SYSTEM';
+      res.locals.ecc.canonical = true;
+      return res.status(501).json({ ok: false, error: "supabaseUrl is required" });
+    }
+
     const supabase = getServerClient();
 
     const { data, error } = await supabase.rpc(functionName, payload);

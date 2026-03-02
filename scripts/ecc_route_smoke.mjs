@@ -88,43 +88,59 @@ async function runSmokeTests() {
         try {
             const res = await fetchRoute(route);
 
-            // Allow Mock exceptions
-            const isMockFail = res.status === 500 && res.raw?.includes('fetch failed');
+            // Status assertions constraints
             const isRPCFail = res.status === 400 && res.raw?.includes('RPC not available');
             const isDBFail = res.status === 501 && res.data?.error === 'db_unconfigured_for_this_route';
             const isGuardrail = res.status === 503 && res.data?.error === 'Server misconfigured';
 
+            // Status validations
             if (route.status === '410_gone') {
                 if (res.status !== 410) issues.push(`Expected 410, got ${res.status}`);
-                if (res.headers['x-ecc-handler'] !== '410_gone') issues.push(`Missing x-ecc-handler: 410_gone`);
             } else {
+                let allowed = [...(route.allowed_statuses || [])];
+
+                // Allow 401 for control/admin boundaries
+                if (route.path.startsWith('/api/control/') || route.path.startsWith('/api/admin/')) {
+                    if (!allowed.includes(401)) allowed.push(401);
+                }
+
+                // Allow 501 for RPC endpoints missing Supabase
+                if (route.path.startsWith('/api/rpc/')) {
+                    if (!allowed.includes(501)) allowed.push(501);
+                }
+
                 // Assert Allowed Statuses
-                if (!route.allowed_statuses?.includes(res.status) && !isMockFail && !isRPCFail && !isDBFail && !isGuardrail) {
-                    issues.push(`Status ${res.status} not in allowed [${route.allowed_statuses?.join(',')}] | RAW: ${res.raw?.slice(0, 100)}`);
+                if (!allowed.includes(res.status) && !isRPCFail && !isDBFail && !isGuardrail) {
+                    issues.push(`Status ${res.status} not in allowed [${allowed.join(',')}] | RAW: ${res.raw?.slice(0, 100)}`);
                 }
+            }
 
-                // Assert Signature Headers
-                if (res.headers['x-ecc-handler'] !== route.handler.toLowerCase() && res.headers['x-ecc-handler'] !== route.handler) {
-                    issues.push(`Handler mismatch: ${res.headers['x-ecc-handler']} !== ${route.handler}`);
-                }
-                if (res.headers['x-ecc-contract'] !== route.contract_name) {
-                    issues.push(`Contract mismatch: ${res.headers['x-ecc-contract']} !== ${route.contract_name}`);
-                }
-                if (res.headers['x-ecc-route-canonical'] !== String(route.canonical)) {
-                    issues.push(`Canonical mismatch: ${res.headers['x-ecc-route-canonical']} !== ${route.canonical}`);
-                }
+            // Assert Signature Headers (for all)
+            let expectedHandler = route.status === '410_gone' ? '410_gone' : route.handler;
+            if (res.headers['x-ecc-handler'] !== expectedHandler.toLowerCase() && res.headers['x-ecc-handler'] !== expectedHandler) {
+                issues.push(`Handler mismatch: ${res.headers['x-ecc-handler']} !== ${expectedHandler}`);
+            }
 
-                // Assert Zod Schema against runtime response body (if it's a 2xx status)
-                if (res.status >= 200 && res.status < 300 && res.data) {
-                    const schema = resolveFamily(route.contract_family);
-                    if (schema) {
-                        const parsed = schema.safeParse(res.data);
-                        if (!parsed.success) {
-                            issues.push(`Zod contract violaton -> ${parsed.error.issues[0].message} at ${parsed.error.issues[0].path?.join('.')}`);
-                        }
-                    } else {
-                        issues.push(`No Zod schema defined for family ${route.contract_family}`);
+            let expectedContract = route.status === '410_gone' ? 'SYSTEM' : route.contract_name;
+            if (res.headers['x-ecc-contract'] !== expectedContract) {
+                issues.push(`Contract mismatch: ${res.headers['x-ecc-contract']} !== ${expectedContract}`);
+            }
+
+            let expectedCanonical = route.status === '410_gone' ? 'false' : String(route.canonical);
+            if (res.headers['x-ecc-route-canonical'] !== expectedCanonical) {
+                issues.push(`Canonical mismatch: ${res.headers['x-ecc-route-canonical']} !== ${expectedCanonical}`);
+            }
+
+            // Assert Zod Schema against runtime response body (if it's a 2xx status)
+            if (res.status >= 200 && res.status < 300 && res.data) {
+                const schema = resolveFamily(route.contract_family);
+                if (schema) {
+                    const parsed = schema.safeParse(res.data);
+                    if (!parsed.success) {
+                        issues.push(`Zod contract violaton -> ${parsed.error.issues[0].message} at ${parsed.error.issues[0].path?.join('.')}`);
                     }
+                } else {
+                    issues.push(`No Zod schema defined for family ${route.contract_family}`);
                 }
             }
 

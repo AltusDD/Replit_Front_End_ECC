@@ -2,11 +2,12 @@ import { Router, Request, Response } from 'express';
 import pool from '../lib/db.js';
 import { getDatabaseUrl } from '../lib/env.js';
 import { setContract } from '../lib/contractHeaders.js';
+import { supabaseGuard } from '../lib/supabaseGuard.js';
 
 const router = Router();
 
 // GET /api/owner-transfer/:id - returns { transfer, audit } or 404
-router.get('/owner-transfer/:id', async (req: Request, res: Response) => {
+router.get('/owner-transfer/:id', supabaseGuard, async (req: Request, res: Response) => {
   if (!getDatabaseUrl()) {
     return res.status(501).json({ ok: false, error: 'db_unconfigured_for_this_route', message: 'This route requires a direct Postgres connection' });
   }
@@ -53,7 +54,7 @@ router.get('/owner-transfer/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/owner-transfer/:id/audit - inserts an audit row, returns it
-router.post('/owner-transfer/:id/audit', async (req: Request, res: Response) => {
+router.post('/owner-transfer/:id/audit', supabaseGuard, async (req: Request, res: Response) => {
   if (!getDatabaseUrl()) {
     return res.status(501).json({ ok: false, error: 'db_unconfigured_for_this_route', message: 'This route requires a direct Postgres connection' });
   }

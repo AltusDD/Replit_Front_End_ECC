@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { getServerClient } from '../db.js';
 import { setContract } from '../lib/contractHeaders.js';
+import { supabaseGuard } from '../lib/supabaseGuard.js';
 
 export const entities = Router();
+entities.use(supabaseGuard);
 
 function parseFilters(q: any) {
   const filters: Array<[string, string, any]> = [];

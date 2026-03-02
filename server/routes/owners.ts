@@ -4,23 +4,25 @@ import { sbAdmin } from "../lib/supabaseAdmin";
 export function installOwnerRoutes(app: Express) {
   // live type-ahead (company or first/last)
   app.get("/api/owners/search", async (req, res) => {
-    res.setHeader('x-ecc-handler', '410_gone');
+    if (!res.locals.ecc) res.locals.ecc = {};
+    res.locals.ecc.handler = "410_gone";
+    res.locals.ecc.contract = "SYSTEM";
+    res.locals.ecc.canonical = false;
     res.status(410).json({
       ok: false,
-      error: "deprecated_route",
-      message: "This route has been removed. Use /api/portfolio/owners and filter client-side.",
-      replacement: "/api/portfolio/owners"
+      message: "Gone"
     });
   });
 
   // properties that belong to an owner (for Owner Card & Transfer modal)
   app.get("/api/owners/:id/properties", async (req, res) => {
-    res.setHeader('x-ecc-handler', '410_gone');
+    if (!res.locals.ecc) res.locals.ecc = {};
+    res.locals.ecc.handler = "410_gone";
+    res.locals.ecc.contract = "SYSTEM";
+    res.locals.ecc.canonical = false;
     res.status(410).json({
       ok: false,
-      error: "deprecated_route",
-      message: "This route has been removed. Use /api/portfolio/properties and filter client-side.",
-      replacement: "/api/portfolio/properties"
+      message: "Gone"
     });
   });
 }
