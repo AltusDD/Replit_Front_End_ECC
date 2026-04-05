@@ -29,6 +29,10 @@ export function CardShell({
 }) {
   const [active, setActive] = useState(tabs[0]?.id);
   const activeTab = useMemo(() => tabs.find(t => t.id === active), [tabs, active]);
+  const actionableItems = useMemo(
+    () => (actions ?? []).filter((action) => typeof action.onClick === "function"),
+    [actions],
+  );
 
   const LazyComponent = useMemo(() => {
     if (activeTab?.lazy) {
@@ -56,9 +60,9 @@ export function CardShell({
       {/* Title + actions */}
       <div className="flex items-start justify-between mb-4">
         <h1 className="text-2xl font-semibold">{title}</h1>
-        {actions && actions.length > 0 && (
+        {actionableItems.length > 0 && (
           <div className="flex gap-2">
-            {actions.map((a, idx) => (
+            {actionableItems.map((a, idx) => (
               <button
                 key={idx}
                 data-testid={a.testid ?? `action-${idx}`}
