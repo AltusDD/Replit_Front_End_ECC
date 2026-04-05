@@ -1,17 +1,26 @@
-import {} from '@/lib/ecc-resolvers';
-import React from 'react';
+import FilesTab from "@/features/files/FilesTab";
+import { useIntegrations } from "@/lib/useIntegrations";
 
-let FileButtons: any;
-try { 
-  FileButtons = require('@/components/FileButtons').default; 
-} catch {
-  // FileButtons component not available
-}
+export default function Files({ data }: { data?: any }) {
+  const integrations = useIntegrations();
+  const propertyId = data?.property?.id;
 
-export default function Files() {
+  if (!propertyId) {
+    return (
+      <div className="space-y-3" data-testid="tab-files">
+        <div className="text-sm opacity-70">Property file context unavailable.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3" data-testid="tab-files">
-      <div className="text-sm opacity-70">No files</div>
+      <FilesTab
+        doorloop={Boolean(integrations?.doorloop)}
+        dropbox={Boolean(integrations?.dropbox)}
+        entity="properties"
+        refId={propertyId}
+      />
     </div>
   );
 }
