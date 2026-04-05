@@ -56,8 +56,6 @@ export default function Properties() {
         title="Properties" 
         value={q} 
         onChange={setQ} 
-        createLabel="Add Property" 
-        onCreate={() => alert("Create Property")} 
       />
       <DataTable 
         columns={columns} 
