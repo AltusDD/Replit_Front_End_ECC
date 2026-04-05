@@ -78,20 +78,6 @@ export default function Hero({ data }: HeroProps) {
         <button 
           className="ecc-object" 
           style={{ padding: "8px 16px", fontSize: "14px" }}
-          data-testid="button-edit"
-        >
-          Edit
-        </button>
-        <button 
-          className="ecc-object" 
-          style={{ padding: "8px 16px", fontSize: "14px" }}
-          data-testid="button-export-pdf"
-        >
-          Export PDF
-        </button>
-        <button 
-          className="ecc-object" 
-          style={{ padding: "8px 16px", fontSize: "14px" }}
           data-testid="button-new-work-order"
           disabled={!(window as any).__FEATURES__?.workOrders || woBusy}
           title={!(window as any).__FEATURES__?.workOrders ? 'Coming soon' : undefined}
