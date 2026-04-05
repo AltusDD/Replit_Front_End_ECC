@@ -18,7 +18,6 @@ async function apiCall(url: string, options: RequestInit = {}) {
 
 export default function AdminGeocodeManagementPage() {
   const [stats, setStats] = useState<GeocodeStats | null>(null);
-  const [batchSize, setBatchSize] = useState<number>(10);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string>('');
 
@@ -44,36 +43,6 @@ export default function AdminGeocodeManagementPage() {
       }
     } catch (e: any) {
       setMessage(`Failed to load stats: ${e.message}`);
-    }
-  }
-
-  async function updateBatchSize() {
-    setLoading(true);
-    setMessage('');
-    try {
-      // Note: In a full implementation, we'd need an admin API to update integration_state
-      // For now, this is a placeholder that shows the intended functionality
-      setMessage(`Batch size would be updated to ${batchSize} (admin API needed)`);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-    } catch (e: any) {
-      setMessage(`Failed to update batch size: ${e.message}`);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function triggerManualRun() {
-    setLoading(true);
-    setMessage('');
-    try {
-      // Note: In a full implementation, we'd need an admin API to trigger manual geocode runs
-      setMessage('Manual geocode run would be triggered (admin API needed)');
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-      await loadStats();
-    } catch (e: any) {
-      setMessage(`Failed to trigger manual run: ${e.message}`);
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -125,40 +94,18 @@ export default function AdminGeocodeManagementPage() {
         {/* Controls Card */}
         <div className="card bg-neutral-900 border border-neutral-800">
           <div className="card-header px-4 py-3 border-b border-neutral-800">
-            <h2 className="text-lg font-semibold">Geocode Controls</h2>
+            <h2 className="text-lg font-semibold">Current Posture</h2>
           </div>
           <div className="card-content p-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-2">
-                Batch Size (properties per tick)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={batchSize}
-                  onChange={(e) => setBatchSize(Number(e.target.value))}
-                  min={1}
-                  max={100}
-                  className="flex-1 px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-neutral-200"
-                />
-                <button
-                  onClick={updateBatchSize}
-                  disabled={loading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                >
-                  Update
-                </button>
+            <div className="rounded border border-neutral-700 bg-neutral-950 p-3">
+              <div className="text-xs uppercase tracking-[0.12em] text-neutral-500">Route State</div>
+              <div className="mt-2 text-sm text-neutral-200">
+                This page is currently a read-only audit surface.
               </div>
-            </div>
-
-            <div>
-              <button
-                onClick={triggerManualRun}
-                disabled={loading}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-              >
-                {loading ? 'Processing...' : 'Trigger Manual Geocode Run'}
-              </button>
+              <p className="mt-2 text-xs leading-5 text-neutral-400">
+                Manual batch-size updates and manual run triggers are deferred until a real admin mutation API is mounted.
+                Until then, this screen only reports the latest observed geocode activity from audit history.
+              </p>
             </div>
 
             <div>
@@ -194,6 +141,7 @@ export default function AdminGeocodeManagementPage() {
           <p>• Uses Google Maps API with rate limiting (2 requests/second)</p>
           <p>• Results are cached to avoid duplicate API calls</p>
           <p>• All operations are logged to the audit trail</p>
+          <p>• Manual override controls are intentionally hidden until a real admin write surface exists</p>
         </div>
       </div>
     </div>
