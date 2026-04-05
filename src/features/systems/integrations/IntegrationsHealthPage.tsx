@@ -7,7 +7,7 @@ import LastRunTable from "./components/LastRunTable";
 import ErrorPane from "./components/ErrorPane";
 import LiveLogs from "./components/LiveLogs";
 import DLQPanel from "./components/DLQPanel";
-import { Clock, Settings, Database, MessageSquare, Shield, AlertTriangle, Send } from "lucide-react";
+import { Clock, Settings, Database, MessageSquare, Shield, AlertTriangle, Send, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Define types for API responses
