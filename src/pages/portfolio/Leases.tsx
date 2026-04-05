@@ -1,34 +1,33 @@
-import * as React from "react";
+import React, { useMemo, useState } from "react";
+import FilterBar from "../../components/FilterBar";
 import DataTable, { Column } from "../../components/DataTable";
-import { useCollection } from "../../features/data/useCollection";
-import { money, shortDate } from "../../utils/format";
-import { indexBy } from "../../utils/dict";
+import { useAllLeases } from "../../lib/ecc-resolvers";
+import { BLANK, formatCurrencyFromCents } from "@/lib/format";
 
 type Lease = {
   id: string | number;
-  property_id?: string | number;
-  unit_id?: string | number;
-  primary_tenant_id?: string | number;
-  tenant_id?: string | number;
+  property_name?: string;
+  propertyName?: string;
+  unit_label?: string;
+  unitLabel?: string;
+  primary_tenant_name?: string;
+  tenant_name?: string;
+  tenant_names?: string[];
+  tenants?: string[];
   rent?: number;
   rent_cents?: number;
   start_date?: string;
+  start?: string;
   end_date?: string;
+  end?: string;
   status?: string;
 };
 
-type Property = { id: string | number; name?: string };
-type Tenant = {
-  id: string | number;
-  display_name?: string;
-  full_name?: string;
-  first_name?: string;
-  last_name?: string;
-};
-
 type Row = {
+  id: string;
   tenants: string;
   property: string;
+  unit: string;
   rent: number;
   start: string;
   end: string;
@@ -36,53 +35,54 @@ type Row = {
 };
 
 export default function LeasesPage() {
-  // Pull raw data
-  const leases = useCollection<Lease>("leases");
-  const props = useCollection<Property>("properties");
-  const tenants = useCollection<Tenant>("tenants");
+  const [q, setQ] = useState("");
+  const { data, isLoading, isFetching, error } = useAllLeases();
 
-  // Fast lookup maps
-  const pById = React.useMemo(() => indexBy(props.data, "id"), [props.data]);
-  const tById = React.useMemo(() => indexBy(tenants.data, "id"), [tenants.data]);
+  const rows: Row[] = useMemo(() => {
+    if (!data) return [];
 
-  // Normalize rows the table needs (defensive against schema drift)
-  const rows: Row[] = React.useMemo(() => {
-    return leases.data.map((l) => {
-      const prop = (pById as any)[l.property_id]?.name || "Unknown property";
-      const t1 = (tById as any)[l.primary_tenant_id];
-      const t2 = (tById as any)[l.tenant_id];
-
-      const tn =
-        t1?.display_name ||
-        t1?.full_name ||
-        [t1?.first_name, t1?.last_name].filter(Boolean).join(" ") ||
-        t2?.display_name ||
-        t2?.full_name ||
-        [t2?.first_name, t2?.last_name].filter(Boolean).join(" ") ||
-        "No tenant assigned";
+    const mapped = data.map((lease: Lease) => {
+      const tenantList =
+        Array.isArray(lease.tenant_names) && lease.tenant_names.length > 0
+          ? lease.tenant_names
+          : Array.isArray(lease.tenants) && lease.tenants.length > 0
+            ? lease.tenants
+            : [lease.primary_tenant_name, lease.tenant_name].filter(Boolean);
 
       const rent =
-        typeof l.rent === "number"
-          ? l.rent
-          : typeof l.rent_cents === "number"
-          ? Math.round(l.rent_cents) / 100
-          : 0;
+        typeof lease.rent === "number"
+          ? lease.rent
+          : typeof lease.rent_cents === "number"
+            ? Math.round(lease.rent_cents) / 100
+            : 0;
 
       return {
-        tenants: tn,
-        property: prop,
+        id: String(lease.id),
+        tenants: tenantList.join(", ") || "No tenant assigned",
+        property: lease.property_name ?? lease.propertyName ?? BLANK,
+        unit: lease.unit_label ?? lease.unitLabel ?? BLANK,
         rent,
-        start: l.start_date || "",
-        end: l.end_date || "",
-        status: String(l.status || "").toLowerCase() || "unknown",
+        start: lease.start_date ?? lease.start ?? "",
+        end: lease.end_date ?? lease.end ?? "",
+        status: lease.status ?? "unknown",
       };
     });
-  }, [leases.data, pById, tById]);
+
+    const search = q.trim().toLowerCase();
+    if (!search) return mapped;
+
+    return mapped.filter((row) =>
+      row.tenants.toLowerCase().includes(search) ||
+      row.property.toLowerCase().includes(search) ||
+      row.unit.toLowerCase().includes(search) ||
+      row.status.toLowerCase().includes(search),
+    );
+  }, [data, q]);
 
   // KPIs
   const total = rows.length;
-  const active = rows.filter((r) => r.status === "active");
-  const ended = rows.filter((r) => r.status === "ended");
+  const active = rows.filter((r) => r.status.toLowerCase() === "active");
+  const ended = rows.filter((r) => r.status.toLowerCase() === "ended");
   const mrr = active.reduce((s, r) => s + (Number.isFinite(Number(r.rent)) ? Number(r.rent) : 0), 0);
   const avg = rows.length
     ? rows.reduce((s, r) => s + (Number.isFinite(Number(r.rent)) ? Number(r.rent) : 0), 0) / rows.length
@@ -92,20 +92,27 @@ export default function LeasesPage() {
   const columns: Column<Row>[] = [
     { key: "tenants", header: "TENANT(S)" },
     { key: "property", header: "PROPERTY" },
+    { key: "unit", header: "UNIT", width: 110 },
     {
       key: "rent",
       header: "RENT",
       className: "is-right",
-      render: (r) => money(r.rent),
+      render: (r) => formatCurrencyFromCents(Math.round(r.rent * 100)),
       sort: (a, b) => (Number.isFinite(Number(a.rent)) ? Number(a.rent) : 0) - (Number.isFinite(Number(b.rent)) ? Number(b.rent) : 0),
     },
-    { key: "start", header: "START", render: (r) => shortDate(r.start) },
-    { key: "end", header: "END", render: (r) => shortDate(r.end) },
+    { key: "start", header: "START" },
+    { key: "end", header: "END" },
     { key: "status", header: "STATUS" },
   ];
 
   return (
-    <div>
+    <section className="ecc-page">
+      <FilterBar
+        title="Leases"
+        value={q}
+        onChange={setQ}
+        placeholder="Search tenant / property / unit / status"
+      />
       {/* KPI strip (styled by .ecc-kpis in table.css) */}
       <div className="ecc-kpis">
         <div className="ecc-kpi">
@@ -121,13 +128,24 @@ export default function LeasesPage() {
           <div className="ecc-kpi-l">ENDED</div>
         </div>
         <div className="ecc-kpi">
-          <div className="ecc-kpi-n">{money(mrr)}</div>
+          <div className="ecc-kpi-n">{formatCurrencyFromCents(Math.round(mrr * 100))}</div>
           <div className="ecc-kpi-l">MRR</div>
+        </div>
+        <div className="ecc-kpi">
+          <div className="ecc-kpi-n">{formatCurrencyFromCents(Math.round(avg * 100))}</div>
+          <div className="ecc-kpi-l">AVG RENT</div>
         </div>
       </div>
 
-      <DataTable rows={rows} columns={columns} />
-    </div>
+      <DataTable
+        rows={rows}
+        columns={columns}
+        loading={isLoading || (isFetching && rows.length === 0)}
+        error={error ? String(error) : undefined}
+        rowHref={(r) => `/card/lease/${r.id}`}
+        getRowId={(r) => r.id}
+      />
+    </section>
   );
 }
 
