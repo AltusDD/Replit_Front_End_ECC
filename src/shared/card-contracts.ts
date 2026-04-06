@@ -14,7 +14,11 @@ export const PropertyCard = z.object({
     name: z.string().optional().default(""),
     type: z.string().default("UNKNOWN"),
     address: Address,
-  }),
+  }).passthrough(),
+  owner: z.object({
+    id: z.number(),
+    display_name: z.string().default(""),
+  }).passthrough().nullable().default(null),
   kpis: z.object({
     units: z.number().default(0),
     activeLeases: z.number().default(0),
