@@ -18,6 +18,11 @@ export default function LeaseCardPage() {
   const tenant = data?.tenant;
   const leaseLabel = lease?.doorloop_id ? `Lease ${lease.doorloop_id}` : `Lease #${idNum}`;
   const unitLabel = unit?.unit_label ?? unit?.unit_number ?? "Not available";
+  const leaseStatus = lease?.status ?? "Not available";
+  const leaseStart = lease?.start_date ?? "Not available";
+  const leaseEnd = lease?.end_date ?? "Not available";
+  const tenantLabel =
+    tenant?.display_name ?? tenant?.name ?? (tenant?.id ? `Tenant #${tenant.id}` : "Not available");
 
   const breadcrumbs = ["Portfolio", "Leases", leaseLabel];
   const actions = [
@@ -35,13 +40,13 @@ export default function LeaseCardPage() {
   const rightRail = (
     <div className="space-y-4">
       <RightRailPanel title="Lease Info" data-testid="rr-lease">
-        <div className="text-sm text-neutral-300">Status: {lease?.status}</div>
-        <div className="text-sm text-neutral-300">Start: {lease?.start_date}</div>
-        <div className="text-sm text-neutral-300">End: {lease?.end_date}</div>
+        <div className="text-sm text-neutral-300">Status: {leaseStatus}</div>
+        <div className="text-sm text-neutral-300">Start: {leaseStart}</div>
+        <div className="text-sm text-neutral-300">End: {leaseEnd}</div>
       </RightRailPanel>
       <RightRailPanel title="Related" data-testid="rr-related">
         <div className="text-sm text-neutral-300">Unit: {unitLabel}</div>
-        <div className="text-sm text-neutral-300">Tenant: {tenant?.display_name}</div>
+        <div className="text-sm text-neutral-300">Tenant: {tenantLabel}</div>
       </RightRailPanel>
     </div>
   );
