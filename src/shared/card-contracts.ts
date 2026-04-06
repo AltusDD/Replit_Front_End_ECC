@@ -66,7 +66,7 @@ export const TenantCard = z.object({
   tenant: z.object({
     id: z.number(),
     display_name: z.string().default(""),
-  }),
-  leases: z.array(z.object({ id: z.number(), status: z.string().default("UNKNOWN") })).default([]),
-  activeLease: z.object({ id: z.number(), status: z.string().default("UNKNOWN") }).nullable().default(null),
+  }).passthrough(),
+  leases: z.array(z.object({ id: z.number(), status: z.string().default("UNKNOWN") }).passthrough()).default([]),
+  activeLease: z.object({ id: z.number(), status: z.string().default("UNKNOWN") }).passthrough().nullable().default(null),
 });
