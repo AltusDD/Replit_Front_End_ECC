@@ -16,7 +16,9 @@ export default function UnitCardPage() {
   const unit = data?.unit;
   const property = data?.property;
   const lease = data?.lease;
-  const unitLabel = unit?.unit_label ?? unit?.unit_number ?? `Unit #${idNum}`;
+  const unitLabelValue = unit?.unit_label?.trim();
+  const unitNumberValue = unit?.unit_number?.trim();
+  const unitLabel = unitLabelValue || unitNumberValue || `Unit #${idNum}`;
 
   const breadcrumbs = ["Portfolio", "Units", unitLabel];
   const actions = [
