@@ -42,10 +42,10 @@ export const LeaseCard = z.object({
     id: z.number(),
     status: z.string().default("UNKNOWN"),
     rent_cents: z.number().nullable().default(null),
-  }),
-  unit: z.object({ id: z.number() }).nullable().default(null),
-  tenant: z.object({ id: z.number(), display_name: z.string().default("") }).nullable().default(null),
-  property: z.object({ id: z.number() }).nullable().default(null),
+  }).passthrough(),
+  unit: z.object({ id: z.number() }).passthrough().nullable().default(null),
+  tenant: z.object({ id: z.number(), display_name: z.string().default("") }).passthrough().nullable().default(null),
+  property: z.object({ id: z.number() }).passthrough().nullable().default(null),
 });
 
 export const OwnerCard = z.object({
