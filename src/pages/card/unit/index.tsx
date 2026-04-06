@@ -16,8 +16,9 @@ export default function UnitCardPage() {
   const unit = data?.unit;
   const property = data?.property;
   const lease = data?.lease;
+  const unitLabel = unit?.unit_label ?? unit?.unit_number ?? `Unit #${idNum}`;
 
-  const breadcrumbs = ["Portfolio", "Units", unit?.unit_number ?? `Unit #${idNum}`];
+  const breadcrumbs = ["Portfolio", "Units", unitLabel];
   const actions = [
     { label: "Export PDF", testid: "action-export-pdf" },
     { label: "Edit", testid: "action-edit" },
@@ -39,6 +40,7 @@ export default function UnitCardPage() {
       </RightRailPanel>
       <RightRailPanel title="Property" data-testid="rr-property">
         <div className="text-sm text-neutral-300">{property?.name}</div>
+        <div className="text-sm text-neutral-300">Unit: {unitLabel}</div>
       </RightRailPanel>
     </div>
   );
@@ -46,7 +48,7 @@ export default function UnitCardPage() {
   return (
     <ErrorBoundary>
       <CardShell
-        title={unit?.unit_number ?? `Unit #${idNum}`}
+        title={unitLabel}
         hero={<HeroBlock data={data} isLoading={q.isLoading} />}
         tabs={tabs}
         breadcrumbs={breadcrumbs}
