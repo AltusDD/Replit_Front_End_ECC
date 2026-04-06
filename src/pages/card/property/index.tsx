@@ -19,9 +19,11 @@ export default function PropertyCardPage() {
     units: data?.kpis?.units !== undefined ? data.kpis.units : 0, 
     activeLeases: data?.kpis?.activeLeases !== undefined ? data.kpis.activeLeases : 0 
   };
+  const propertyName = property?.name?.trim();
+  const propertyAddressLine = property?.address?.line1?.trim();
   const propertyLabel =
-    property?.name ??
-    property?.address?.line1 ??
+    propertyName ||
+    propertyAddressLine ||
     (property?.doorloop_id ? `Property ${property.doorloop_id}` : `Property #${idNum}`);
 
   const breadcrumbs = ["Portfolio", "Properties", propertyLabel];
