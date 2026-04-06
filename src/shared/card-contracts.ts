@@ -48,8 +48,14 @@ export const OwnerCard = z.object({
   owner: z.object({
     id: z.number(),
     display_name: z.string().default(""),
-  }),
-  properties: z.array(z.object({ id: z.number(), name: z.string().default("") })).default([]),
+  }).passthrough(),
+  properties: z.array(z.object({ id: z.number(), name: z.string().default("") }).passthrough()).default([]),
+  kpis: z.object({
+    units: z.number().default(0),
+    activeLeases: z.number().default(0),
+    occupancyPct: z.number().default(0),
+    avgRentCents: z.number().nullable().default(null),
+  }).optional(),
 });
 
 export const TenantCard = z.object({

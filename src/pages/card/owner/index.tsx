@@ -13,8 +13,17 @@ export default function OwnerCardPage() {
   if (!Number.isFinite(idNum)) return <div data-testid="owner-invalid">Invalid owner id</div>;
 
   const { data } = q;
-  const owner = data?.owner;
+  const owner = data?.owner
+    ? {
+        ...data.owner,
+        portfolio_units: data.owner.portfolio_units ?? data.kpis?.units,
+        active_leases: data.owner.active_leases ?? data.kpis?.activeLeases,
+        occupancy_pct: data.owner.occupancy_pct ?? data.kpis?.occupancyPct,
+        avg_rent_cents: data.owner.avg_rent_cents ?? data.kpis?.avgRentCents,
+      }
+    : data?.owner;
   const properties = data?.properties || [];
+  const normalizedData = data ? { ...data, owner } : data;
 
   const breadcrumbs = ["Portfolio", "Owners", owner?.display_name ?? `Owner #${idNum}`];
   const actions = [
@@ -23,10 +32,10 @@ export default function OwnerCardPage() {
   ];
 
   const tabs = [
-    { id: "overview", title: "Overview", element: <Overview data={data} />, testid: "tab-overview" },
-    { id: "financials", title: "Financials", lazy: () => import("./Financials"), props: { data }, testid: "tab-financials" },
-    { id: "legal", title: "Legal", lazy: () => import("./Legal"), props: { data }, testid: "tab-legal" },
-    { id: "files", title: "Files", lazy: () => import("./Files"), props: { data }, testid: "tab-files" },
+    { id: "overview", title: "Overview", element: <Overview data={normalizedData} />, testid: "tab-overview" },
+    { id: "financials", title: "Financials", lazy: () => import("./Financials"), props: { data: normalizedData }, testid: "tab-financials" },
+    { id: "legal", title: "Legal", lazy: () => import("./Legal"), props: { data: normalizedData }, testid: "tab-legal" },
+    { id: "files", title: "Files", lazy: () => import("./Files"), props: { data: normalizedData }, testid: "tab-files" },
   ];
 
   const rightRail = (
@@ -46,7 +55,7 @@ export default function OwnerCardPage() {
     <ErrorBoundary>
       <CardShell
         title={owner?.display_name ?? `Owner #${idNum}`}
-        hero={<HeroBlock data={data} isLoading={q.isLoading} />}
+        hero={<HeroBlock data={normalizedData} isLoading={q.isLoading} />}
         tabs={tabs}
         breadcrumbs={breadcrumbs}
         actions={actions}
