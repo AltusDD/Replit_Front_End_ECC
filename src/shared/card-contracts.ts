@@ -32,9 +32,9 @@ export const UnitCard = z.object({
     id: z.number(),
     unit_label: z.string().optional().default(""),
     status: z.string().optional().default("UNKNOWN"),
-  }),
-  property: z.object({ id: z.number() }).nullable().default(null),
-  lease: z.object({ id: z.number(), status: z.string().default("UNKNOWN") }).nullable().default(null),
+  }).passthrough(),
+  property: z.object({ id: z.number() }).passthrough().nullable().default(null),
+  lease: z.object({ id: z.number(), status: z.string().default("UNKNOWN") }).passthrough().nullable().default(null),
 });
 
 export const LeaseCard = z.object({
