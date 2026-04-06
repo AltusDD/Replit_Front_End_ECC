@@ -14,8 +14,8 @@ export default function TenantCardPage() {
 
   const { data } = q;
   const tenant = data?.tenant;
-  const lease = data?.lease;
-  const unit = data?.unit;
+  const lease = data?.activeLease ?? null;
+  const normalizedData = data ? { ...data, lease } : data;
 
   const breadcrumbs = ["Portfolio", "Tenants", tenant?.display_name ?? `Tenant #${idNum}`];
   const actions = [
@@ -25,9 +25,9 @@ export default function TenantCardPage() {
 
   const tabs = [
     { id: "overview", title: "Overview", element: <Overview tenant={tenant} activeLease={lease || null} />, testid: "tab-overview" },
-    { id: "financials", title: "Financials", lazy: () => import("./Financials"), props: { data }, testid: "tab-financials" },
-    { id: "legal", title: "Legal", lazy: () => import("./Legal"), props: { data }, testid: "tab-legal" },
-    { id: "files", title: "Files", lazy: () => import("./Files"), props: { data }, testid: "tab-files" },
+    { id: "financials", title: "Financials", lazy: () => import("./Financials"), props: { data: normalizedData }, testid: "tab-financials" },
+    { id: "legal", title: "Legal", lazy: () => import("./Legal"), props: { data: normalizedData }, testid: "tab-legal" },
+    { id: "files", title: "Files", lazy: () => import("./Files"), props: { data: normalizedData }, testid: "tab-files" },
   ];
 
   const rightRail = (
@@ -37,8 +37,8 @@ export default function TenantCardPage() {
         <div className="text-sm text-neutral-300">Phone: {tenant?.phone}</div>
       </RightRailPanel>
       <RightRailPanel title="Current Lease" data-testid="rr-lease">
-        <div className="text-sm text-neutral-300">Unit: {unit?.unit_number}</div>
-        <div className="text-sm text-neutral-300">Status: {lease?.status}</div>
+        <div className="text-sm text-neutral-300">Lease: {lease?.doorloop_id ?? lease?.id ?? "No active lease"}</div>
+        <div className="text-sm text-neutral-300">Status: {lease?.status ?? "Not available"}</div>
       </RightRailPanel>
     </div>
   );
