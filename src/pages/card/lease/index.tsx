@@ -16,8 +16,10 @@ export default function LeaseCardPage() {
   const lease = data?.lease;
   const unit = data?.unit;
   const tenant = data?.tenant;
+  const leaseLabel = lease?.doorloop_id ? `Lease ${lease.doorloop_id}` : `Lease #${idNum}`;
+  const unitLabel = unit?.unit_label ?? unit?.unit_number ?? "Not available";
 
-  const breadcrumbs = ["Portfolio", "Leases", `Lease #${idNum}`];
+  const breadcrumbs = ["Portfolio", "Leases", leaseLabel];
   const actions = [
     { label: "Export PDF", testid: "action-export-pdf" },
     { label: "Edit", testid: "action-edit" },
@@ -38,7 +40,7 @@ export default function LeaseCardPage() {
         <div className="text-sm text-neutral-300">End: {lease?.end_date}</div>
       </RightRailPanel>
       <RightRailPanel title="Related" data-testid="rr-related">
-        <div className="text-sm text-neutral-300">Unit: {unit?.unit_number}</div>
+        <div className="text-sm text-neutral-300">Unit: {unitLabel}</div>
         <div className="text-sm text-neutral-300">Tenant: {tenant?.display_name}</div>
       </RightRailPanel>
     </div>
@@ -47,7 +49,7 @@ export default function LeaseCardPage() {
   return (
     <ErrorBoundary>
       <CardShell
-        title={`Lease #${idNum}`}
+        title={leaseLabel}
         hero={<HeroBlock data={data} isLoading={q.isLoading} />}
         tabs={tabs}
         breadcrumbs={breadcrumbs}
