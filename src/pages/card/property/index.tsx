@@ -19,8 +19,12 @@ export default function PropertyCardPage() {
     units: data?.kpis?.units !== undefined ? data.kpis.units : 0, 
     activeLeases: data?.kpis?.activeLeases !== undefined ? data.kpis.activeLeases : 0 
   };
+  const propertyLabel =
+    property?.name ??
+    property?.address?.line1 ??
+    (property?.doorloop_id ? `Property ${property.doorloop_id}` : `Property #${idNum}`);
 
-  const breadcrumbs = ["Portfolio", "Properties", property?.name ?? `Property #${idNum}`];
+  const breadcrumbs = ["Portfolio", "Properties", propertyLabel];
   const actions = [
     { label: "Export PDF", testid: "action-export-pdf" },
     { label: "Edit", testid: "action-edit" },
@@ -48,7 +52,7 @@ export default function PropertyCardPage() {
   return (
     <ErrorBoundary>
       <CardShell
-        title={property?.name ?? `Property #${idNum}`}
+        title={propertyLabel}
         hero={<HeroBlock data={data} isLoading={q.isLoading} />}
         tabs={tabs}
         breadcrumbs={breadcrumbs}
