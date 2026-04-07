@@ -16,8 +16,10 @@ export default function TenantCardPage() {
   const tenant = data?.tenant;
   const lease = data?.activeLease ?? null;
   const normalizedData = data ? { ...data, lease } : data;
+  const tenantName = tenant?.display_name?.trim();
+  const tenantLabel = tenantName || `Tenant #${idNum}`;
 
-  const breadcrumbs = ["Portfolio", "Tenants", tenant?.display_name ?? `Tenant #${idNum}`];
+  const breadcrumbs = ["Portfolio", "Tenants", tenantLabel];
   const actions = [
     { label: "Export PDF", testid: "action-export-pdf" },
     { label: "Edit", testid: "action-edit" },
@@ -46,7 +48,7 @@ export default function TenantCardPage() {
   return (
     <ErrorBoundary>
       <CardShell
-        title={tenant?.display_name ?? `Tenant #${idNum}`}
+        title={tenantLabel}
         hero={<HeroBlock data={data} isLoading={q.isLoading} />}
         tabs={tabs}
         breadcrumbs={breadcrumbs}
