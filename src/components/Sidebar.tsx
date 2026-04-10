@@ -27,30 +27,10 @@ type IconName =
   | "Building2" | "Wrench" | "Cpu" | "Link2" | "ChartNoAxesColumn" | "FileSpreadsheet" | "Shuffle";
 
 type NavChild = { title: string; path: string; icon?: IconName };
-type NavParent = { title: string; icon: IconName; path?: string; children?: NavChild[]; disabled?: boolean };
-
-const LIVE_ROUTES = new Set([
-  "/dashboard",
-  "/data",
-  "/portfolio/properties",
-  "/portfolio/units",
-  "/portfolio/leases",
-  "/portfolio/tenants",
-  "/portfolio/owners",
-  "/owners/transfer",
-  "/reports/create",
-  "/reports/saved",
-  "/reports/templates",
-  "/admin/sync",
-  "/admin/geocode",
-  "/admin/transfers",
-  "/systems/integrations",
-  "/owners/transfer/detail",
-]);
+type NavParent = { title: string; icon: IconName; path?: string; children?: NavChild[] };
 
 const NAV: NavParent[] = [
   { title: "Dashboard", icon: "LayoutDashboard", path: "/dashboard" },
-  { title: "Data Hub", icon: "Database", path: "/data" },
   {
     title: "Portfolio V3", icon: "Boxes",
     children: [
@@ -65,27 +45,22 @@ const NAV: NavParent[] = [
   {
     title: "Accounting", icon: "FileText",
     children: [ { title: "Overview", path: "/ops/accounting/overview", icon: "ClipboardList" } ],
-    disabled: true,
   },
   {
     title: "AI Analytics", icon: "Shield",
     children: [ { title: "Risk Summary", path: "/ops/ai/risk-summary", icon: "Shield" } ],
-    disabled: true,
   },
   {
     title: "Legal Tracker", icon: "Scale",
     children: [ { title: "Case Manager", path: "/ops/legal/case-manager", icon: "ClipboardList" } ],
-    disabled: true,
   },
   {
     title: "Communication", icon: "MessageSquare",
     children: [ { title: "Queue", path: "/ops/comms/queue", icon: "MessageSquare" } ],
-    disabled: true,
   },
   {
     title: "Construction & Repair", icon: "Hammer",
     children: [ { title: "Work Orders", path: "/ops/maintenance/work-orders", icon: "Hammer" } ],
-    disabled: true,
   },
   { 
     title: "Reports", 
@@ -96,27 +71,25 @@ const NAV: NavParent[] = [
       { title: "Templates", path: "/reports/templates", icon: "FileText" },
     ]
   },
-  { title: "Growth", icon: "PieChart", children: [{ title: "Marketing", path: "/growth/marketing", icon: "PieChart" }], disabled: true },
+  { title: "Growth", icon: "PieChart", children: [{ title: "Marketing", path: "/growth/marketing", icon: "PieChart" }] },
   {
     title: "Systems", icon: "Settings",
     children: [ 
+      { title: "Settings", path: "/system/settings", icon: "Settings" },
       { title: "Integrations", path: "/systems/integrations", icon: "Link2" },
     ],
   },
   {
     title: "Data Management", icon: "Database",
     children: [ { title: "Sync Audit", path: "/data/sync-audit", icon: "ClipboardList" } ],
-    disabled: true,
   },
   {
     title: "Investor Portal", icon: "PieChart",
     children: [ { title: "Dashboard", path: "/investor/dashboard", icon: "LayoutDashboard" } ],
-    disabled: true,
   },
   {
     title: "Integrations", icon: "Link2",
     children: [ { title: "Dropbox Files", path: "/integrations/dropbox", icon: "FolderOpen" } ],
-    disabled: true,
   },
 ];
 
@@ -160,26 +133,11 @@ export default function Sidebar() {
   const [location] = useLocation();
   const { collapsed, setCollapsed } = useCollapsed();
   const [expandedTitle, setExpandedTitle] = useState<string | null>(null);
-  const liveNav = useMemo(
-    () =>
-      NAV.map((item) => {
-        const liveChildren = item.children?.filter((child) => LIVE_ROUTES.has(child.path)) ?? [];
-        return {
-          ...item,
-          path: item.path && LIVE_ROUTES.has(item.path) ? item.path : undefined,
-          children: liveChildren,
-          disabled: item.disabled || (!item.path && liveChildren.length === 0),
-        };
-      }),
-    [],
-  );
 
   useEffect(() => {
-    const activeParent = liveNav.find(
-      (p) => p.children?.some((c) => location.startsWith(c.path)) || (p.path && location.startsWith(p.path)),
-    );
+    const activeParent = NAV.find(p => p.children?.some(c => location.startsWith(c.path)) || (p.path && location.startsWith(p.path)));
     setExpandedTitle(activeParent?.title || null);
-  }, [liveNav, location]);
+  }, [location]);
 
   const [flyOpen, setFlyOpen] = useState(false);
   const [flyTitle, setFlyTitle] = useState("");
@@ -255,20 +213,19 @@ export default function Sidebar() {
         </div>
 
         <nav className="ecc-scroll" role="list">
-          {liveNav.map((p) => {
+          {NAV.map((p) => {
             const ParentIcon = iconOf(p.icon);
             const hasKids = !!p.children?.length;
             const isExpanded = expandedTitle === p.title;
             const parentActive = isActive(p.path) || (hasKids && p.children!.some((c) => isActive(c.path)));
             const rowRef = useRef<HTMLDivElement | null>(null);
-            const isDisabled = p.disabled;
 
             const rowContent = (
               <div
                 className="ecc-row-inner"
                 onMouseEnter={() => {
                   hoverParent.current = true;
-                  if (collapsed && hasKids && !isDisabled && rowRef.current) scheduleOpen(p, rowRef.current.getBoundingClientRect());
+                  if (collapsed && hasKids && rowRef.current) scheduleOpen(p, rowRef.current.getBoundingClientRect());
                 }}
                 onMouseLeave={() => {
                   hoverParent.current = false;
@@ -279,11 +236,6 @@ export default function Sidebar() {
                 {!collapsed && (
                   <>
                     <span className="ecc-label">{p.title}</span>
-                    {isDisabled && (
-                      <span className="ml-auto rounded border border-[#8b7340] bg-[#3b3425] px-1.5 py-0.5 text-[8px] uppercase tracking-[0.08em] text-[#f0e2bd]">
-                        Soon
-                      </span>
-                    )}
                     {hasKids && <div className="ecc-caret">{isExpanded ? <Icons.ChevronDown size={16} /> : <Icons.ChevronRight size={16} />}</div>}
                   </>
                 )}
@@ -291,7 +243,7 @@ export default function Sidebar() {
             );
 
             // If it's a direct link with no children, the whole row is a Link.
-            if (p.path && !hasKids && !isDisabled) {
+            if (p.path && !hasKids) {
               return (
                 <div key={p.title} ref={rowRef}>
                   <Link href={p.path} className={`ecc-row ${parentActive ? "is-active" : ""}`}>
@@ -303,23 +255,15 @@ export default function Sidebar() {
 
             // If it has children, it's a div that toggles them.
             return (
-              <div
-                key={p.title}
-                ref={rowRef}
-                className={`ecc-row ${parentActive ? "is-active" : ""} ${isDisabled ? "opacity-60" : ""}`}
-                aria-disabled={isDisabled}
-              >
+              <div key={p.title} ref={rowRef} className={`ecc-row ${parentActive ? "is-active" : ""}`}>
                 <div
                     className="ecc-row-clickable"
-                    onClick={() => {
-                      if (isDisabled || !hasKids) return;
-                      setExpandedTitle(isExpanded ? null : p.title);
-                    }}
+                    onClick={() => setExpandedTitle(isExpanded ? null : p.title)}
                 >
                     {rowContent}
                 </div>
 
-                {!collapsed && hasKids && isExpanded && !isDisabled && (
+                {!collapsed && hasKids && isExpanded && (
                   <div className="ecc-children" role="group">
                     {p.children!.map((c) => {
                       const CIcon = iconOf(c.icon);
