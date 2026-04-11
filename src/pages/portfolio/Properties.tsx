@@ -4,7 +4,26 @@ import { BLANK, formatPercent } from "@/lib/format";
 import CanonicalDenseTableShell from "@/features/command-surface/CanonicalDenseTableShell";
 import EccCommandPalette from "@/features/command-surface/EccCommandPalette";
 import TriageBoardShell from "@/features/command-surface/TriageBoardShell";
-import { PropertyCommandRow } from "@/features/command-surface/types";
+import { CommandSurfaceConfig, CommandSurfaceRow } from "@/features/command-surface/types";
+
+const PROPERTY_SURFACE_CONFIG: CommandSurfaceConfig = {
+  entityLabel: "Property",
+  entityPluralLabel: "Properties",
+  routePath: "/portfolio/properties",
+  title: "Properties Command Surface",
+  subtitle: "Type A zoning over the existing property resolver, using only current ECC collection fields.",
+  searchPlaceholder: "Search property, address, id, or market",
+  searchLabel: "Search properties",
+  tableSummary: "Search current rows and select properties for the optional triage rail.",
+  selectedLabel: "selected",
+  metricALabel: "Units",
+  metricBLabel: "Occupancy",
+  segmentLabel: "Market",
+  segmentSummaryLabel: "markets",
+  triageTitle: "Portfolio Triage",
+  triageEmptyLabel: "Select properties from the dense table to start local triage.",
+  focusCommandLabel: "Focus Property Search",
+};
 
 export default function Properties() {
   const [q, setQ] = useState("");
@@ -14,25 +33,20 @@ export default function Properties() {
 
   const rows = useMemo(() => {
     if (!data) return [];
-    
-    // Map API data to table format
-    const mapped: PropertyCommandRow[] = data.map((prop: any) => ({
+
+    const mapped: CommandSurfaceRow[] = data.map((prop: any) => ({
       id: String(prop.id),
-      name: prop.name ?? prop.label ?? `Property ${prop.id}`,
-      address: [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") ?? BLANK,
-      units: prop.units !== null && prop.units !== undefined ? prop.units : 0,
-      occupancy: prop.occupancy_pct ? formatPercent(prop.occupancy_pct, 0, "percent") : BLANK,
-      market: prop.city ?? prop.state ?? BLANK
+      primary: prop.name ?? prop.label ?? `Property ${prop.id}`,
+      secondary: [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") ?? BLANK,
+      metricA: String(prop.units !== null && prop.units !== undefined ? prop.units : 0),
+      metricB: prop.occupancy_pct ? formatPercent(prop.occupancy_pct, 0, "percent") : BLANK,
+      segment: prop.city ?? prop.state ?? BLANK,
     }));
 
-    // Apply search filter
-    const t = q.trim().toLowerCase();
-    if (!t) return mapped;
-    return mapped.filter(r =>
-      r.name.toLowerCase().includes(t) ||
-      r.address.toLowerCase().includes(t) ||
-      r.id.toLowerCase().includes(t) ||
-      r.market.toLowerCase().includes(t)
+    const needle = q.trim().toLowerCase();
+    if (!needle) return mapped;
+    return mapped.filter((row) =>
+      [row.primary, row.secondary, row.id, row.segment].join(" ").toLowerCase().includes(needle),
     );
   }, [data, q]);
   const selectedRows = rows.filter((row) => selectedIds.includes(row.id));
@@ -41,9 +55,10 @@ export default function Properties() {
     <section className="ecc-page">
       <div className="ecc-command-surface-layout">
         <div>
-          <EccCommandPalette onFocusPropertiesSearch={() => searchInputRef.current?.focus()} />
+          <EccCommandPalette config={PROPERTY_SURFACE_CONFIG} onFocusSearch={() => searchInputRef.current?.focus()} />
           <CanonicalDenseTableShell
             rows={rows}
+            config={PROPERTY_SURFACE_CONFIG}
             loading={isLoading || (isFetching && rows.length === 0)}
             error={error ? String(error) : undefined}
             search={q}
@@ -53,7 +68,7 @@ export default function Properties() {
             onSelectionChange={(ids) => setSelectedIds(Array.from(new Set(ids)))}
           />
         </div>
-        <TriageBoardShell items={selectedRows} />
+        <TriageBoardShell items={selectedRows} config={PROPERTY_SURFACE_CONFIG} />
       </div>
     </section>
   );
