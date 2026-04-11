@@ -15,7 +15,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { AlertTriangle, Eye, ShieldAlert } from "lucide-react";
-import { PropertyCommandRow } from "./types";
+import { CommandSurfaceConfig, CommandSurfaceRow } from "./types";
 import "@/styles/command-surface.css";
 
 type LaneKey = "watchlist" | "review" | "escalate";
@@ -39,11 +39,12 @@ const LANE_META: Record<LaneKey, { title: string; icon: React.ReactNode; hint: s
 };
 
 type Props = {
-  items: PropertyCommandRow[];
+  items: CommandSurfaceRow[];
+  config: CommandSurfaceConfig;
 };
 
 type SortableCardProps = {
-  item: PropertyCommandRow;
+  item: CommandSurfaceRow;
 };
 
 function SortableCard({ item }: SortableCardProps) {
@@ -54,23 +55,16 @@ function SortableCard({ item }: SortableCardProps) {
   };
 
   return (
-    <button
-      ref={setNodeRef}
-      style={style}
-      type="button"
-      className="ecc-triage-card"
-      {...attributes}
-      {...listeners}
-    >
-      <span className="ecc-triage-card__title">{item.name}</span>
-      <span className="ecc-triage-card__meta">#{item.id} • {item.occupancy} • {item.market}</span>
+    <button ref={setNodeRef} style={style} type="button" className="ecc-triage-card" {...attributes} {...listeners}>
+      <span className="ecc-triage-card__title">{item.primary}</span>
+      <span className="ecc-triage-card__meta">#{item.id} • {item.metricB} • {item.segment}</span>
     </button>
   );
 }
 
-export default function TriageBoardShell({ items }: Props) {
+export default function TriageBoardShell({ items, config }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
-  const [lanes, setLanes] = useState<Record<LaneKey, PropertyCommandRow[]>>({
+  const [lanes, setLanes] = useState<Record<LaneKey, CommandSurfaceRow[]>>({
     watchlist: items,
     review: [],
     escalate: [],
@@ -86,10 +80,7 @@ export default function TriageBoardShell({ items }: Props) {
     }));
   }, [items]);
 
-  const allIds = useMemo(
-    () => Object.values(lanes).flatMap((lane) => lane.map((item) => item.id)),
-    [lanes],
-  );
+  const allIds = useMemo(() => Object.values(lanes).flatMap((lane) => lane.map((item) => item.id)), [lanes]);
 
   function findLane(itemId: string): LaneKey | undefined {
     return (Object.keys(lanes) as LaneKey[]).find((lane) => lanes[lane].some((item) => item.id === itemId));
@@ -133,7 +124,7 @@ export default function TriageBoardShell({ items }: Props) {
     return (
       <aside className="ecc-triage-shell ecc-object">
         <p className="ecc-command-surface__eyebrow">T5 Drilldown Rail</p>
-        <div className="ecc-command-empty-panel">Select properties from the dense table to start local triage.</div>
+        <div className="ecc-command-empty-panel">{config.triageEmptyLabel}</div>
       </aside>
     );
   }
@@ -143,7 +134,7 @@ export default function TriageBoardShell({ items }: Props) {
       <div className="ecc-triage-shell__header">
         <div>
           <p className="ecc-command-surface__eyebrow">T5 Optional Drilldown Rail</p>
-          <h2 className="ecc-triage-shell__title">Portfolio Triage</h2>
+          <h2 className="ecc-triage-shell__title">{config.triageTitle}</h2>
         </div>
         <span className="ecc-triage-shell__count">{allIds.length} cards in motion</span>
       </div>
@@ -164,9 +155,7 @@ export default function TriageBoardShell({ items }: Props) {
                   {lanes[lane].map((item) => (
                     <SortableCard key={item.id} item={item} />
                   ))}
-                  {lanes[lane].length === 0 ? (
-                    <div className="ecc-triage-lane__empty">Drop selected properties here.</div>
-                  ) : null}
+                  {lanes[lane].length === 0 ? <div className="ecc-triage-lane__empty">Drop selected rows here.</div> : null}
                 </div>
               </SortableContext>
             </div>

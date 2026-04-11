@@ -9,11 +9,12 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ArrowUpDown, Building2, MapPinned, Percent, Rows3 } from "lucide-react";
-import { PropertyCommandRow } from "./types";
+import { CommandSurfaceConfig, CommandSurfaceRow } from "./types";
 import "@/styles/command-surface.css";
 
 type Props = {
-  rows: PropertyCommandRow[];
+  rows: CommandSurfaceRow[];
+  config: CommandSurfaceConfig;
   loading?: boolean;
   error?: string;
   search: string;
@@ -25,6 +26,7 @@ type Props = {
 
 export default function CanonicalDenseTableShell({
   rows,
+  config,
   loading,
   error,
   search,
@@ -33,9 +35,9 @@ export default function CanonicalDenseTableShell({
   selectedIds,
   onSelectionChange,
 }: Props) {
-  const [sorting, setSorting] = useState<SortingState>([{ id: "name", desc: false }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "primary", desc: false }]);
 
-  const columns = useMemo<ColumnDef<PropertyCommandRow>[]>(
+  const columns = useMemo<ColumnDef<CommandSurfaceRow>[]>(
     () => [
       {
         id: "select",
@@ -43,10 +45,8 @@ export default function CanonicalDenseTableShell({
           <input
             type="checkbox"
             checked={rows.length > 0 && selectedIds.length === rows.length}
-            onChange={(event) =>
-              onSelectionChange(event.target.checked ? rows.map((row) => row.id) : [])
-            }
-            aria-label="Select all visible properties"
+            onChange={(event) => onSelectionChange(event.target.checked ? rows.map((row) => row.id) : [])}
+            aria-label={`Select all visible ${config.entityPluralLabel.toLowerCase()}`}
           />
         ),
         cell: ({ row }) => {
@@ -63,20 +63,20 @@ export default function CanonicalDenseTableShell({
                     : selectedIds.filter((id) => id !== rowId),
                 )
               }
-              aria-label={`Select property ${row.original.name}`}
+              aria-label={`Select ${config.entityLabel.toLowerCase()} ${row.original.primary}`}
             />
           );
         },
         enableSorting: false,
       },
       { accessorKey: "id", header: "ID" },
-      { accessorKey: "name", header: "Property" },
-      { accessorKey: "address", header: "Address" },
-      { accessorKey: "units", header: "Units" },
-      { accessorKey: "occupancy", header: "Occupancy" },
-      { accessorKey: "market", header: "Market" },
+      { accessorKey: "primary", header: config.entityLabel },
+      { accessorKey: "secondary", header: "Context" },
+      { accessorKey: "metricA", header: config.metricALabel },
+      { accessorKey: "metricB", header: config.metricBLabel },
+      { accessorKey: "segment", header: config.segmentLabel },
     ],
-    [onSelectionChange, rows, selectedIds],
+    [config, onSelectionChange, rows, selectedIds],
   );
 
   const table = useReactTable({
@@ -92,10 +92,11 @@ export default function CanonicalDenseTableShell({
       if (!needle) return true;
       const haystack = [
         row.original.id,
-        row.original.name,
-        row.original.address,
-        row.original.occupancy,
-        row.original.market,
+        row.original.primary,
+        row.original.secondary,
+        row.original.metricA,
+        row.original.metricB,
+        row.original.segment,
       ]
         .join(" ")
         .toLowerCase();
@@ -108,11 +109,11 @@ export default function CanonicalDenseTableShell({
 
   const visibleRows = table.getRowModel().rows;
   const selectedRows = rows.filter((row) => selectedIds.includes(row.id));
-  const averageOccupancy = rows.length
-    ? Math.round(
-        rows.reduce((sum, row) => sum + Number.parseInt(row.occupancy.replace("%", ""), 10), 0) /
-          rows.length,
-      )
+  const metricBNumbers = rows
+    .map((row) => Number.parseFloat(row.metricB.replace(/[^0-9.-]/g, "")))
+    .filter((value) => Number.isFinite(value));
+  const averageMetricB = metricBNumbers.length
+    ? Math.round(metricBNumbers.reduce((sum, value) => sum + value, 0) / metricBNumbers.length)
     : 0;
 
   return (
@@ -120,10 +121,8 @@ export default function CanonicalDenseTableShell({
       <div className="ecc-command-surface__context">
         <div>
           <p className="ecc-command-surface__eyebrow">T0 Context</p>
-          <h1 className="ecc-command-surface__title">Properties Command Surface</h1>
-          <p className="ecc-command-surface__subtitle">
-            Type A zoning over the existing property resolver, using only current ECC collection fields.
-          </p>
+          <h1 className="ecc-command-surface__title">{config.title}</h1>
+          <p className="ecc-command-surface__subtitle">{config.subtitle}</p>
         </div>
         <div className="ecc-command-surface__stats">
           <div className="ecc-command-stat">
@@ -132,11 +131,11 @@ export default function CanonicalDenseTableShell({
           </div>
           <div className="ecc-command-stat">
             <Percent size={16} />
-            <span>{averageOccupancy}% avg occupancy</span>
+            <span>{averageMetricB}{config.metricBLabel.toLowerCase().includes("occupancy") ? "% avg" : " avg"}</span>
           </div>
           <div className="ecc-command-stat">
             <MapPinned size={16} />
-            <span>{new Set(rows.map((row) => row.market)).size} markets</span>
+            <span>{new Set(rows.map((row) => row.segment)).size} {config.segmentSummaryLabel}</span>
           </div>
         </div>
       </div>
@@ -144,15 +143,15 @@ export default function CanonicalDenseTableShell({
       <div className="ecc-command-surface__toolbar">
         <div className="ecc-command-surface__toolbar-copy">
           <p className="ecc-command-surface__eyebrow">T2 Filters / Search</p>
-          <span>Search current rows and select properties for the optional triage rail.</span>
+          <span>{config.tableSummary}</span>
         </div>
         <label className="ecc-command-search">
-          <span className="sr-only">Search properties</span>
+          <span className="sr-only">{config.searchLabel}</span>
           <input
             ref={searchInputRef}
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Search property, address, id, or market"
+            placeholder={config.searchPlaceholder}
           />
         </label>
       </div>
@@ -165,11 +164,11 @@ export default function CanonicalDenseTableShell({
           </div>
           <div className="ecc-command-surface__selected">
             <Building2 size={16} />
-            <span>{selectedRows.length} selected</span>
+            <span>{selectedRows.length} {config.selectedLabel}</span>
           </div>
         </div>
 
-        {loading ? <div className="ecc-command-empty-panel">Loading property command surface…</div> : null}
+        {loading ? <div className="ecc-command-empty-panel">Loading {config.entityLabel.toLowerCase()} command surface…</div> : null}
         {!loading && error ? <div className="ecc-command-empty-panel">{error}</div> : null}
         {!loading && !error ? (
           <div className="ecc-command-table-shell">
@@ -208,7 +207,7 @@ export default function CanonicalDenseTableShell({
               </tbody>
             </table>
             {visibleRows.length === 0 ? (
-              <div className="ecc-command-empty-panel">No properties match the current search.</div>
+              <div className="ecc-command-empty-panel">No {config.entityPluralLabel.toLowerCase()} match the current search.</div>
             ) : null}
           </div>
         ) : null}

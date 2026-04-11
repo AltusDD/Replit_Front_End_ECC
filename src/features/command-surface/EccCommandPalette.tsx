@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Command } from "cmdk";
 import { Building2, Command as CommandIcon, LayoutDashboard, Link2, Search, Shield } from "lucide-react";
 import { useLocation } from "wouter";
+import { CommandSurfaceConfig } from "./types";
 import "@/styles/command-surface.css";
 
 type CommandItem = {
@@ -14,10 +15,11 @@ type CommandItem = {
 };
 
 type Props = {
-  onFocusPropertiesSearch?: () => void;
+  config?: CommandSurfaceConfig;
+  onFocusSearch?: () => void;
 };
 
-export default function EccCommandPalette({ onFocusPropertiesSearch }: Props) {
+export default function EccCommandPalette({ config, onFocusSearch }: Props) {
   const [open, setOpen] = useState(false);
   const [, navigate] = useLocation();
 
@@ -43,11 +45,11 @@ export default function EccCommandPalette({ onFocusPropertiesSearch }: Props) {
         path: "/dashboard",
       },
       {
-        id: "properties",
-        label: "Open Properties",
-        hint: "Go to Type A portfolio proof surface",
+        id: "surface",
+        label: config ? `Open ${config.entityPluralLabel}` : "Open Properties",
+        hint: config ? `Go to ${config.title}` : "Go to Type A portfolio proof surface",
         icon: <Building2 size={16} />,
-        path: "/portfolio/properties",
+        path: config?.routePath ?? "/portfolio/properties",
       },
       {
         id: "integrations",
@@ -58,10 +60,10 @@ export default function EccCommandPalette({ onFocusPropertiesSearch }: Props) {
       },
       {
         id: "focus-search",
-        label: "Focus Property Search",
+        label: config?.focusCommandLabel ?? "Focus Property Search",
         hint: "Jump to the T2 search surface",
         icon: <Search size={16} />,
-        action: () => onFocusPropertiesSearch?.(),
+        action: () => onFocusSearch?.(),
       },
       {
         id: "dropbox",
@@ -71,7 +73,7 @@ export default function EccCommandPalette({ onFocusPropertiesSearch }: Props) {
         path: "/integrations/dropbox",
       },
     ],
-    [onFocusPropertiesSearch],
+    [config, onFocusSearch],
   );
 
   function runItem(item: CommandItem) {
@@ -109,11 +111,7 @@ export default function EccCommandPalette({ onFocusPropertiesSearch }: Props) {
             <Command.Empty className="ecc-command-empty">No matching ECC commands.</Command.Empty>
             <Command.Group heading="Surfaces" className="ecc-command-group">
               {items.map((item) => (
-                <Command.Item
-                  key={item.id}
-                  className="ecc-command-item"
-                  onSelect={() => runItem(item)}
-                >
+                <Command.Item key={item.id} className="ecc-command-item" onSelect={() => runItem(item)}>
                   <span className="ecc-command-item__icon">{item.icon}</span>
                   <span className="ecc-command-item__copy">
                     <span className="ecc-command-item__label">{item.label}</span>
