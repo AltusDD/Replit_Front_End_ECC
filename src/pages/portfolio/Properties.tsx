@@ -2,7 +2,9 @@ import React, { useMemo, useState } from "react";
 import FilterBar from "../../components/FilterBar";
 import DataTable, { Column } from "../../components/DataTable";
 import { useAllProperties } from "../../lib/ecc-resolvers";
-import { formatNumber, formatPercent, formatCurrencyFromCents, BLANK } from "@/lib/format";
+import { formatNumber, formatPercent, BLANK } from "@/lib/format";
+import KpiStrip from "@/components/analytics/KpiStrip";
+import ActiveFilterSummary from "@/components/analytics/ActiveFilterSummary";
 
 type PropertyRow = {
   id: string;
@@ -50,6 +52,41 @@ export default function Properties() {
     { key: "market", header: "Market", width: 140 },
   ];
 
+  const occupancyAverage = useMemo(() => {
+    if (!data || data.length === 0) return null;
+    const numeric = data
+      .map((prop: any) => Number(prop.occupancy_pct))
+      .filter((value: number) => Number.isFinite(value));
+    if (numeric.length === 0) return null;
+    return numeric.reduce((sum: number, value: number) => sum + value, 0) / numeric.length;
+  }, [data]);
+
+  const rankedMarkets = useMemo(() => {
+    const counts = new Map<string, number>();
+    rows.forEach((row) => {
+      if (!row.market || row.market === BLANK) return;
+      counts.set(row.market, (counts.get(row.market) ?? 0) + 1);
+    });
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 1)
+      .map(([market, count]) => `${market} (${count})`)[0] ?? BLANK;
+  }, [rows]);
+
+  const propertyMetrics = [
+    { key: "visible_properties", label: "Visible Properties", value: formatNumber(rows.length), helper: "Current property rows after applying the live table search scope." },
+    { key: "portfolio_total", label: "Portfolio Total", value: formatNumber(data?.length ?? 0), helper: "Total properties returned from the portfolio resolver before search narrowing." },
+    { key: "avg_occupancy", label: "Avg Occupancy", value: occupancyAverage !== null ? formatPercent(occupancyAverage, 0, "percent") : BLANK, helper: "Average occupancy across properties currently loaded into the table." },
+    { key: "top_market", label: "Top Market", value: rankedMarkets, helper: "Most represented market inside the current visible property slice." },
+  ];
+
+  const activeSummary = [
+    { key: "search", label: "Search", value: q.trim() || "All properties" },
+    { key: "results", label: "Results", value: `${rows.length}/${data?.length ?? 0}` },
+    { key: "scope", label: "Scope", value: "Property table" },
+    { key: "drilldown", label: "Drill-down", value: "Property card route" },
+  ];
+
   return (
     <section className="ecc-page">
       <FilterBar 
@@ -59,6 +96,10 @@ export default function Properties() {
         createLabel="Add Property" 
         onCreate={() => alert("Create Property")} 
       />
+      <div className="space-y-4 pb-4">
+        <KpiStrip title="Portfolio Metric Rail" items={propertyMetrics} />
+        <ActiveFilterSummary title="Active Property Scope" items={activeSummary} />
+      </div>
       <DataTable 
         columns={columns} 
         rows={rows} 
