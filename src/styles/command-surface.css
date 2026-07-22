@@ -260,6 +260,11 @@
   background: rgba(255,255,255,0.025);
 }
 
+.ecc-triage-lane[data-drag-over="true"] {
+  border-color: rgba(214, 179, 106, 0.55);
+  background: rgba(214, 179, 106, 0.08);
+}
+
 .ecc-triage-lane__label {
   display: inline-flex;
   align-items: center;
