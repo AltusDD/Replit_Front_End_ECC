@@ -1,34 +1,33 @@
-import React, { useMemo, useState } from "react";
-import FilterBar from "../../components/FilterBar";
-import DataTable, { Column } from "../../components/DataTable";
+import React, { useMemo, useRef, useState } from "react";
 import { useAllProperties } from "../../lib/ecc-resolvers";
-import { formatNumber, formatPercent, formatCurrencyFromCents, BLANK } from "@/lib/format";
-
-type PropertyRow = {
-  id: string;
-  name: string;
-  address: string;
-  units: number;
-  occupancy: string; // "94%" etc
-  market: string; // region/metro
-};
+import { BLANK, formatPercent } from "@/lib/format";
+import CanonicalDenseTableShell from "@/features/command-surface/CanonicalDenseTableShell";
+import EccCommandPalette from "@/features/command-surface/EccCommandPalette";
+import TriageBoardShell from "@/features/command-surface/TriageBoardShell";
+import { PropertyCommandRow } from "@/features/command-surface/types";
 
 export default function Properties() {
   const [q, setQ] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { data, isLoading, isFetching, error } = useAllProperties();
 
   const rows = useMemo(() => {
     if (!data) return [];
     
-    // Map API data to table format
-    const mapped: PropertyRow[] = data.map((prop: any) => ({
-      id: String(prop.id),
-      name: prop.name ?? prop.label ?? `Property ${prop.id}`,
-      address: [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") ?? BLANK,
-      units: prop.units !== null && prop.units !== undefined ? prop.units : 0,
-      occupancy: prop.occupancy_pct ? formatPercent(prop.occupancy_pct, 0, "percent") : BLANK,
-      market: prop.city ?? prop.state ?? BLANK
-    }));
+    const mapped: PropertyCommandRow[] = data.map((prop: any) => {
+      const address = [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ");
+      return {
+        id: String(prop.id),
+        name: prop.name ?? prop.label ?? `Property ${prop.id}`,
+        address: address || BLANK,
+        units: prop.units !== null && prop.units !== undefined ? prop.units : BLANK,
+        occupancy: prop.occupancy_pct !== null && prop.occupancy_pct !== undefined
+          ? formatPercent(prop.occupancy_pct, 0, "percent")
+          : BLANK,
+        market: prop.city ?? prop.state ?? BLANK,
+      };
+    });
 
     // Apply search filter
     const t = q.trim().toLowerCase();
@@ -40,33 +39,26 @@ export default function Properties() {
       r.market.toLowerCase().includes(t)
     );
   }, [data, q]);
-
-  const columns: Column<PropertyRow>[] = [
-    { key: "id", header: "ID", width: 110 },
-    { key: "name", header: "Property" },
-    { key: "address", header: "Address" },
-    { key: "units", header: "Units", width: 90 },
-    { key: "occupancy", header: "Occupancy", width: 120 },
-    { key: "market", header: "Market", width: 140 },
-  ];
+  const selectedRows = rows.filter((row) => selectedIds.includes(row.id));
 
   return (
     <section className="ecc-page">
-      <FilterBar 
-        title="Properties" 
-        value={q} 
-        onChange={setQ} 
-        createLabel="Add Property" 
-        onCreate={() => alert("Create Property")} 
-      />
-      <DataTable 
-        columns={columns} 
-        rows={rows} 
-        loading={isLoading || (isFetching && rows.length === 0)}
-        error={error ? String(error) : undefined}
-        rowHref={(r) => `/card/property/${r.id}`}
-        getRowId={(r) => r.id}
-      />
+      <div className="ecc-command-surface-layout">
+        <div>
+          <EccCommandPalette onFocusPropertiesSearch={() => searchInputRef.current?.focus()} />
+          <CanonicalDenseTableShell
+            rows={rows}
+            loading={isLoading || (isFetching && rows.length === 0)}
+            error={error ? String(error) : undefined}
+            search={q}
+            onSearchChange={setQ}
+            searchInputRef={searchInputRef}
+            selectedIds={selectedIds}
+            onSelectionChange={(ids) => setSelectedIds(Array.from(new Set(ids)))}
+          />
+        </div>
+        <TriageBoardShell items={selectedRows} />
+      </div>
     </section>
   );
 }
