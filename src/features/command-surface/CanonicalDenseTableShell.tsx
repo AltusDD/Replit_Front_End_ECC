@@ -108,11 +108,11 @@ export default function CanonicalDenseTableShell({
 
   const visibleRows = table.getRowModel().rows;
   const selectedRows = rows.filter((row) => selectedIds.includes(row.id));
-  const averageOccupancy = rows.length
-    ? Math.round(
-        rows.reduce((sum, row) => sum + Number.parseInt(row.occupancy.replace("%", ""), 10), 0) /
-          rows.length,
-      )
+  const occupancyValues = rows
+    .map((row) => Number.parseFloat(row.occupancy.replace(/[^0-9.-]/g, "")))
+    .filter((value) => Number.isFinite(value));
+  const averageOccupancy = occupancyValues.length
+    ? Math.round(occupancyValues.reduce((sum, value) => sum + value, 0) / occupancyValues.length)
     : 0;
 
   return (

@@ -15,15 +15,19 @@ export default function Properties() {
   const rows = useMemo(() => {
     if (!data) return [];
     
-    // Map API data to table format
-    const mapped: PropertyCommandRow[] = data.map((prop: any) => ({
-      id: String(prop.id),
-      name: prop.name ?? prop.label ?? `Property ${prop.id}`,
-      address: [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") ?? BLANK,
-      units: prop.units !== null && prop.units !== undefined ? prop.units : 0,
-      occupancy: prop.occupancy_pct ? formatPercent(prop.occupancy_pct, 0, "percent") : BLANK,
-      market: prop.city ?? prop.state ?? BLANK
-    }));
+    const mapped: PropertyCommandRow[] = data.map((prop: any) => {
+      const address = [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ");
+      return {
+        id: String(prop.id),
+        name: prop.name ?? prop.label ?? `Property ${prop.id}`,
+        address: address || BLANK,
+        units: prop.units !== null && prop.units !== undefined ? prop.units : BLANK,
+        occupancy: prop.occupancy_pct !== null && prop.occupancy_pct !== undefined
+          ? formatPercent(prop.occupancy_pct, 0, "percent")
+          : BLANK,
+        market: prop.city ?? prop.state ?? BLANK,
+      };
+    });
 
     // Apply search filter
     const t = q.trim().toLowerCase();
