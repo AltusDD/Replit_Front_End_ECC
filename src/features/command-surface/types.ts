@@ -19,6 +19,7 @@ export type CommandSurfaceConfig = {
   selectedLabel: string;
   metricALabel: string;
   metricBLabel: string;
+  metricBFormat: "percentage" | "currency" | "number";
   segmentLabel: string;
   segmentSummaryLabel: string;
   triageTitle: string;

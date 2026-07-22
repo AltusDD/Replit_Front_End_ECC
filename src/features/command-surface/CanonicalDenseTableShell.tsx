@@ -8,7 +8,7 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, Building2, MapPinned, Percent, Rows3 } from "lucide-react";
+import { ArrowUpDown, Building2, CircleDollarSign, MapPinned, Percent, Rows3 } from "lucide-react";
 import { CommandSurfaceConfig, CommandSurfaceRow } from "./types";
 import "@/styles/command-surface.css";
 
@@ -115,6 +115,15 @@ export default function CanonicalDenseTableShell({
   const averageMetricB = metricBNumbers.length
     ? Math.round(metricBNumbers.reduce((sum, value) => sum + value, 0) / metricBNumbers.length)
     : 0;
+  const averageMetricBDisplay = config.metricBFormat === "currency"
+    ? new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(averageMetricB)
+    : config.metricBFormat === "percentage"
+      ? `${averageMetricB}%`
+      : String(averageMetricB);
 
   return (
     <section className="ecc-command-surface ecc-object">
@@ -130,8 +139,8 @@ export default function CanonicalDenseTableShell({
             <span>{rows.length} loaded</span>
           </div>
           <div className="ecc-command-stat">
-            <Percent size={16} />
-            <span>{averageMetricB}{config.metricBLabel.toLowerCase().includes("occupancy") ? "% avg" : " avg"}</span>
+            {config.metricBFormat === "currency" ? <CircleDollarSign size={16} /> : <Percent size={16} />}
+            <span>{averageMetricBDisplay} avg {config.metricBLabel.toLowerCase()}</span>
           </div>
           <div className="ecc-command-stat">
             <MapPinned size={16} />

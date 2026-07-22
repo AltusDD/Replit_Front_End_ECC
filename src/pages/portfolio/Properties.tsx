@@ -18,6 +18,7 @@ const PROPERTY_SURFACE_CONFIG: CommandSurfaceConfig = {
   selectedLabel: "selected",
   metricALabel: "Units",
   metricBLabel: "Occupancy",
+  metricBFormat: "percentage",
   segmentLabel: "Market",
   segmentSummaryLabel: "markets",
   triageTitle: "Portfolio Triage",
@@ -34,14 +35,19 @@ export default function Properties() {
   const rows = useMemo(() => {
     if (!data) return [];
 
-    const mapped: CommandSurfaceRow[] = data.map((prop: any) => ({
-      id: String(prop.id),
-      primary: prop.name ?? prop.label ?? `Property ${prop.id}`,
-      secondary: [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ") ?? BLANK,
-      metricA: String(prop.units !== null && prop.units !== undefined ? prop.units : 0),
-      metricB: prop.occupancy_pct ? formatPercent(prop.occupancy_pct, 0, "percent") : BLANK,
-      segment: prop.city ?? prop.state ?? BLANK,
-    }));
+    const mapped: CommandSurfaceRow[] = data.map((prop: any) => {
+      const address = [prop.street_1, prop.city, prop.state].filter(Boolean).join(", ");
+      return {
+        id: String(prop.id),
+        primary: prop.name ?? prop.label ?? `Property ${prop.id}`,
+        secondary: address || BLANK,
+        metricA: prop.units !== null && prop.units !== undefined ? String(prop.units) : BLANK,
+        metricB: prop.occupancy_pct !== null && prop.occupancy_pct !== undefined
+          ? formatPercent(prop.occupancy_pct, 0, "percent")
+          : BLANK,
+        segment: prop.city ?? prop.state ?? BLANK,
+      };
+    });
 
     const needle = q.trim().toLowerCase();
     if (!needle) return mapped;

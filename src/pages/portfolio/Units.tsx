@@ -18,6 +18,7 @@ const UNIT_SURFACE_CONFIG: CommandSurfaceConfig = {
   selectedLabel: "selected",
   metricALabel: "Mix",
   metricBLabel: "Market Rent",
+  metricBFormat: "currency",
   segmentLabel: "Status",
   segmentSummaryLabel: "statuses",
   triageTitle: "Unit Triage",
@@ -38,9 +39,13 @@ export default function Units() {
       id: String(unit.id),
       primary: unit.label ?? unit.unit_number ?? `Unit ${unit.id}`,
       secondary: unit.property_name ?? BLANK,
-      metricA: `${unit.beds !== null && unit.beds !== undefined ? unit.beds : 0} bd / ${unit.baths !== null && unit.baths !== undefined ? unit.baths : 0} ba`,
-      metricB: unit.market_rent_cents ? formatCurrencyFromCents(unit.market_rent_cents) : BLANK,
-      segment: unit.status ?? "Vacant",
+      metricA: (unit.beds === null || unit.beds === undefined) && (unit.baths === null || unit.baths === undefined)
+        ? BLANK
+        : `${unit.beds ?? BLANK} bd / ${unit.baths ?? BLANK} ba`,
+      metricB: unit.market_rent_cents !== null && unit.market_rent_cents !== undefined
+        ? formatCurrencyFromCents(unit.market_rent_cents)
+        : BLANK,
+      segment: unit.status ?? BLANK,
     }));
 
     const needle = q.trim().toLowerCase();
