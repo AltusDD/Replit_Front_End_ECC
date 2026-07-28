@@ -104,7 +104,7 @@ We had a **working Legal Page stub** in earlier builds. This needs to be restore
 **Guardrails**
 - Use ECC dark theme only.
 - Pull live data from Supabase legal tables.
-- Activity logs sourced from M365/Teams/Outlook if secrets available【108†ecc_m_365_core_update.txt】【109†ecc_m_365_secrets.txt】.
+- Activity logs may use M365/Teams/Outlook only through an approved server-side integration with managed credentials. Plaintext local secret files are prohibited and are never implementation inputs.
 
 **CHANGESET**
 - Restore existing Legal Page baseline.
@@ -140,7 +140,7 @@ Files to Touch: `src/features/owners/transfer/*`
 
 **VERIFICATION**
 - Transfer logs in Supabase.
-- Teams notification fires (if secrets present).
+- Teams notification fires only when the approved server-side integration is configured.
 - Accounting packet generated and stored.
 
 ---
