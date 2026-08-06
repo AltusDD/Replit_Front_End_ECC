@@ -1,8 +1,8 @@
 # ECC Roadmap Authority Index
 
-## Proposed canonical roadmap
+## Canonical roadmap
 
-- `ECC_SUPERIORITY_IMPLEMENTATION_MASTER_PLAN_V1.md` - corrected full build program for turning ECC into the Altus daily operating command center and surpassing conventional property-management platforms.
+- `ECC_SUPERIORITY_IMPLEMENTATION_MASTER_PLAN_V1.md` - merged canonical full build program for turning ECC into the Altus daily operating command center and surpassing conventional property-management platforms.
 
 ## Superseded historical roadmap
 
