@@ -34,4 +34,4 @@ These files remain tracked for a later, separately reviewed disposition decision
 
 ## Security status
 
-Tracked environment files contained live-looking credential material before this cleanup. Values are intentionally not reproduced here. Credential rotation remains recommended but is outside this PR's authorization. History cleanup also remains outside scope.
+The environment files removed from the current snapshot contained placeholder values, not usable credentials. Earlier Git history is not rewritten; any credential ever committed there should still be treated as exposed and rotated. Rotation and history cleanup remain outside this PR's authorization.
