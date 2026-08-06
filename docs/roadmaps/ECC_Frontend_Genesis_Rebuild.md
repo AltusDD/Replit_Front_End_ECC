@@ -1,5 +1,7 @@
 # ECC_Frontend_Genesis_Rebuild.md
 
+> **SUPERSEDED - DO NOT EXECUTE.** This historical roadmap assumes an unverified product and architecture, identifies an outdated repository owner, contains fixed historical counts, and conflicts with the implemented component direction. Use `ECC_SUPERIORITY_IMPLEMENTATION_MASTER_PLAN_V1.md` and `README.md` in this directory. This file remains only for provenance.
+
 ## 📑 Scope
 This document defines the step-by-step front-end rebuild plan for the **Empire Command Center (ECC)** GitHub repo (`AltusDD/Replit_Front_End_ECC`). It merges prior directives, playbooks, and project state files into a single execution order.
 
