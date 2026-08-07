@@ -6,3 +6,9 @@ The project includes a backup and cleanup script for maintenance. When changes a
 ### How to Roll Back
 To roll back, decompress the desired ZIP archive from `.archive/` back into the project root.
 
+## Governance Protocol
+
+All work must follow:
+
+docs/governance/ALTUS_PROMPT_PROTOCOL_V6.md
+
