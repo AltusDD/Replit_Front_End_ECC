@@ -1,5 +1,41 @@
-const BASE = import.meta.env.VITE_API_BASE || "";
-export const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+const API_PATH_PREFIX = import.meta.env.VITE_API_BASE ?? "/api";
+
+function getApiBaseUrl(): string {
+  const envBase = import.meta.env.VITE_API_BASE_URL;
+  if (envBase) return String(envBase).replace(/\/+$/, "");
+
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  if (hostname.includes("replit")) return "https://ecc-triage-node-staging.azurewebsites.net";
+
+  return "";
+}
+
+function joinUrl(base: string, path: string): string {
+  if (!base) return path;
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${base}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
+const API_PATH_PREFIX = import.meta.env.VITE_API_BASE ?? "/api";
+
+function getApiBaseUrl(): string {
+  const envBase = import.meta.env.VITE_API_BASE_URL;
+  if (envBase) return String(envBase).replace(/\/+$/, "");
+
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  if (hostname.includes("replit")) return "https://ecc-triage-node-staging.azurewebsites.net";
+
+  return "";
+}
+
+function joinUrl(base: string, path: string): string {
+  if (!base) return path;
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${base}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
+const BASE = joinUrl(getApiBaseUrl(), API_PATH_PREFIX).replace(/\/+$/, "");
+export const API_BASE = BASE;
 
 export async function api(path: string, init?: RequestInit) {
   const res = await fetch(BASE + path, init);
@@ -56,7 +92,7 @@ export async function fetchBadgeCounts(): Promise<BadgeCounts> {
 
 /** Entity fetcher with fallback for both path param and query param patterns */
 export async function fetchEntity(entityPlural: string, id: string) {
-  const base = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE || "/api").replace(/\/$/, "");
+    const base = BASE.replace(/\/$/, "");
   
   // Azure Functions structure: /api/entities/{type}/{id?}
   const tryUrls = [
