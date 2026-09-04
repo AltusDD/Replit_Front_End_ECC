@@ -103,6 +103,24 @@ assert.equal(
   ).status,
   "denied",
 );
+assert.equal(
+  consumeControlPlaneSession(
+    { ...canonicalSession, personId: "browser-person" },
+    registered,
+    "production",
+    now,
+  ).status,
+  "denied",
+);
+assert.equal(
+  consumeControlPlaneSession(
+    { ...canonicalSession, expiresAt: "2026-09-04" },
+    registered,
+    "production",
+    now,
+  ).status,
+  "denied",
+);
 
 const bypassSession = {
   ...canonicalSession,
@@ -186,7 +204,7 @@ assert.deepEqual(buildControlPlaneLogoutRequest("application"), {
 });
 assert.deepEqual(buildControlPlaneLogoutRequest("global"), { scope: "global" });
 
-console.log("Control Plane auth consumer proof: 16 assertions passed");
+console.log("Control Plane auth consumer proof: 18 assertions passed");
 }
 
 void run();
