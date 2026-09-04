@@ -223,11 +223,20 @@ export function consumeControlPlaneAccessDecision(
 
 export function resolveControlPlaneAdminUsersLink(
   state: ControlPlaneAuthState,
-  permissions: readonly string[],
+  rawAdminDecision: unknown,
+  registration: ControlPlaneConsumerRegistration,
+  runtime: ControlPlaneRuntime,
 ): string | null {
+  const decision = consumeControlPlaneAccessDecision(
+    rawAdminDecision,
+    registration,
+    runtime,
+  );
   if (
     state.status !== "authenticated" ||
-    !permissions.includes("control.admin.read")
+    !decision.allowed ||
+    !("decisionMode" in decision) ||
+    decision.decisionMode !== "canonical"
   ) {
     return null;
   }
