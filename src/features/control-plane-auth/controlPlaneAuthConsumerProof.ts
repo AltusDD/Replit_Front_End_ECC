@@ -11,6 +11,7 @@ import {
   type ControlPlaneConsumerRegistration,
 } from "./controlPlaneAuthConsumer";
 
+async function run() {
 const unbound: ControlPlaneConsumerRegistration = {
   applicationId: "consumer-app",
   clientId: "consumer-web",
@@ -157,3 +158,6 @@ assert.deepEqual(buildControlPlaneLogoutRequest("application"), {
 assert.deepEqual(buildControlPlaneLogoutRequest("global"), { scope: "global" });
 
 console.log("Control Plane auth consumer proof: 16 assertions passed");
+}
+
+void run();
