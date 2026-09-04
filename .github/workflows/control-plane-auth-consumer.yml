@@ -5,7 +5,7 @@ on:
     paths:
       - "src/features/control-plane-auth/controlPlaneAuthConsumer.ts"
       - "src/features/control-plane-auth/controlPlaneAuthConsumerProof.ts"
-      - "src/features/docs/CONTROL_PLANE_AUTH_CONSUMER_STUB.md"
+      - "docs/CONTROL_PLANE_AUTH_CONSUMER_STUB.md"
       - ".github/workflows/control-plane-auth-consumer.yml"
   workflow_dispatch:
 
@@ -15,9 +15,6 @@ permissions:
 jobs:
   control-plane-auth-consumer:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: .
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
