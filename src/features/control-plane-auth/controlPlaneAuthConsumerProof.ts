@@ -1,0 +1,159 @@
+import assert from "node:assert/strict";
+import {
+  CONTROL_PLANE_ADMIN_USERS_PATH,
+  CONTROL_PLANE_DEVELOPER_BANNER,
+  buildControlPlaneAccessRequest,
+  buildControlPlaneLogoutRequest,
+  consumeControlPlaneAccessDecision,
+  consumeControlPlaneSession,
+  createUnboundControlPlaneAuthPort,
+  resolveControlPlaneAdminUsersLink,
+  type ControlPlaneConsumerRegistration,
+} from "./controlPlaneAuthConsumer";
+
+const unbound: ControlPlaneConsumerRegistration = {
+  applicationId: "consumer-app",
+  clientId: "consumer-web",
+  registrationStatus: "unbound",
+};
+const registered: ControlPlaneConsumerRegistration = {
+  ...unbound,
+  registrationStatus: "registered",
+};
+const now = Date.parse("2026-09-04T20:00:00Z");
+const canonicalSession = {
+  applicationSessionId: "opaque-app-session",
+  personId: "00000000-0000-4000-8000-000000000001",
+  accountId: "00000000-0000-4000-8000-000000000002",
+  applicationId: "consumer-app",
+  expiresAt: "2026-09-04T21:00:00Z",
+  decisionMode: "canonical",
+  reasonCode: "ACCESS_ALLOWED",
+  billingMode: "canonical",
+  banner: null,
+} as const;
+
+assert.deepEqual(await createUnboundControlPlaneAuthPort().readSession(), {
+  status: "unavailable",
+  reasonCode: "CONTROL_PLANE_NOT_BOUND",
+});
+assert.equal(
+  consumeControlPlaneSession(canonicalSession, unbound, "development", now).status,
+  "unavailable",
+);
+const accepted = consumeControlPlaneSession(
+  canonicalSession,
+  registered,
+  "production",
+  now,
+);
+assert.equal(accepted.status, "authenticated");
+assert.equal(
+  resolveControlPlaneAdminUsersLink(accepted, ["control.admin.read"]),
+  CONTROL_PLANE_ADMIN_USERS_PATH,
+);
+assert.equal(resolveControlPlaneAdminUsersLink(accepted, []), null);
+
+assert.equal(
+  consumeControlPlaneSession(
+    { ...canonicalSession, applicationId: "another-app" },
+    registered,
+    "production",
+    now,
+  ).status,
+  "denied",
+);
+assert.equal(
+  consumeControlPlaneSession(
+    { ...canonicalSession, expiresAt: "2026-09-04T20:00:00Z" },
+    registered,
+    "production",
+    now,
+  ).status,
+  "expired_or_revoked",
+);
+assert.equal(
+  consumeControlPlaneSession(
+    { ...canonicalSession, browserRole: "admin" },
+    registered,
+    "production",
+    now,
+  ).status,
+  "denied",
+);
+
+const bypassSession = {
+  ...canonicalSession,
+  decisionMode: "developer_bypass",
+  reasonCode: "DEVELOPER_BYPASS_ALLOWED",
+  billingMode: "not_applicable_developer",
+  banner: CONTROL_PLANE_DEVELOPER_BANNER,
+} as const;
+const bypass = consumeControlPlaneSession(
+  bypassSession,
+  registered,
+  "development",
+  now,
+);
+assert.equal(bypass.status, "developer_bypass");
+assert.equal(resolveControlPlaneAdminUsersLink(bypass, ["control.admin.read"]), null);
+assert.equal(
+  consumeControlPlaneSession(
+    bypassSession,
+    registered,
+    "production",
+    now,
+  ).status,
+  "denied",
+);
+
+assert.deepEqual(buildControlPlaneAccessRequest(registered, "app.read"), {
+  applicationId: "consumer-app",
+  capability: "app.read",
+});
+assert.equal(buildControlPlaneAccessRequest(unbound, "app.read"), null);
+assert.equal(buildControlPlaneAccessRequest(registered, " app.read"), null);
+
+assert.deepEqual(
+  consumeControlPlaneAccessDecision(
+    {
+      allowed: true,
+      reasonCode: "ACCESS_ALLOWED",
+      applicationId: "consumer-app",
+      decisionMode: "canonical",
+      billingMode: "canonical",
+      banner: null,
+    },
+    registered,
+    "production",
+  ),
+  {
+    allowed: true,
+    reasonCode: "ACCESS_ALLOWED",
+    applicationId: "consumer-app",
+    decisionMode: "canonical",
+    billingMode: "canonical",
+    banner: null,
+  },
+);
+assert.equal(
+  consumeControlPlaneAccessDecision(
+    {
+      allowed: true,
+      reasonCode: "DEVELOPER_BYPASS_ALLOWED",
+      applicationId: "consumer-app",
+      decisionMode: "developer_bypass",
+      billingMode: "not_applicable_developer",
+      banner: CONTROL_PLANE_DEVELOPER_BANNER,
+    },
+    registered,
+    "production",
+  ).allowed,
+  false,
+);
+assert.deepEqual(buildControlPlaneLogoutRequest("application"), {
+  scope: "application",
+});
+assert.deepEqual(buildControlPlaneLogoutRequest("global"), { scope: "global" });
+
+console.log("Control Plane auth consumer proof: 16 assertions passed");
