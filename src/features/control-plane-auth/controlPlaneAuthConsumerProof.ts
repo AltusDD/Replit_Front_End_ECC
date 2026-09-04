@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   CONTROL_PLANE_ADMIN_USERS_PATH,
+  CONTROL_PLANE_CONSUMER,
   CONTROL_PLANE_DEVELOPER_BANNER,
   buildControlPlaneAccessRequest,
   buildControlPlaneLogoutRequest,
@@ -8,10 +9,36 @@ import {
   consumeControlPlaneSession,
   createUnboundControlPlaneAuthPort,
   resolveControlPlaneAdminUsersLink,
+  selectControlPlaneAuthPath,
   type ControlPlaneConsumerRegistration,
 } from "./controlPlaneAuthConsumer";
 
 async function run() {
+assert.equal(CONTROL_PLANE_CONSUMER.applicationId, "ecc");
+assert.equal(CONTROL_PLANE_CONSUMER.clientId, "ecc-web");
+assert.equal(CONTROL_PLANE_CONSUMER.primaryCapability, "ecc.read");
+assert.equal(
+  selectControlPlaneAuthPath({
+    bindingReady: false,
+    rollbackToExistingAuth: false,
+  }),
+  "existing",
+);
+assert.equal(
+  selectControlPlaneAuthPath({
+    bindingReady: true,
+    rollbackToExistingAuth: true,
+  }),
+  "existing",
+);
+assert.equal(
+  selectControlPlaneAuthPath({
+    bindingReady: true,
+    rollbackToExistingAuth: false,
+  }),
+  "control_plane",
+);
+
 const unbound: ControlPlaneConsumerRegistration = {
   applicationId: "consumer-app",
   clientId: "consumer-web",
@@ -204,7 +231,7 @@ assert.deepEqual(buildControlPlaneLogoutRequest("application"), {
 });
 assert.deepEqual(buildControlPlaneLogoutRequest("global"), { scope: "global" });
 
-console.log("Control Plane auth consumer proof: 18 assertions passed");
+console.log("Control Plane auth consumer proof: 24 assertions passed");
 }
 
 void run();
