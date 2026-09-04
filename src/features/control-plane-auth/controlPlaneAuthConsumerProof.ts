@@ -49,11 +49,32 @@ const accepted = consumeControlPlaneSession(
   now,
 );
 assert.equal(accepted.status, "authenticated");
+const canonicalAdminDecision = {
+  allowed: true,
+  reasonCode: "ACCESS_ALLOWED",
+  applicationId: "consumer-app",
+  decisionMode: "canonical",
+  billingMode: "canonical",
+  banner: null,
+} as const;
 assert.equal(
-  resolveControlPlaneAdminUsersLink(accepted, ["control.admin.read"]),
+  resolveControlPlaneAdminUsersLink(
+    accepted,
+    canonicalAdminDecision,
+    registered,
+    "production",
+  ),
   CONTROL_PLANE_ADMIN_USERS_PATH,
 );
-assert.equal(resolveControlPlaneAdminUsersLink(accepted, []), null);
+assert.equal(
+  resolveControlPlaneAdminUsersLink(
+    accepted,
+    { ...canonicalAdminDecision, applicationId: "another-app" },
+    registered,
+    "production",
+  ),
+  null,
+);
 
 assert.equal(
   consumeControlPlaneSession(
@@ -97,7 +118,7 @@ const bypass = consumeControlPlaneSession(
   now,
 );
 assert.equal(bypass.status, "developer_bypass");
-assert.equal(resolveControlPlaneAdminUsersLink(bypass, ["control.admin.read"]), null);
+assert.equal(\n  resolveControlPlaneAdminUsersLink(\n    bypass,\n    canonicalAdminDecision,\n    registered,\n    "development",\n  ),\n  null,\n);
 assert.equal(
   consumeControlPlaneSession(
     bypassSession,
