@@ -92,8 +92,24 @@ function isBoundedString(value: unknown): value is string {
   );
 }
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const RFC3339_PATTERN =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+
 function isNonProduction(runtime: ControlPlaneRuntime): boolean {
   return runtime === "development" || runtime === "test" || runtime === "preview";
+}
+
+function successReasonIsValid(
+  decisionMode: unknown,
+  reasonCode: unknown,
+): boolean {
+  return (
+    (decisionMode === "canonical" && reasonCode === "ACCESS_ALLOWED") ||
+    (decisionMode === "developer_bypass" &&
+      reasonCode === "DEVELOPER_BYPASS_ALLOWED")
+  );
 }
 
 function modesAreValid(
@@ -167,7 +183,13 @@ export function consumeControlPlaneSession(
     return { status: "denied", reasonCode: "AUTHORIZATION_REQUEST_INVALID" };
   }
 
-  if (payload.applicationId !== registration.applicationId) {
+  if (
+    payload.applicationId !== registration.applicationId ||
+    !UUID_PATTERN.test(payload.personId as string) ||
+    !UUID_PATTERN.test(payload.accountId as string) ||
+    !RFC3339_PATTERN.test(payload.expiresAt as string) ||
+    !successReasonIsValid(payload.decisionMode, payload.reasonCode)
+  ) {
     return { status: "denied", reasonCode: "APPLICATION_ACCESS_DENIED" };
   }
 
@@ -208,6 +230,8 @@ export function consumeControlPlaneAccessDecision(
     typeof payload.allowed !== "boolean" ||
     !isBoundedString(payload.reasonCode) ||
     payload.applicationId !== registration.applicationId ||
+    (payload.allowed &&
+      !successReasonIsValid(payload.decisionMode, payload.reasonCode)) ||
     !modesAreValid(
       payload.decisionMode,
       payload.billingMode,
