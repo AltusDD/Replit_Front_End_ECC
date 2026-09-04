@@ -5,12 +5,12 @@ Status: repository-only, unbound, non-deployed.
 ## Consumer
 
 - Application: ECC
-- Candidate application ID: `ecc`
-- Candidate client ID: `ecc-web`
+- Exact planned application ID: `ecc`
+- Exact planned client ID: `ecc-web`
 - Initial capability used by proof: `ecc.read`
 - Registration status: `unbound`
 
-The IDs are consumer candidates until the Control Plane records the exact active
+The mapping is fixed for this consumer contract but remains inactive until the Control Plane records the exact active
 application, client, and redirect registration. No redirect URI, host, credential,
 cookie, provider, or environment variable is configured by this change.
 
@@ -39,7 +39,9 @@ create an admin-console link.
 ## Current behavior and rollback
 
 Existing authentication and routing are unchanged. There is no runtime import or
-feature switch. Rollback is removal of the four files in this slice. A later,
+feature switch. The dormant dual-run selector defaults to the existing auth path
+when binding is not ready and its server-controlled rollback input restores that
+path without copying credentials. Removal of the four files remains the repository rollback. A later,
 separately authorized binding PR must supply registered endpoints, server-side
 configuration, secure cookie handling, transport, observability, and browser
 acceptance proof without weakening existing production authentication.
