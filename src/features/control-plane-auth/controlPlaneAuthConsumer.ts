@@ -16,6 +16,13 @@ export type ControlPlaneConsumerRegistration = Readonly<{
   registrationStatus: "unbound" | "registered";
 }>;
 
+export const CONTROL_PLANE_CONSUMER = Object.freeze({
+  applicationId: "ecc",
+  clientId: "ecc-web",
+  primaryCapability: "ecc.read",
+  registrationStatus: "unbound" as const,
+});
+
 export type ControlPlaneSessionData = Readonly<{
   applicationSessionId: string;
   personId: string;
@@ -136,6 +143,16 @@ export function createUnboundControlPlaneAuthPort(): ControlPlaneAuthPort {
       return { status: "unavailable", reasonCode: "CONTROL_PLANE_NOT_BOUND" };
     },
   };
+}
+
+export function selectControlPlaneAuthPath(input: Readonly<{
+  bindingReady: boolean;
+  rollbackToExistingAuth: boolean;
+}>): "existing" | "control_plane" {
+  if (!input.bindingReady || input.rollbackToExistingAuth) {
+    return "existing";
+  }
+  return "control_plane";
 }
 
 export function buildControlPlaneAccessRequest(
