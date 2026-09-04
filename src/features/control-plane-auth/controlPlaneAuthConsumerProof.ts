@@ -118,7 +118,15 @@ const bypass = consumeControlPlaneSession(
   now,
 );
 assert.equal(bypass.status, "developer_bypass");
-assert.equal(\n  resolveControlPlaneAdminUsersLink(\n    bypass,\n    canonicalAdminDecision,\n    registered,\n    "development",\n  ),\n  null,\n);
+assert.equal(
+  resolveControlPlaneAdminUsersLink(
+    bypass,
+    canonicalAdminDecision,
+    registered,
+    "development",
+  ),
+  null,
+);
 assert.equal(
   consumeControlPlaneSession(
     bypassSession,
